@@ -35,6 +35,14 @@ It's done when: <how you'll know it works>
 Only change what this feature needs, and tell me if you have to touch anything else.
 ```
 
+## 2a. Pick and build a module (everyone, new session each time)
+
+```
+Read BUILD-MODULES.md. Show me which modules are still open and what each one does.
+I'll pick one: <module ID, for example M3D>. Claim it on the board, then build only that
+module and open a pull request when it works.
+```
+
 ## 3. Change something you can see
 
 ```
