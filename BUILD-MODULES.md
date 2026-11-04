@@ -16,7 +16,7 @@ Claude: if the student hasn't named a module, show them the `OPEN` rows in plain
 
 | ID | Module | Layer | Stage behaviour | Needs first | Status | Owner |
 |----|--------|-------|-----------------|-------------|--------|-------|
-| M0 | Shared foundation (project record, stage flag, flag format, sample projects) | Base | Shared | none | OPEN | |
+| M0 | Shared foundation (project record, stage flag, flag format, sample projects) | Base | Shared | none | CLAIMED | NS |
 | M1 | Integrity checks | 1 | Shared | M0 | OPEN | |
 | M2 | Benchmarking engine | 2 | Shared engine, stage-specific benchmark sets | M0 | OPEN | |
 | M3D | Development risk module | 3 | Development stage | M0 | OPEN | |
