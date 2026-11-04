@@ -49,14 +49,15 @@ Every project is reviewed by asking the same six questions in order. The questio
 
 Projects move between states, and the transitions carry the biggest risk. Construction to lease-up to stabilization to refinance is where deals break. So the stage flag has three values:
 
-| `stage` value | Plain meaning | Typical signs |
+| `stage` value | Plain meaning | Typical signs (guidance for the underwriter) |
 |---------------|---------------|---------------|
-| `development` | Being built, nothing operating | Operational Percentage is 0%; budget and draw schedule are live |
-| `lease_up` | Partially operating: built or delivering, still filling and not yet stable | Operational Percentage is above 0% and below the stabilization target; some actuals exist, some projections remain |
-| `completed` | Stabilized and operating with real history | Operational Percentage at or above the stabilization target; rent roll and trailing 12 months (T-12) exist |
+| `development` | Being built, nothing operating | Nothing is earning yet; budget and draw schedule are live |
+| `lease_up` | Partially operating: built or delivering, still filling and not yet stable | Construction is complete but the project has not yet met the stability test in 1f; some actuals exist, some projections remain |
+| `completed` | Stabilized and operating with real history | The project has met the stability test in 1f; rent roll and trailing 12 months (T-12) exist |
 
-- **Operational Percentage** is the row already in the model. M0 derives the stage from it (and from dates) and also lets the reviewer set it by hand. When the derived stage and the manual stage disagree, that is itself a flag (owned by M1).
-- A project's stage is never inferred silently. Every module reads `project.stage` and reports which stage it used.
+- The **underwriter chooses the stage** for each project. The tool never works it out. The "typical signs" above are guidance for the underwriter, not rules the tool applies. If the data in the project clearly contradicts the chosen stage, M1 raises a flag. The tool never changes the stage by itself.
+- A project is one stage at a time. For a phased project, the underwriter updates the stage and the "as of" date when the next phase is built.
+- Every module reads `project.stage` and reports which stage it used.
 - **How `lease_up` runs:** it runs the `development` checks for whatever is still projected (remaining budget, remaining lease-up), the `completed` checks for whatever is already actual (rent roll to date, expenses to date), and the transition checks in M3T.
 
 ### Transitions are their own risk checks (owned by M3T)
@@ -79,9 +80,19 @@ These keep nine separate sessions from producing nine incompatible pieces. **M0 
 - Everything runs in the browser. There is no server. Follow the hosting limits in `CLAUDE.md`.
 - Shared types and helpers live in `src/modules/shared/` and are built only by M0. If you need a change there, say so in your pull request instead of editing it.
 
-### 1b. The project record
+### 1b. The firm record and the project record
 
-One object describes a project. It contains `stage`, the operational percentage, the sources and uses, budget, schedule, rent roll, T-12, debt terms, and sponsor reference. M0 defines the exact fields and provides **made-up sample projects, one per stage** (three in total), so every module can be built and tested without waiting for real data.
+Two linked records describe a review. Field names follow the applicant's workbook, so a flag can point to a cell.
+
+**Firm record:** identity (name, address, principal, other owners and their ownership %); the firm's balance sheet (current and prior period); the principal's personal financial statement; firm earnings (fee income, overhead, EBITDA, debt payments); firm debt and equity; and the list of its projects with the firm's ownership % in each.
+
+**Project record:** identity (name, address, construction and property type); the `stage` chosen by the underwriter; the team (general contractor, architect, development partners and their ownership %); timeline (construction start, completion and stabilization dates); sources and uses (lien priority, source type, amount, term, rate); budget; income (residential by unit type, commercial leases, other income); expenses; debt terms; and an **optional monthly T-12**.
+
+The **T-12** holds up to 12 monthly columns using the same revenue and expense lines as the applicant workbook, plus monthly occupancy, concessions, NOI and debt service. It may have fewer than 12 months. It is optional, but a completed project without one should be flagged by M1.
+
+Every project record carries an **"as of" date**. Every value also carries the **workbook tab and cell it came from**, and the record carries the **workbook version**.
+
+M0 defines the exact fields and provides **made-up sample firms and projects**, each with an answer key stating what every module should produce for it, so every module can be built and tested without waiting for real data.
 
 ### 1c. The flag format (what every risk-type module returns)
 
@@ -108,7 +119,19 @@ Every module exports one function, `run(project, context)`, where `context` hold
 
 ### 1e. Data and privacy
 
-Sample projects use made-up names and numbers only. No real sponsors, lenders, addresses or people. This repository is public.
+Sample projects use made-up names and numbers only. No real sponsors, lenders, addresses or people. This repository is public. Sample data may be translated from real models only after every name, address, lender and program is replaced and the numbers are altered so no real deal can be recognized.
+
+### 1f. Settings (stored by M0, read by other modules)
+
+| Setting | Default |
+|---------|---------|
+| Lender's minimum DSCR | 1.20 |
+| NOI vs. underwritten | at least 100% |
+| Consecutive months | 3 |
+| Occupancy floor | 90% |
+| Rent premium over market that warrants a look | 10% |
+
+A project passes the **first stability screen** when DSCR and NOI meet their thresholds for the consecutive months. The **occupancy screen** then checks for low occupancy combined with rent well above market. M3T uses this test to estimate when a project will stabilize. It is not used to assign the stage. The underwriter can change any setting.
 
 ---
 
@@ -116,10 +139,11 @@ Sample projects use made-up names and numbers only. No real sponsors, lenders, a
 
 ### M0: Shared foundation
 
-**Skill:** data modeling. **Answers:** "What does a project look like, and what stage is it in?"
+**Skill:** data modeling. **Answers:** "What do a firm and its projects look like, and what stage did the underwriter put each project in?"
 **Build:**
-- The project record (section 1b) and the three sample projects (`development`, `lease_up`, `completed`).
-- Stage derivation from Operational Percentage and dates, plus manual override.
+- The firm record and project record (section 1b), including the optional monthly T-12 and the "as of" date.
+- Sample firms and projects covering every stage, with an answer key stating what each module should produce for each one.
+- The stage as an input chosen by the underwriter (not worked out by the tool), and the settings in section 1f.
 - The flag format and a helper to create a flag (section 1c).
 - Benchmark set loader: benchmark sets are data files keyed by stage, so M2 can plug into them.
 **You'll see:** a simple page where you pick a sample project and see its stage and fields.
@@ -132,7 +156,7 @@ Sample projects use made-up names and numbers only. No real sponsors, lenders, a
 - No error values or broken formulas.
 - No template residue (placeholder text, default values left in, unfilled cells).
 - Cross-tab tie-outs (a number that appears on two tabs must match).
-- Derived stage matches the stage the reviewer set (see section 0).
+- The chosen stage is not clearly contradicted by the data (for example development with T-12 rent, completed with no rent roll or T-12, a development project whose stabilization date has passed, or a completed project whose construction completion is in the future). Raise a flag; never change the stage.
 **You'll see:** a pass / fail checklist per project, with the failing cells named.
 **Possible split:** M1-a sources and uses plus errors; M1-b template residue plus cross-tab tie-outs.
 
@@ -175,7 +199,8 @@ Three modules, one per row on the board.
 #### M3T: Transition checks
 
 **Skill:** stage-change risk. **Runs for:** `lease_up` mainly, and as a look-ahead for `development` and `completed`.
-- Builds the `lease_up` view: Operational Percentage trend, absorption pace, concessions, how long until stabilization.
+- Builds the `lease_up` view: occupancy trend, absorption pace, concessions, how long until stabilization.
+- Uses the stability test in section 1f to estimate when a project will stabilize, and flags high rent combined with low occupancy.
 - Runs T1, T2 and T3 (section 0) as separate named checks, each producing flags with `transition` set.
 - Every project gets a "next transition" summary: which transition is next, when, and what has to be true for it to go well.
 **You'll see:** a timeline for each project showing where it is and which transition is coming.
@@ -197,6 +222,7 @@ Three modules, one per row on the board.
 
 **Skill:** counterparty analysis. **Answers:** "Does this sponsor have the track record and cash to deliver?"
 **Build:**
+- Uses the firm record from M0. A healthy project under a failing firm is still a risk, and it matters most at the `development` stage.
 - Global debt service coverage across all of the sponsor's projects.
 - Liquidity (cash and liquid assets against obligations and guarantees).
 - Track record.
