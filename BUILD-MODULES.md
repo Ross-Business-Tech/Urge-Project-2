@@ -92,6 +92,8 @@ The **T-12** holds up to 12 monthly columns using the same revenue and expense l
 
 Every project record carries an **"as of" date**. Every value also carries the **workbook tab and cell it came from**, and the record carries the **workbook version**.
 
+The applicant form has no line called "interest reserve". Wherever this spec says interest reserve, use the Construction Interest, Rent-Up Reserve and Operating Reserve budget lines.
+
 M0 defines the exact fields and provides **made-up sample firms and projects**, each with an answer key stating what every module should produce for it, so every module can be built and tested without waiting for real data.
 
 ### 1c. The flag format (what every risk-type module returns)
@@ -133,6 +135,38 @@ Sample projects use made-up names and numbers only. No real sponsors, lenders, a
 
 A project passes the **first stability screen** when DSCR and NOI meet their thresholds for the consecutive months. The **occupancy screen** then checks for low occupancy combined with rent well above market. M3T uses this test to estimate when a project will stabilize. It is not used to assign the stage. The underwriter can change any setting.
 
+### 1g. Shared calculators and key ratios (built by M0)
+
+M0 provides these calculators. Every module uses them and never recomputes them. They use only the stored inputs and the project's "as of" date, never today's date. If an input is missing, a calculator returns "not available" with the reason. It never returns zero and never crashes.
+
+**Base calculators**
+
+| Calculator | How it is worked out |
+|------------|----------------------|
+| Total sources | Sum of all source amounts |
+| Total uses and total development cost | Sum of all acquisition, hard cost and soft cost lines |
+| Annual debt service | For each source, 12 × its monthly payment. The monthly payment is the typed payment if one was entered, otherwise the standard loan payment from amount, annual rate ÷ 12, and term in months. A zero rate means amount ÷ term; a zero term means no payment |
+| NOI | Residential, commercial and other income after vacancy, minus operating expenses (including replacement reserves) |
+| DSCR | NOI ÷ annual debt service. For monthly T-12 data, monthly NOI ÷ monthly debt service |
+| Total debt | Sources typed as hard debt, government debt or mezzanine debt |
+
+**Key ratios** (the headline picture; a project shows only the ones for its stage)
+
+| Ratio | How it is worked out | Shown for |
+|-------|----------------------|-----------|
+| DSCR | As above | All |
+| NOI cushion | (NOI − minimum DSCR × debt service) ÷ NOI, and the same against a DSCR of 1.0 | All |
+| Break-even occupancy | (Operating expenses + debt service) ÷ income at full occupancy | All |
+| Debt yield | NOI ÷ total debt | All |
+| Debt-to-cost | Total debt ÷ total development cost | Development |
+| Equity share | Developer equity plus tax credit equity ÷ total development cost, shown beside the share typed as "Other" | Development |
+| Yield on cost | Stabilized NOI ÷ total development cost | Development |
+| Contingency % | Construction and owner's contingency ÷ hard costs; soft-cost contingency ÷ soft costs | Development |
+| Collected vs. potential rent | Revenue after vacancy and concessions ÷ rent at full occupancy | Lease-up, completed |
+| T-12 vs. underwritten, and stability streak | T-12 NOI ÷ underwritten NOI; the number of most recent consecutive months that pass the DSCR and NOI tests in 1f | Lease-up, completed |
+| Operating runway | Budgeted rent-up and operating reserves ÷ average monthly shortfall over the last 3 months; "not burning cash" if there is none | Lease-up |
+| Global DSCR, liquidity cover, fee dependence | Defined and built by M5, using the project figures M0 provides | Firm |
+
 ---
 
 ## 2. Module specs
@@ -144,9 +178,10 @@ A project passes the **first stability screen** when DSCR and NOI meet their thr
 - The firm record and project record (section 1b), including the optional monthly T-12 and the "as of" date.
 - Sample firms and projects covering every stage, with an answer key stating what each module should produce for each one.
 - The stage as an input chosen by the underwriter (not worked out by the tool), and the settings in section 1f.
+- The shared calculators and key ratios in section 1g.
 - The flag format and a helper to create a flag (section 1c).
 - Benchmark set loader: benchmark sets are data files keyed by stage, so M2 can plug into them.
-**You'll see:** a simple page where you pick a sample project and see its stage and fields.
+**You'll see:** a simple page where you pick a sample project and see its stage, its fields and the key ratios for its stage.
 
 ### M1: Integrity checks (Layer 1, shared)
 
@@ -157,6 +192,9 @@ A project passes the **first stability screen** when DSCR and NOI meet their thr
 - No template residue (placeholder text, default values left in, unfilled cells).
 - Cross-tab tie-outs (a number that appears on two tabs must match).
 - The chosen stage is not clearly contradicted by the data (for example development with T-12 rent, completed with no rent roll or T-12, a development project whose stabilization date has passed, or a completed project whose construction completion is in the future). Raise a flag; never change the stage.
+- The project count on the Cover matches the project tabs that contain data, including hidden tabs.
+- A source's typed payment is not lower than the payment its amount, rate and term produce.
+- The T-12, balance sheet and personal statement are no more than 12 months older than the "as of" date.
 **You'll see:** a pass / fail checklist per project, with the failing cells named.
 **Possible split:** M1-a sources and uses plus errors; M1-b template residue plus cross-tab tie-outs.
 
@@ -171,6 +209,8 @@ A project passes the **first stability screen** when DSCR and NOI meet their thr
 | Expenses per unit | Underwritten expenses vs. stabilized comps | Run-rate expenses vs. comps | T-12 expenses vs. comps |
 | Cost per square foot | Hard, soft and total cost vs. comps | Remaining cost vs. comps | Not applicable |
 
+Units with an AMI level are compared by AMI level. If no benchmark exists for that level, return a low-severity "no comparable benchmark" flag instead of comparing against market rent.
+
 Benchmark sets are made-up sample data for now.
 **You'll see:** a table showing each metric, the project's value, the market range and a flag when it falls outside.
 
@@ -181,7 +221,7 @@ Three modules, one per row on the board.
 #### M3D: Development risk
 
 **Skill:** construction-stage underwriting. **Runs for:** `development`, and for the still-projected parts of `lease_up`.
-1. **Budget realism:** contingency size, hard-cost to soft-cost ratio, cost per square foot.
+1. **Budget realism:** contingency size, hard-cost to soft-cost ratio, cost per square foot, and the share of cost paid to the sponsor and related parties as fees, with how much of it is deferred.
 2. **Schedule:** start date, completion date, stabilization date, lease-up length, and whether they are consistent with each other.
 3. **Capital stack and takeout risk:** lien priority, interest reserve adequacy, refinance or takeout risk.
 4. **Team completeness:** is a developer, general contractor, architect, property manager and guarantor named, with relevant experience?
@@ -223,6 +263,7 @@ Three modules, one per row on the board.
 **Skill:** counterparty analysis. **Answers:** "Does this sponsor have the track record and cash to deliver?"
 **Build:**
 - Uses the firm record from M0. A healthy project under a failing firm is still a risk, and it matters most at the `development` stage.
+- Builds the firm-level key ratios from section 1g: global DSCR, liquidity cover and fee dependence.
 - Global debt service coverage across all of the sponsor's projects.
 - Liquidity (cash and liquid assets against obligations and guarantees).
 - Track record.
