@@ -26,9 +26,10 @@ const SOURCE_TYPE_BY_TEXT = new Map(
 )
 const LEASE_TYPE_BY_TEXT = new Map(LEASE_TYPES.map((t) => [normalize(t.label), t.value]))
 
-function excelDate(serial) {
-  const d = new Date(Date.UTC(1899, 11, 30) + Math.round(serial) * 86400000)
-  return d.toISOString().slice(0, 10)
+// Excel stores a date as a day count. Files use one of two systems: counting from 1900 (the usual) or from 1904 (older Mac files).
+function excelDate(serial, is1904) {
+  const base = is1904 ? Date.UTC(1904, 0, 1) : Date.UTC(1899, 11, 30)
+  return new Date(base + Math.round(serial) * 86400000).toISOString().slice(0, 10)
 }
 
 function parseNumberText(text) {
@@ -40,7 +41,7 @@ function parseNumberText(text) {
 }
 
 // Turn one workbook cell into a value of the schema type. Returns { value, error?, bad?, note? }.
-function convert(type, cell) {
+function convert(type, cell, is1904 = false) {
   if (!cell) return { value: null }
   if (cell.kind === 'error') return { value: null, error: cell.value }
   let v = cell.value
@@ -64,10 +65,10 @@ function convert(type, cell) {
       return { value: null, bad: true }
     }
     case 'date':
-      return { value: typeof v === 'number' && v > 20000 ? excelDate(v) : String(v) }
+      return { value: typeof v === 'number' && v > 20000 ? excelDate(v, is1904) : String(v) }
     case 'yearMonth':
       if (typeof v === 'number' && v >= 1900 && v < 3000) return { value: String(v) }
-      return { value: typeof v === 'number' && v > 20000 ? excelDate(v).slice(0, 7) : String(v) }
+      return { value: typeof v === 'number' && v > 20000 ? excelDate(v, is1904).slice(0, 7) : String(v) }
     case 'sourceType': {
       const known = SOURCE_TYPE_BY_TEXT.get(normalize(v))
       return known ? { value: known } : { value: String(v), note: `Unrecognized source type "${v}"` }
@@ -86,7 +87,7 @@ const EXPECTED = { number: 'a number', dollars: 'a dollar amount', percent: 'a p
 const typeOf = (list, key) => (list || []).find((i) => i.key === key)?.type
 
 // Reads one group. Returns the group's data, how many cells were filled, blank or showing errors, and the source of each value.
-function readGroup(schemaGroup, spec, cells, tabName) {
+function readGroup(schemaGroup, spec, cells, tabName, is1904) {
   const counts = { filled: 0, blank: 0, errors: 0, bad: 0 }
   const sources = {}
   const notes = []
@@ -94,7 +95,7 @@ function readGroup(schemaGroup, spec, cells, tabName) {
   const data = {}
 
   const read = (type, addr, path) => {
-    const result = convert(type, cells.get(addr))
+    const result = convert(type, cells.get(addr), is1904)
     if (result.error) {
       counts.errors++
       errorCells.push({ tab: tabName, cell: addr, value: result.error })
@@ -125,7 +126,7 @@ function readGroup(schemaGroup, spec, cells, tabName) {
     for (const def of rowDefs) {
       // Look first, count only if the row is kept.
       const keep = Object.entries(def).some(([k, addr]) => {
-        const r = convert(typeOf(schemaGroup.columns, k), cells.get(addr))
+        const r = convert(typeOf(schemaGroup.columns, k), cells.get(addr), is1904)
         return t.keepIf.includes(k) && (r.value !== null || r.error)
       })
       if (!keep) continue
@@ -155,12 +156,12 @@ function readGroup(schemaGroup, spec, cells, tabName) {
     const yearCol = schemaGroup.columns.find((c) => c.key === 'fiscalYear')
     const lineCols = schemaGroup.columns.filter((c) => c.key !== 'fiscalYear')
     for (const letter of spec.years.cols) {
-      const header = convert('number', cells.get(`${letter}${spec.years.headerRow}`))
+      const header = convert('number', cells.get(`${letter}${spec.years.headerRow}`), is1904)
       const headerCell = cells.get(`${letter}${spec.years.headerRow}`)
       let year = header.value
-      if (typeof year === 'number' && year > 20000) year = Number(excelDate(year).slice(0, 4))
+      if (typeof year === 'number' && year > 20000) year = Number(excelDate(year, is1904).slice(0, 4))
       if (!Number.isFinite(year) || !headerCell) continue
-      const peek = lineCols.map((c) => convert(c.type, cells.get(`${letter}${rowOf(c.cell)}`)))
+      const peek = lineCols.map((c) => convert(c.type, cells.get(`${letter}${rowOf(c.cell)}`), is1904))
       // A year column counts only if the applicant put something in it (a value that is not just a calculated zero).
       if (!peek.some((r) => (typeof r.value === 'number' && r.value !== 0) || r.error)) continue
       const index = rows.length
@@ -267,7 +268,7 @@ export async function importWorkbook(input, options = {}) {
       continue
     }
     if (!usable) continue
-    const result = readGroup(g, spec, usable, spec.tab)
+    const result = readGroup(g, spec, usable, spec.tab, wb.date1904)
     firmResults[g.id] = result
     notes.push(...result.notes)
     errorCells.push(...result.errorCells)
@@ -283,7 +284,8 @@ export async function importWorkbook(input, options = {}) {
     const kind = m[1].toLowerCase()
     const n = Number(m[2])
     const detailsName = sheet.name
-    const budgetName = `${m[1]} Project ${n} Budget`
+    const baseName = detailsName.replace(/ Details$/, '') // the full tab name keeps "Project 03" and "Project 3" apart
+    const budgetName = `${baseName} Budget`
     const details = cellsFor(detailsName, DETAILS_ANCHORS)
     const budget = kind === 'development' && wb.hasSheet(budgetName) ? cellsFor(budgetName, BUDGET_ANCHORS) : { cells: null, usable: null }
 
@@ -294,7 +296,7 @@ export async function importWorkbook(input, options = {}) {
       const source = spec.tab === 'budget' ? budget : details
       const tabName = spec.tab === 'budget' ? budgetName : detailsName
       if (!source.usable) continue
-      const result = readGroup(g, spec, source.usable, tabName)
+      const result = readGroup(g, spec, source.usable, tabName, wb.date1904)
       results[g.id] = result
       notes.push(...result.notes)
       errorCells.push(...result.errorCells)
@@ -302,12 +304,12 @@ export async function importWorkbook(input, options = {}) {
 
     const hasData = hasProjectData(results)
     const report = {
-      id: `${kind}-${n}`,
+      id: baseName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
       tab: detailsName,
       kind,
       number: n,
       state: sheet.state,
-      hint: `This came from a "${m[1]} Project ${n}" tab`,
+      hint: `This came from a "${baseName}" tab`,
       hasData,
       name: results.identity?.data?.name ?? null,
       groups: summarize(projectSchema, results),
