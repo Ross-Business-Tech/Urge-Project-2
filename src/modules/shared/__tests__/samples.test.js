@@ -105,3 +105,15 @@ test('the answer key file is up to date', async () => {
   const onDisk = readFileSync(new URL('../samples/ANSWER-KEY.md', import.meta.url), 'utf8')
   assert.equal(onDisk, renderAnswerKey(), 'run: node src/modules/shared/samples/writeKey.mjs')
 })
+
+test('the committed sample files all load', async () => {
+  const { readFileSync, existsSync } = await import('node:fs')
+  for (const s of scenarios) {
+    const file = new URL(`../../../../sample-files/${s.id}.xlsx`, import.meta.url)
+    assert.ok(existsSync(file), `missing ${s.id}.xlsx: run node src/modules/shared/samples/writeFiles.mjs`)
+    const out = await importWorkbook(new Uint8Array(readFileSync(file)))
+    assert.deepEqual(out.report.layoutProblems, [], s.id)
+    assert.ok(out.projects.length >= 1, s.id)
+    if (s.t12) assert.ok(existsSync(new URL(`../../../../sample-files/${s.id}-t12.xlsx`, import.meta.url)), `${s.id} t12`)
+  }
+})
