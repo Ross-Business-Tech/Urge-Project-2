@@ -10,7 +10,9 @@
 // Removing a table row keeps what the applicant had for that row in originals['<group>.removedRows'].
 
 import { blankTableRow } from './records.js'
-import { isEmpty } from './fieldFormat.js'
+import { firmSchema, projectSchema } from './schema.js'
+import { STAGE_VALUES, isValidDate } from './projectStage.js'
+import { isEmpty, limitError } from './fieldFormat.js'
 
 const FORBIDDEN = new Set(['__proto__', 'constructor', 'prototype'])
 
@@ -38,13 +40,52 @@ function setIn(node, keys, value) {
   return copy
 }
 
+// The schema definition (type and limits) of the value at a path, or null if there is none.
+function fieldDefinition(record, path) {
+  const schema = record.kind === 'firm' ? firmSchema : projectSchema
+  const [groupId, ...rest] = path.split('.')
+  const group = schema.find((g) => g.id === groupId)
+  if (!group) return null
+  if (rest.length === 1) return (group.fields ?? []).find((f) => f.key === rest[0]) ?? null
+  if ((rest[0] === 'rows' || rest[0] === 'lines') && rest.length === 3) return (group.columns ?? []).find((c) => c.key === rest[2]) ?? null
+  return null
+}
+
+// Is this value acceptable for a field? Returns a plain message if not, or null.
+function valueProblem(def, value) {
+  if (isEmpty(value)) return null
+  switch (def.type) {
+    case 'number':
+    case 'dollars':
+    case 'percent':
+      return limitError(def.type, value, def)
+    case 'boolean':
+      return typeof value === 'boolean' ? null : 'It must be yes or no.'
+    case 'date':
+      return isValidDate(value) ? null : 'It must be a real date.'
+    case 'yearMonth':
+      return typeof value === 'string' && /^\d{4}(-(0[1-9]|1[0-2]))?$/.test(value) ? null : 'It must be a year or a year and month.'
+    case 'stage':
+      return STAGE_VALUES.includes(value) ? null : 'It must be one of the three stages.'
+    default:
+      return typeof value === 'string' && value.length <= 500 ? null : 'It must be text of at most 500 characters.'
+  }
+}
+
 const copyMaps = (record) => ({ ...record, sources: { ...record.sources }, originals: { ...record.originals } })
 
-// Set one value (null clears it). Records where it came from and keeps the applicant's original.
-export function setValue(record, path, value) {
+// Set one value (null clears it). Records where it came from and keeps the applicant's original. A value of the wrong
+// kind, or outside the field's limits, is refused. `restore: true` skips that check, so "put back" can return the
+// applicant's original value even when it was out of range.
+export function setValue(record, path, value, { restore = false } = {}) {
   const oldValue = getValue(record, path)
   if (oldValue === undefined) throw new Error(`Nothing to edit at ${path}`)
   const next = isEmpty(value) ? null : value
+  if (!restore && next !== null) {
+    const def = fieldDefinition(record, path)
+    const problem = def ? valueProblem(def, next) : 'It is not a field that can be edited.'
+    if (problem) throw new Error(`That is not valid for "${def?.label ?? path}": ${problem}`)
+  }
   if (Object.is(oldValue ?? null, next)) return record
 
   const out = copyMaps(record)

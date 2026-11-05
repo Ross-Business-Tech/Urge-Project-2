@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import './App.css'
 import ImportPreview from './ImportPreview.jsx'
+import { RescueBoundary } from './RescueBoundary.jsx'
+import { rescueStore } from './download.js'
 import {
   firmSchema,
   projectSchema,
@@ -169,6 +171,7 @@ const VIEWS = [
 
 export default function App() {
   const [view, setView] = useState('import')
+  const [attempt, setAttempt] = useState(0) // changing this starts the review screen over after a crash
   const current = VIEWS.find((v) => v.id === view)
 
   return (
@@ -193,7 +196,15 @@ export default function App() {
 
       {/* Kept on the page (just hidden) so a loaded review is not lost when you look at another tab. */}
       <div hidden={current.id !== 'import'}>
-        <ImportPreview />
+        <RescueBoundary
+          key={attempt}
+          onReset={() => {
+            rescueStore.current = null
+            setAttempt((n) => n + 1)
+          }}
+        >
+          <ImportPreview />
+        </RescueBoundary>
       </div>
       {current.id !== 'import' && (
         <>

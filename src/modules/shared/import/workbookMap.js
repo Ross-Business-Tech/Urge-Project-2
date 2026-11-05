@@ -24,15 +24,20 @@ export const FIRM_TABS = {
   'Balance Sheet': [
     ['A9', 'cash'],
     ['A34', 'total assets'],
+    ['A38', 'accounts payable'],
+    ['A53', 'capital stock'],
     ['A59', 'total liabilities'],
   ],
   'Principal PFS': [
     ['A11', 'cash checking'],
+    ['A19', 'real estate owned'],
+    ['A30', 'property mortgages'],
     ['A36', 'net worth'],
   ],
   'Consol Financials & Projections': [
     ['A9', 'developer fee'],
     ['A17', 'total revenue'],
+    ['A21', 'salaries'],
     ['A33', 'total sg a'],
   ],
   'Cap Table': [
@@ -41,18 +46,46 @@ export const FIRM_TABS = {
   ],
 }
 
+// Every column header the project map reads is checked, so moved or swapped columns are noticed instead of misread.
 export const DETAILS_ANCHORS = [
   ['D3', 'development name'],
+  ['D10', 'firm name'],
+  ['E10', 'firm principal'],
+  ['F10', 'ownership percentage'],
   ['C20', 'construction start'],
   ['D27', 'name of source'],
-  ['D57', 'unit type'],
+  ['E27', 'type of source'],
+  ['G27', 'term'],
+  ['H27', 'interest'],
+  ['K27', 'payment override'],
   ['C45', 'acquisition'],
+  ['C57', 'ami'],
+  ['D57', 'unit type'],
+  ['E57', 'units'],
+  ['F57', 'baths'],
+  ['G57', 'sq ft'],
+  ['H57', 'mo rent'],
+  ['C83', 'lease type'],
+  ['D83', 'description'],
+  ['G83', 'sq ft'],
+  ['H83', 'rent sq ft'],
+  ['G103', 'monthly income'],
+  ['C124', 'property management'],
+  ['C132', 'replacement reserves'],
+  ['C138', 'property liability'],
+  ['C139', 'property taxes'],
 ]
 
 export const BUDGET_ANCHORS = [
   ['A1', 'total development costs'],
   ['B3', 'land'],
+  ['B40', 'construction contingency'],
   ['B49', 'architectural'],
+  ['B61', 'construction interest'],
+  ['B76', 'developer fee'],
+  ['B85', 'rent up reserve'],
+  ['B87', 'operating reserve'],
+  ['B88', 'soft cost contingency'],
 ]
 
 export const COVER_VERSION_CELL = 'G2'
