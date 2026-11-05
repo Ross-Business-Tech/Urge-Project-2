@@ -394,3 +394,125 @@
 .banner.warn {
   background: var(--warn-bg);
 }
+
+/* ---- Editing forms ---- */
+
+.group-details > summary {
+  list-style: none;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.group-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.editor {
+  padding: 4px 0 12px;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 10px 0;
+}
+
+.edit-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.edit-field input[type='text'],
+.edit-field input[type='date'],
+.edit-field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  font: inherit;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unit {
+  color: var(--muted);
+}
+
+.prov {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.prov.hand {
+  color: var(--accent);
+}
+
+.prov.changed {
+  color: var(--danger);
+}
+
+.field-error {
+  font-size: 0.82rem;
+  color: var(--danger);
+}
+
+.link {
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.row-card {
+  margin: 8px 0;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.row-card > summary {
+  padding: 10px 12px;
+  min-height: 44px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.row-body {
+  padding: 0 12px 12px;
+}
+
+.line {
+  margin: 12px 0;
+}
+
+.line-label {
+  font-weight: 600;
+}
+
+.line-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0 12px;
+}
+
+.button.danger {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

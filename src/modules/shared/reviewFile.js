@@ -27,9 +27,17 @@ function hasForbiddenKey(value, depth = 0) {
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
 
+// Records saved before the provenance maps existed get empty ones; anything else odd is rejected.
+function hasMaps(record) {
+  if (!isObject(record)) return false
+  record.sources ??= {}
+  record.originals ??= {}
+  return isObject(record.sources) && isObject(record.originals)
+}
+
 // A project record the screen can safely show: it has its stage section, a project id, and only allowed stage/date values.
 function isProjectShape(p) {
-  if (!isObject(p) || p.kind !== 'project' || !isObject(p.data) || !isObject(p.data.stage)) return false
+  if (!isObject(p) || p.kind !== 'project' || !isObject(p.data) || !isObject(p.data.stage) || !hasMaps(p)) return false
   if (!isObject(p.meta) || typeof p.meta.projectId !== 'string') return false
   const { stage, asOfDate } = p.data.stage
   return (stage === null || STAGE_VALUES.includes(stage)) && (asOfDate === null || isValidDate(asOfDate))
@@ -80,7 +88,7 @@ export function parseReview(text) {
   }
   const { firm, projects, facts, report } = review
   const shapeOk =
-    isObject(firm) && firm.kind === 'firm' && isObject(firm.data) &&
+    isObject(firm) && firm.kind === 'firm' && isObject(firm.data) && hasMaps(firm) &&
     Array.isArray(projects) && projects.every(isProjectShape) &&
     isObject(facts) && Array.isArray(facts.sheets) &&
     isObject(report) && isObject(report.workbook) && Array.isArray(report.firmGroups) &&

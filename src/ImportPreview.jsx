@@ -9,10 +9,14 @@ import {
   reviewFileName,
   ReviewFileError,
   STAGES,
+  firmSchema,
+  projectSchema,
+  countGroup,
   applyStageAndDate,
   projectReadiness,
   reviewReadiness,
 } from './modules/shared/index.js'
+import { GroupEditor } from './RecordEditor.jsx'
 
 // Today's date on this device, as YYYY-MM-DD.
 function todayLocal() {
@@ -34,42 +38,41 @@ function downloadReview(result) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-// Groups that are not read from cells, with what to tell the underwriter instead.
-const NOT_FROM_CELLS = {
-  projects: 'Filled in from the project tabs below',
-  stage: 'You choose this after loading',
-  t12: 'Loaded separately from a T-12 template',
-}
-
 function plural(n, word) {
   return `${n} ${word}${n === 1 ? '' : 's'}`
 }
 
-function GroupRow({ group }) {
-  const total = group.filled + group.blank
-  const pct = total === 0 ? 0 : Math.round((group.filled / total) * 100)
-  const special = NOT_FROM_CELLS[group.id]
+// Groups that have no tab to read from in the applicant workbook.
+const NO_TAB = new Set(['projects', 't12', 'stage'])
+
+// One group of a record: a summary line with a live fill bar that opens into the editing form.
+function GroupRow({ schemaGroup, reportGroup, record, onEdit }) {
+  const live = countGroup(schemaGroup, record.data[schemaGroup.id])
+  const pct = live.total === 0 ? 0 : Math.round((live.filled / live.total) * 100)
+  const unread = reportGroup && !reportGroup.read && !NO_TAB.has(schemaGroup.id)
   return (
     <li className="group-row">
-      <div className="group-head">
-        <span>{group.title}</span>
-        {special ? (
-          <span className="chip">{special}</span>
-        ) : !group.read ? (
-          <span className="chip warn">Not read</span>
-        ) : (
-          <span className="chips">
-            <span className="chip">{total === 0 ? 'nothing entered' : `${group.filled} of ${total} filled`}</span>
-            {group.errors > 0 && <span className="chip warn">{plural(group.errors, 'error cell')}</span>}
-            {group.bad > 0 && <span className="chip warn">{plural(group.bad, 'odd value')}</span>}
-          </span>
-        )}
-      </div>
-      {!special && group.read && total > 0 && (
-        <div className="bar" role="img" aria-label={`${pct}% filled`}>
-          <div className="bar-fill" style={{ width: `${pct}%` }} />
+      <details className="group-details">
+        <summary>
+          <div className="group-head">
+            <span>{schemaGroup.title}</span>
+            <span className="chips">
+              <span className="chip">{live.total === 0 ? 'nothing entered' : `${live.filled} of ${live.total} filled`}</span>
+              {unread && <span className="chip warn">not read from the workbook</span>}
+              {reportGroup?.errors > 0 && <span className="chip warn">{plural(reportGroup.errors, 'error cell')} in the workbook</span>}
+              {reportGroup?.bad > 0 && <span className="chip warn">{plural(reportGroup.bad, 'odd value')} in the workbook</span>}
+            </span>
+          </div>
+          {live.total > 0 && (
+            <div className="bar" role="img" aria-label={`${pct}% filled`}>
+              <div className="bar-fill" style={{ width: `${pct}%` }} />
+            </div>
+          )}
+        </summary>
+        <div className="editor">
+          <GroupEditor group={schemaGroup} record={record} onEdit={onEdit} />
         </div>
-      )}
+      </details>
     </li>
   )
 }
@@ -109,7 +112,7 @@ function StageControls({ project, record, onChange }) {
   )
 }
 
-function ProjectCard({ project, record, onChange }) {
+function ProjectCard({ project, record, onChange, onEdit }) {
   const visibility = project.state === 'veryHidden' ? 'very hidden tab' : project.state === 'hidden' ? 'hidden tab' : null
   const { ready } = projectReadiness(record)
   const chosen = STAGES.find((s) => s.value === record.data.stage.stage)
@@ -125,12 +128,18 @@ function ProjectCard({ project, record, onChange }) {
       </summary>
       <div className="body">
         <StageControls project={project} record={record} onChange={onChange} />
-        <p className="section-label">What was read</p>
+        <p className="section-label">Values (tap a group to view or edit)</p>
         <ul className="groups">
-          {project.groups
+          {projectSchema
             .filter((g) => g.id !== 'stage')
             .map((g) => (
-              <GroupRow key={g.id} group={g} />
+              <GroupRow
+                key={g.id}
+                schemaGroup={g}
+                reportGroup={project.groups.find((x) => x.id === g.id)}
+                record={record}
+                onEdit={(fn) => onEdit(project.id, fn)}
+              />
             ))}
         </ul>
       </div>
@@ -138,7 +147,7 @@ function ProjectCard({ project, record, onChange }) {
   )
 }
 
-function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange }) {
+function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, onEdit }) {
   const { report } = result
   const readiness = reviewReadiness(result.projects)
   const recordFor = (id) => result.projects.find((r) => r.meta?.projectId === id)
@@ -169,6 +178,7 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange })
       </section>
 
       <h2>Things to look at</h2>
+      <p className="note">These describe the workbook as it was read. They do not change when you edit values below.</p>
       {report.notes.length === 0 ? (
         <p className="ok">Nothing unusual found in what we read.</p>
       ) : (
@@ -180,9 +190,16 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange })
       )}
 
       <h2>The firm</h2>
+      <p className="note">Tap a group to see and edit its values. A small tag under each value says where it came from.</p>
       <ul className="groups">
-        {report.firmGroups.map((g) => (
-          <GroupRow key={g.id} group={g} />
+        {firmSchema.map((g) => (
+          <GroupRow
+            key={g.id}
+            schemaGroup={g}
+            reportGroup={report.firmGroups.find((x) => x.id === g.id)}
+            record={result.firm}
+            onEdit={(fn) => onEdit('firm', fn)}
+          />
         ))}
       </ul>
 
@@ -197,7 +214,7 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange })
       )}
       {withData.map((p) => {
         const record = recordFor(p.id)
-        return record ? <ProjectCard key={p.id} project={p} record={record} onChange={onProjectChange} /> : null
+        return record ? <ProjectCard key={p.id} project={p} record={record} onChange={onProjectChange} onEdit={onEdit} /> : null
       })}
       {emptyReadable.length > 0 && (
         <p className="note">
@@ -268,13 +285,19 @@ export default function ImportPreview() {
     setState({ status: 'idle' })
   }
 
-  function changeProject(id, patch) {
+  // Change one record ('firm' or a project id) with a function that returns the edited copy. Marks the review unsaved.
+  function editRecord(target, fn) {
     setState((s) => ({
       ...s,
       saved: false,
-      result: { ...s.result, projects: s.result.projects.map((p) => (p.meta?.projectId === id ? applyStageAndDate(p, patch) : p)) },
+      result:
+        target === 'firm'
+          ? { ...s.result, firm: fn(s.result.firm) }
+          : { ...s.result, projects: s.result.projects.map((p) => (p.meta?.projectId === target ? fn(p) : p)) },
     }))
   }
+
+  const changeProject = (id, patch) => editRecord(id, (p) => applyStageAndDate(p, patch))
 
   function save() {
     downloadReview(state.result)
@@ -282,7 +305,7 @@ export default function ImportPreview() {
   }
 
   if (state.status === 'done') {
-    return <Report result={state.result} saved={state.saved} reopenedAt={state.reopenedAt} onSave={save} onReset={reset} onProjectChange={changeProject} />
+    return <Report result={state.result} saved={state.saved} reopenedAt={state.reopenedAt} onSave={save} onReset={reset} onProjectChange={changeProject} onEdit={editRecord} />
   }
 
   return (
