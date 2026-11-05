@@ -5,3 +5,4 @@ export { blankFirm, blankProject, blankTableRow, describeGroup, checkSchema } fr
 export { importWorkbook, ImportError } from './import/importWorkbook.js'
 export { MAX_FILE_BYTES } from './import/xlsxReader.js'
 export { checkMapCoverage } from './import/workbookMap.js'
+export { buildReview, serializeReview, parseReview, reviewFileName, ReviewFileError, MAX_REVIEW_BYTES } from './reviewFile.js'

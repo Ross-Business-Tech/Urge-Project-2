@@ -1,13 +1,15 @@
 // Blank records built from the schema. Built by M0.
 //
 // A record looks like:
-//   { schemaVersion, kind: 'firm' | 'project', data: { <groupId>: ... }, sources: { <path>: 'Tab!Cell' } }
+//   { schemaVersion, kind: 'firm' | 'project', data: { <groupId>: ... }, sources: { <path>: 'Tab!Cell' | 'manual' },
+//     originals: { <path>: { value, source } } }
 // and each group's data depends on its kind:
 //   fields -> { key: null, ... }
 //   table  -> { rows: [], <extra field keys>: null }            (each row is { column: null, ... })
 //   grid   -> { lines: { rowKey: { column: null } }, <extra field keys>: null }
 // `sources` remembers where each value came from in the applicant workbook, keyed by path such as
-// "sources.rows.0.amount". It starts empty.
+// "sources.rows.0.amount". It starts empty. A value typed by hand is marked 'manual'. When someone changes a value that
+// came from the workbook, `originals` keeps what the applicant said (and where it came from) so both can be shown.
 
 import { SCHEMA_VERSION, firmSchema, projectSchema } from './schema.js'
 
@@ -34,6 +36,7 @@ function blankRecord(kind, schema) {
     kind,
     data: Object.fromEntries(schema.map((g) => [g.id, blankGroup(g)])),
     sources: {},
+    originals: {},
   }
 }
 

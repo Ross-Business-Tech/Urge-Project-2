@@ -297,3 +297,26 @@
   border-radius: 10px;
   cursor: pointer;
 }
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 8px;
+}
+
+.actions .button {
+  flex: 1 1 160px;
+  margin-top: 0;
+}
+
+.button.primary {
+  color: #fff;
+  background: var(--accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  .button.primary {
+    color: #0b1020;
+  }
+}

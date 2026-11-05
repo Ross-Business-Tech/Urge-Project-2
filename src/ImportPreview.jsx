@@ -1,5 +1,27 @@
-import { useState } from 'react'
-import { importWorkbook, ImportError, MAX_FILE_BYTES } from './modules/shared/index.js'
+import { useEffect, useState } from 'react'
+import {
+  importWorkbook,
+  ImportError,
+  MAX_FILE_BYTES,
+  buildReview,
+  serializeReview,
+  parseReview,
+  reviewFileName,
+  ReviewFileError,
+} from './modules/shared/index.js'
+
+// Download a review as a file. Nothing is sent anywhere.
+function downloadReview(result) {
+  const blob = new Blob([serializeReview(buildReview(result))], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = reviewFileName()
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
 
 // Groups that are not read from cells, with what to tell the underwriter instead.
 const NOT_FROM_CELLS = {
@@ -61,7 +83,7 @@ function ProjectCard({ project }) {
   )
 }
 
-function Report({ result, onReset }) {
+function Report({ result, saved, reopenedAt, onSave, onReset }) {
   const { report } = result
   const withData = report.projects.filter((p) => p.hasData)
   const empty = report.projects.filter((p) => !p.hasData)
@@ -84,7 +106,8 @@ function Report({ result, onReset }) {
             </li>
             <li>{plural(withData.length, 'project')} with data</li>
           </ul>
-          <p className="note">Read on this device only. Nothing was uploaded or saved.</p>
+          {reopenedAt && <p className="note">Reopened from a review saved on {new Date(reopenedAt).toLocaleDateString()}.</p>}
+          <p className="note">Read on this device only. Nothing was uploaded.</p>
         </div>
       </section>
 
@@ -118,10 +141,20 @@ function Report({ result, onReset }) {
         </p>
       )}
 
-      <p className="note">This is a preview. Nothing is saved yet, and no stage has been chosen for any project.</p>
-      <button type="button" className="button" onClick={onReset}>
-        Choose another file
-      </button>
+      <p className="note">No stage has been chosen for any project yet.</p>
+      <div className="actions">
+        <button type="button" className="button primary" onClick={onSave}>
+          Save this review
+        </button>
+        <button type="button" className="button" onClick={onReset}>
+          Choose another file
+        </button>
+      </div>
+      <p className={saved ? 'ok' : 'note'} role="status">
+        {saved
+          ? 'Saved. The file is in your downloads. Open it again here later with "Drop the applicant workbook here".'
+          : 'Not saved yet. Saving downloads a file to this device; no copy is kept in the browser.'}
+      </p>
     </>
   )
 }
@@ -129,6 +162,18 @@ function Report({ result, onReset }) {
 export default function ImportPreview() {
   const [state, setState] = useState({ status: 'idle' })
   const [dragging, setDragging] = useState(false)
+
+  // Warn before leaving the page with work that has not been saved to a file.
+  const unsaved = state.status === 'done' && !state.saved
+  useEffect(() => {
+    if (!unsaved) return undefined
+    const warn = (event) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [unsaved])
 
   async function handleFile(file) {
     if (!file) return
@@ -138,16 +183,35 @@ export default function ImportPreview() {
     }
     setState({ status: 'reading', name: file.name })
     try {
-      const result = await importWorkbook(file, { fileName: file.name })
-      setState({ status: 'done', result })
+      if (/\.json$/i.test(file.name)) {
+        const review = parseReview(await file.text())
+        setState({ status: 'done', result: review, saved: true, reopenedAt: review.savedAt })
+      } else {
+        const result = await importWorkbook(file, { fileName: file.name })
+        setState({ status: 'done', result, saved: false })
+      }
     } catch (err) {
       const message =
-        err instanceof ImportError ? err.message : 'Something went wrong reading that file. Please check it is an .xlsx or .xlsm workbook.'
+        err instanceof ImportError || err instanceof ReviewFileError
+          ? err.message
+          : 'Something went wrong reading that file. Please check it is an .xlsx or .xlsm workbook, or a saved review.'
       setState({ status: 'error', message })
     }
   }
 
-  if (state.status === 'done') return <Report result={state.result} onReset={() => setState({ status: 'idle' })} />
+  function reset() {
+    if (unsaved && !window.confirm('This review has not been saved. Leave without saving?')) return
+    setState({ status: 'idle' })
+  }
+
+  function save() {
+    downloadReview(state.result)
+    setState({ ...state, saved: true })
+  }
+
+  if (state.status === 'done') {
+    return <Report result={state.result} saved={state.saved} reopenedAt={state.reopenedAt} onSave={save} onReset={reset} />
+  }
 
   return (
     <>
@@ -166,21 +230,21 @@ export default function ImportPreview() {
       >
         <input
           type="file"
-          accept=".xlsx,.xlsm"
+          accept=".xlsx,.xlsm,.json"
           onChange={(e) => {
             handleFile(e.target.files?.[0])
             e.target.value = ''
           }}
         />
         <span className="drop-title">{state.status === 'reading' ? `Reading ${state.name}…` : 'Drop the applicant workbook here'}</span>
-        <span className="drop-sub">or tap to choose a file (.xlsx or .xlsm)</span>
+        <span className="drop-sub">or a saved review. Tap to choose a file (.xlsx, .xlsm or .json)</span>
       </label>
       {state.status === 'error' && (
         <p className="problem" role="alert">
           {state.message}
         </p>
       )}
-      <p className="note">The file is read on this device only. Nothing is uploaded, and macros are never run.</p>
+      <p className="note">Files are read on this device only. Nothing is uploaded, and macros are never run.</p>
     </>
   )
 }

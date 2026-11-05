@@ -149,7 +149,7 @@ const VIEWS = [
     id: 'import',
     label: 'Load workbook',
     heading: 'Load an applicant workbook',
-    lede: "Drop the applicant's spreadsheet here to see what we can read from it. This is a preview: nothing is saved or sent anywhere.",
+    lede: "Drop the applicant's spreadsheet here to see what we can read from it. Nothing is sent anywhere. You can save the review as a file and reopen it later.",
   },
   {
     id: 'firm',
@@ -191,9 +191,11 @@ export default function App() {
         ))}
       </div>
 
-      {current.id === 'import' ? (
+      {/* Kept on the page (just hidden) so a loaded review is not lost when you look at another tab. */}
+      <div hidden={current.id !== 'import'}>
         <ImportPreview />
-      ) : (
+      </div>
+      {current.id !== 'import' && (
         <>
           <p className="summary-line">{plural(current.schema.length, 'group')}</p>
           {current.schema.map((g) => (
