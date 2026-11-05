@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './App.css'
+import ImportPreview from './ImportPreview.jsx'
 import {
   firmSchema,
   projectSchema,
@@ -144,23 +145,38 @@ function GroupCard({ group }) {
 }
 
 const VIEWS = [
-  { id: 'firm', label: 'Firm record', schema: firmSchema },
-  { id: 'project', label: 'Project record', schema: projectSchema },
+  {
+    id: 'import',
+    label: 'Load workbook',
+    heading: 'Load an applicant workbook',
+    lede: "Drop the applicant's spreadsheet here to see what we can read from it. Nothing is sent anywhere. You can save the review as a file and reopen it later.",
+  },
+  {
+    id: 'firm',
+    label: 'Firm record',
+    schema: firmSchema,
+    heading: 'What we store about a firm',
+    lede: 'The record structure, grouped the way the applicant workbook groups it. Tap a group to see its fields. Blue "new" tags mark things the workbook does not have.',
+  },
+  {
+    id: 'project',
+    label: 'Project record',
+    schema: projectSchema,
+    heading: 'What we store about a project',
+    lede: 'The record structure, grouped the way the applicant workbook groups it. Tap a group to see its fields. Blue "new" tags mark things the workbook does not have.',
+  },
 ]
 
 export default function App() {
-  const [view, setView] = useState('firm')
+  const [view, setView] = useState('import')
   const current = VIEWS.find((v) => v.id === view)
 
   return (
     <main className="page">
-      <h1>What we store about a firm and its projects</h1>
-      <p className="lede">
-        Draft of the record structure, grouped the way the applicant workbook groups it. Tap a group to see
-        its fields. Blue &quot;new&quot; tags mark things the workbook does not have.
-      </p>
+      <h1>{current.heading}</h1>
+      <p className="lede">{current.lede}</p>
 
-      <div className="tabs" role="tablist" aria-label="Record type">
+      <div className="tabs" role="tablist" aria-label="What to show">
         {VIEWS.map((v) => (
           <button
             key={v.id}
@@ -175,10 +191,18 @@ export default function App() {
         ))}
       </div>
 
-      <p className="summary-line">{plural(current.schema.length, 'group')}</p>
-      {current.schema.map((g) => (
-        <GroupCard key={g.id} group={g} />
-      ))}
+      {/* Kept on the page (just hidden) so a loaded review is not lost when you look at another tab. */}
+      <div hidden={current.id !== 'import'}>
+        <ImportPreview />
+      </div>
+      {current.id !== 'import' && (
+        <>
+          <p className="summary-line">{plural(current.schema.length, 'group')}</p>
+          {current.schema.map((g) => (
+            <GroupCard key={g.id} group={g} />
+          ))}
+        </>
+      )}
     </main>
   )
 }
