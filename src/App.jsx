@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import ImportPreview from './ImportPreview.jsx'
 import { RescueBoundary } from './RescueBoundary.jsx'
+import FlagFormat from './FlagFormat.jsx'
 import { rescueStore } from './download.js'
 import {
   firmSchema,
@@ -167,6 +168,12 @@ const VIEWS = [
     heading: 'What we store about a project',
     lede: 'The record structure, grouped the way the applicant workbook groups it. Tap a group to see its fields. Blue "new" tags mark things the workbook does not have.',
   },
+  {
+    id: 'flags',
+    label: 'Flag format',
+    heading: 'What a flag looks like',
+    lede: 'Every module reports what it finds in the same shape, so the findings can be combined and ranked.',
+  },
 ]
 
 export default function App() {
@@ -206,7 +213,8 @@ export default function App() {
           <ImportPreview />
         </RescueBoundary>
       </div>
-      {current.id !== 'import' && (
+      {current.id === 'flags' && <FlagFormat />}
+      {current.schema && (
         <>
           <p className="summary-line">{plural(current.schema.length, 'group')}</p>
           {current.schema.map((g) => (
