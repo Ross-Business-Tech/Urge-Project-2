@@ -90,6 +90,28 @@ export const BUDGET_ANCHORS = [
 
 export const COVER_VERSION_CELL = 'G2'
 
+// Cells the applicant workbook computes by formula (totals and subtotals). An applicant is not meant to type into them.
+// If one holds a plain typed number, that number may not match its parts, so M1 checks it (see `facts.typedOver`).
+// Taken from the layout of cover version 1.9. Cells are listed whether or not we read them.
+const across = (cols, rows) => rows.flatMap((r) => cols.map((c) => `${c}${r}`))
+export const COMPUTED_CELLS = {
+  'Balance Sheet': across(['B', 'D'], [16, 25, 32, 34, 44, 50, 57, 59]),
+  'Principal PFS': ['D23', 'D34', 'D36'],
+  'Cap Table': across(['C', 'D', 'E', 'F'], [10, 13, 17, 19]),
+  'Consol Financials & Projections': across(['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'], [17, 33, 42, 44]),
+  details: ['F42', 'E51', 'G51', 'I51', 'K51', 'E79', 'H79', 'G99', 'G114', 'H114', 'E117', 'E146'],
+  budget: ['G6', 'G10', 'G19', 'G44', 'G57', 'G66', 'G73', 'G82', 'G90', 'G99', 'G102'],
+}
+
+// The computed cells for one tab, or an empty list for a tab we have no list for.
+export function computedCellsFor(tabName) {
+  // Own keys only: a tab named "constructor" must not match a built-in property.
+  if (Object.hasOwn(COMPUTED_CELLS, tabName) && !['details', 'budget'].includes(tabName)) return COMPUTED_CELLS[tabName]
+  if (PROJECT_TAB.test(tabName)) return COMPUTED_CELLS.details
+  if (/^Development Project \d+ Budget$/.test(tabName)) return COMPUTED_CELLS.budget
+  return []
+}
+
 const FIRM_YEAR_COLUMNS = ['C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
 
 export const firmMap = {

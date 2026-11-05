@@ -12,6 +12,7 @@ import {
   DETAILS_ANCHORS,
   BUDGET_ANCHORS,
   COVER_VERSION_CELL,
+  computedCellsFor,
   firmMap,
   projectMap,
 } from './workbookMap.js'
@@ -158,6 +159,44 @@ function hasProjectData(results) {
   )
 }
 
+const MAX_FACT_CELLS = 500
+
+// What M1 needs to know about the file itself: each tab's visibility and whether it holds project data, every cell
+// showing an Excel error, and every cell the workbook computes that holds a typed number instead.
+function buildFacts(wb, projectReports) {
+  const sheets = wb.sheets.map((s) => {
+    const project = projectReports.find((p) => p.tab === s.name)
+    return { name: s.name, state: s.state, hasData: project ? project.hasData : null, errorCount: 0 }
+  })
+  const errorCells = []
+  const typedOver = []
+  let errorsTotal = 0
+  let typedTotal = 0
+  // Tabs we read come first, so the list of cells (capped) shows their errors before those in helper tabs.
+  const mattersFirst = (s) => (computedCellsFor(s.name).length || PROJECT_TAB.test(s.name) ? 0 : 1)
+  const order = wb.sheets.filter((s) => s.isWorksheet).sort((a, b) => mattersFirst(a) - mattersFirst(b))
+  for (const s of order) {
+    const cells = wb.cells(s.name)
+    if (!cells) continue
+    const entry = sheets.find((x) => x.name === s.name)
+    for (const [cell, c] of cells) {
+      if (c.kind === 'error') {
+        errorsTotal++
+        entry.errorCount++
+        if (errorCells.length < MAX_FACT_CELLS) errorCells.push({ tab: s.name, cell, value: String(c.value).slice(0, 50) })
+      }
+    }
+    for (const cell of computedCellsFor(s.name)) {
+      const c = cells.get(cell)
+      if (c && c.kind === 'number' && !c.formula) {
+        typedTotal++
+        if (typedOver.length < MAX_FACT_CELLS) typedOver.push({ tab: s.name, cell, value: c.value })
+      }
+    }
+  }
+  return { sheets, errorCells, errorCellsTotal: errorsTotal, typedOver, typedOverTotal: typedTotal }
+}
+
 export async function importWorkbook(input, options = {}) {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(await input.arrayBuffer())
   const wb = openWorkbook(bytes)
@@ -286,7 +325,7 @@ export async function importWorkbook(input, options = {}) {
   return {
     firm,
     projects,
-    facts: { sheets: wb.sheets.map((s) => ({ name: s.name, state: s.state })) },
+    facts: buildFacts(wb, projectReports),
     report: {
       fileName: options.fileName ?? input.name ?? null,
       workbook: { version, versionKnown, sheetCount: wb.sheets.length, ...visibility },

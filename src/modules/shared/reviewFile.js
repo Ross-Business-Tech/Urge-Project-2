@@ -118,6 +118,20 @@ function migrateToVersion2(review) {
   review.schemaVersion = 2
 }
 
+// The workbook facts. Reviews saved before the error and typed-over facts existed lack them; they are filled in as empty below.
+function validFacts(facts) {
+  if (!isObject(facts) || !Array.isArray(facts.sheets)) return false
+  const sheetOk = (s) =>
+    isObject(s) && isText(s.name, 300) && ['visible', 'hidden', 'veryHidden'].includes(s.state) && (s.hasData === undefined || s.hasData === null || typeof s.hasData === 'boolean') && (s.errorCount === undefined || isCount(s.errorCount))
+  const errorOk = (c) => isObject(c) && isText(c.tab, 300) && isText(c.cell, 50) && isText(c.value, 50)
+  const typedOk = (c) => isObject(c) && isText(c.tab, 300) && isText(c.cell, 50) && typeof c.value === 'number' && Number.isFinite(c.value)
+  const listOk = (list, ok) => list === undefined || (Array.isArray(list) && list.length <= 500 && list.every(ok))
+  const countOk = (n) => n === undefined || isCount(n)
+  return (
+    facts.sheets.every(sheetOk) && listOk(facts.errorCells, errorOk) && listOk(facts.typedOver, typedOk) && countOk(facts.errorCellsTotal) && countOk(facts.typedOverTotal)
+  )
+}
+
 export function buildReview(importResult, now = new Date()) {
   return {
     kind: REVIEW_KIND,
@@ -166,11 +180,19 @@ export function parseReview(text) {
   const sound =
     validRecord(firm, firmSchema, 'firm') &&
     Array.isArray(projects) && projects.every((p) => validRecord(p, projectSchema, 'project')) &&
-    isObject(facts) && Array.isArray(facts.sheets) && facts.sheets.every((s) => isObject(s) && isText(s.name, 300) && ['visible', 'hidden', 'veryHidden'].includes(s.state)) &&
+    validFacts(facts) &&
     validReport(report) &&
     consistent(review)
   if (!sound) throw new ReviewFileError('That saved review is damaged or incomplete, so it was not opened.')
   if (review.schemaVersion < 2) migrateToVersion2(review)
+  review.facts.errorCells ??= []
+  review.facts.typedOver ??= []
+  review.facts.errorCellsTotal ??= review.facts.errorCells.length
+  review.facts.typedOverTotal ??= review.facts.typedOver.length
+  for (const sheet of review.facts.sheets) {
+    sheet.hasData ??= null
+    sheet.errorCount ??= 0
+  }
   // Settings are optional in a file; anything missing or out of range falls back to the default.
   review.settings = sanitizeSettings(review.settings)
   return review

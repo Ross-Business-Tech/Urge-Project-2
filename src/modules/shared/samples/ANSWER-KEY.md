@@ -23,6 +23,7 @@ The healthy baseline: total cost 5,550,000; one loan of 3,000,000 at 6% over 360
 | s13-typed-payment-too-low | development | Typed yearly payment is too low |
 | s14-rate-typed-as-whole-number | development | Interest rate typed as 6.5 instead of 6.5% |
 | s15-equity-with-rate-and-term | development | Equity source with a rate and a term |
+| s16-typed-over-total | development | A total typed over its formula |
 
 ## s01-healthy-development: Healthy development project
 
@@ -177,3 +178,13 @@ The healthy baseline: total cost 5,550,000; one loan of 3,000,000 at 6% over 360
 - **Modules should:**
   - M1 raises `M1-equity-with-payment-terms` (Medium or higher). Developer equity has a rate and term; confirm it is not a loan typed under the wrong label.
 - **Overall:** The calculators count it (announced in their notes), so DSCR drops from 2.71 to about 1.16, under the 1.20 minimum. M1 asks the underwriter to confirm.
+
+## s16-typed-over-total: A total typed over its formula
+
+- **Stage chosen:** development. **As of:** 2026-01-15.
+- **Planted:** Total development costs on the Budget tab holds a typed 5,000,000 instead of the formula, while the budget lines add to 5,550,000. The Sources tab total is a normal formula (the control).
+- **T-12:** none.
+- **Calculators:** dscr = 2.71.
+- **Modules should:**
+  - M1 raises `M1-typed-over-formula` (Medium or higher). Budget G102 (total development costs) is a typed 5,000,000, but the lines add to 5,550,000. Details F42 is a formula and is fine.
+- **Overall:** The workbook facts list one typed-over cell. M1 compares it with our own total and flags the 550,000 difference.
