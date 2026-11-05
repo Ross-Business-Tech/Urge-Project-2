@@ -1,58 +1,11 @@
 // Test helpers: build small fake workbooks in code, so tests need no binary files and never touch real data.
 
-import { zipSync, strToU8 } from 'fflate'
 import { FIRM_TABS, DETAILS_ANCHORS, BUDGET_ANCHORS } from '../import/workbookMap.js'
 import { blankProject } from '../records.js'
 
-const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-
-// cells: { A1: 'text' | 123 | true | { error: '#REF!' } | { formula: 'A1+1', value: 3 } }
-function cellXml(addr, v, shared) {
-  if (typeof v === 'number') return `<c r="${addr}"><v>${v}</v></c>`
-  if (typeof v === 'boolean') return `<c r="${addr}" t="b"><v>${v ? 1 : 0}</v></c>`
-  if (typeof v === 'string') {
-    return shared ? `<c r="${addr}" t="s"><v>${shared(v)}</v></c>` : `<c r="${addr}" t="inlineStr"><is><t>${esc(v)}</t></is></c>`
-  }
-  if (v && v.error) return `<c r="${addr}" t="e"><v>${esc(v.error)}</v></c>`
-  if (v && v.formula !== undefined) {
-    return typeof v.value === 'string'
-      ? `<c r="${addr}" t="str"><f>${esc(v.formula)}</f><v>${esc(v.value)}</v></c>`
-      : `<c r="${addr}"><f>${esc(v.formula)}</f><v>${v.value}</v></c>`
-  }
-  throw new Error(`Cannot write cell ${addr}`)
-}
-
-// sheets: [{ name, state?: 'hidden' | 'veryHidden', cells, rawXml? }]
-export function makeXlsx({ sheets, date1904 = false, sharedStrings = false, extraParts = {} }) {
-  const sst = []
-  const shared = sharedStrings ? (s) => (sst.includes(s) ? sst.indexOf(s) : sst.push(s) - 1) : null
-  const parts = { ...extraParts }
-  sheets.forEach((sheet, i) => {
-    let xml = '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'
-    const rows = new Map()
-    for (const [addr, v] of Object.entries(sheet.cells ?? {})) {
-      const r = Number(addr.match(/\d+/)[0])
-      if (!rows.has(r)) rows.set(r, [])
-      rows.get(r).push(cellXml(addr, v, shared))
-    }
-    for (const [r, cells] of [...rows].sort((a, b) => a[0] - b[0])) xml += `<row r="${r}">${cells.join('')}</row>`
-    parts[`xl/worksheets/sheet${i + 1}.xml`] = strToU8(sheet.rawXml ?? `${xml}</sheetData></worksheet>`)
-  })
-  const sheetTags = sheets
-    .map((s, i) => `<sheet name="${esc(s.name)}" sheetId="${i + 1}"${s.state ? ` state="${s.state}"` : ''} r:id="rId${i + 1}"/>`)
-    .join('')
-  parts['xl/workbook.xml'] = strToU8(
-    `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
-      `<workbookPr${date1904 ? ' date1904="1"' : ''}/><sheets>${sheetTags}</sheets></workbook>`,
-  )
-  parts['xl/_rels/workbook.xml.rels'] = strToU8(
-    `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
-      sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('') +
-      `</Relationships>`,
-  )
-  if (sharedStrings) parts['xl/sharedStrings.xml'] = strToU8(`<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">${sst.map((s) => `<si><t>${esc(s)}</t></si>`).join('')}</sst>`)
-  return zipSync(parts, { level: 6 })
-}
+// The tests build fake workbooks with the same writer the app uses for the T-12 template.
+export { writeXlsx as makeXlsx } from '../import/xlsxWriter.js'
+import { writeXlsx as makeXlsx } from '../import/xlsxWriter.js'
 
 // Overwrite the "uncompressed size" a zip file claims for one part (to simulate a lying header).
 export function forgeSize(zipBytes, partName, fakeSize) {

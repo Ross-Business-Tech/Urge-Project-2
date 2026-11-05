@@ -171,3 +171,15 @@ export function countGroup(group, data) {
   if (group.kind === 'grid') for (const r of group.rows) for (const c of group.columns) take(data.lines[r.key][c.key])
   return { filled, total, blank: total - filled }
 }
+
+// Replace a project's whole T-12 with rows read from a T-12 template. The old rows and their history are dropped
+// (a T-12 never came from the applicant workbook), the new rows record the template cell each value came from, and
+// nothing else in the record changes.
+export function replaceT12Rows(record, { rows, sources }) {
+  const out = copyMaps(record)
+  const keep = (map) => Object.fromEntries(Object.entries(map).filter(([key]) => !key.startsWith('t12.')))
+  out.sources = { ...keep(record.sources), ...sources }
+  out.originals = keep(record.originals)
+  out.data = { ...record.data, t12: { ...record.data.t12, rows } }
+  return out
+}

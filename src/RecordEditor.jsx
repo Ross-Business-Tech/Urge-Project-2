@@ -9,6 +9,7 @@ import {
   removeTableRow,
   formatForInput,
   parseInput,
+  T12_SOURCE,
 } from './modules/shared/index.js'
 
 const CHOICES = {
@@ -20,6 +21,8 @@ const CHOICES = {
   ],
 }
 
+// Where a value came from, in words: the applicant's workbook, or the T-12 template.
+const isTemplate = (source) => typeof source === 'string' && source.startsWith(`${T12_SOURCE}!`)
 const cellOf = (source) => (typeof source === 'string' ? (source.split('!')[1] ?? source) : '')
 
 function showValue(type, value) {
@@ -30,12 +33,12 @@ function showValue(type, value) {
 
 // Where a value came from: the workbook, typed by hand, or changed from what the workbook said.
 function Provenance({ prov, type, onRestore }) {
-  if (prov.kind === 'workbook') return <span className="prov">From workbook ({cellOf(prov.source)})</span>
+  if (prov.kind === 'workbook') return <span className="prov">{isTemplate(prov.source) ? 'From the T-12 template' : 'From workbook'} ({cellOf(prov.source)})</span>
   if (prov.kind === 'manual') return <span className="prov hand">Entered by hand</span>
   if (prov.kind === 'changed') {
     return (
       <span className="prov changed">
-        Changed by you. Applicant said {showValue(type, prov.original)} ({cellOf(prov.originalSource)}).{' '}
+        Changed by you. {isTemplate(prov.originalSource) ? 'The template' : 'Applicant'} said {showValue(type, prov.original)} ({cellOf(prov.originalSource)}).{' '}
         <button type="button" className="link" onClick={onRestore}>
           Put back
         </button>
