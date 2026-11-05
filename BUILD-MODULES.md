@@ -115,6 +115,13 @@ A module takes a project and returns a list of flags. Each flag has:
 
 If a check can't run because data is missing, return a low-severity flag saying what's missing. Never crash and never skip silently.
 
+**How flags are made (built by M0).** Modules create flags with the shared helper instead of writing the fields by hand, so every flag has the same shape:
+- A flag is refused, with a plain message, if it has an unknown severity, a missing title, evidence or follow-up, a module id that is not a real module, or an `id` that does not start with its module's id (`M3D-contingency-low` is fine for M3D).
+- A finished flag cannot be changed afterwards.
+- A flag a module could not run (data missing, or a calculator saying "not available") is made with the missing-data helpers, which give a low-severity flag naming what is missing and the form to fill in. Cell references use one format, such as `Budget!C14`.
+- Each module is wrapped by a guard. If a module crashes or returns something that is not a flag, the guard turns that into one medium-severity "check failed" flag for that module (the raw error is kept in the notes), so one broken module never stops the review.
+- A module that tries to return another module's flags, or more than 1,000 flags, is stopped by the guard.
+
 ### 1d. Module interface
 
 Every module exports one function, `run(project, context)`, where `context` holds the benchmark sets, scenario settings and (for M5) the sponsor's other projects. It returns `{ flags, notes }`. No module calls another module directly. M6 combines their outputs.
@@ -181,9 +188,12 @@ The underwriter loads data by dropping the applicant's workbook (`.xlsx` or `.xl
 - **Limits.** The importer reads each sheet in a single pass, counts what a zip actually inflates (it does not trust the size the file declares), and refuses files that expand past its limits (25 MB file, 200 MB inflated in total, 2 million cells in a sheet). It reads both of Excel's date systems (1900 and 1904). Each project is identified by its full tab name. Password-protected and old-format (.xls) files get their own message.
 - **Saved reviews are checked on reopening.** Every record is checked against the record structure (every group present, every value a plain number, text, yes/no or blank, no more rows than allowed) and the report field by field. A file that is not exactly right is refused, never rendered. The record layout is now **version 2** (a typed payment is yearly); older reviews are converted.
 - **The stage is never filled in.** Every imported project starts with the stage and the "as of" date blank. The report shows a hint such as "this came from a Completed Project tab". The underwriter must choose the stage and date for each project before it is used.
-- **Workbook facts, for M1.** Alongside the records the importer returns `facts`: every tab with its visibility (visible, hidden, very hidden) and whether it holds data; every cell showing an error value, with tab and cell; and any cell in M0's list of "cells the workbook computes by formula" (totals, percentages) that holds a typed number instead. M1 uses these for its error, hidden-tab and typed-over-formula checks.
+- **Workbook facts, for M1.** Alongside the records the importer returns `facts`: every tab with its visibility (visible, hidden, very hidden), whether it holds project data, and how many error cells it has; every cell showing an error value, with tab and cell (tabs the tool reads come first; at most 500 are listed and the true total is kept); and every cell in M0's list of "cells the workbook computes by formula" (totals and subtotals) that holds a typed number instead of a formula. M1 uses these for its error, hidden-tab and typed-over-formula checks. The blank applicant workbook already shows over a thousand error cells, mostly on hidden helper tabs, so M1 should weigh an error by its tab: errors on tabs the tool reads matter, errors on untouched helper tabs are noise.
 - **Import report.** For each group: how many fields were filled and how many were blank. Plus the workbook version, the project tabs found against the Cover's project count, tabs with data that the Cover doesn't account for, error cells, and any layout differences.
 - **T-12 is imported separately.** The applicant workbook has no T-12. M0 provides a small T-12 template spreadsheet with the monthly columns from section 1b. The underwriter uploads it against a chosen project.
+  - The template is a real Excel file with a header row, up to 12 monthly rows (oldest first) and the same revenue and expense lines as the applicant workbook, plus monthly occupancy, concessions, NOI and debt service. Months may be dates or text such as `2026-06`. Percentages may be typed as `95%` or `0.95`.
+  - Columns are found by their heading text, so the template can be re-ordered. A column that is not part of the template is ignored and reported. A blank cell stays blank and a cell that cannot be read is reported. The importer never fills a number in for the applicant. More than 12 months is refused.
+  - Imported T-12 values are labelled "From the T-12 template" in the record editor, and the underwriter can still correct them by hand.
 - **Save and reopen.** The underwriter can download a review (records, workbook facts, chosen stages and "as of" dates) as a file and reopen it later, with no server involved. This lets an underwriter come back after the next phase of a project is built and compare it with the earlier version.
 
 ### 1i. No network (built by M0)
@@ -200,11 +210,11 @@ The built page carries a Content-Security-Policy with `connect-src 'none'`, so t
 **Build:**
 - The firm record and project record (section 1b), including the optional monthly T-12 and the "as of" date.
 - The workbook importer and import report (section 1h), the workbook facts for M1, the T-12 template, and save and reopen of a review.
-- Sample workbooks and a T-12 template covering every stage, with an answer key stating what each module should produce for each one.
+- Sample workbooks and a T-12 template covering every stage, with an answer key stating what each module should produce for each one. There are 16 scenarios in the applicant layout (a healthy control plus planted problems), ready to load from the `sample-files/` folder, with the written key in `src/modules/shared/samples/ANSWER-KEY.md`. Each key entry names the module, the flag id, the least severity, and where a module should stay quiet.
 - The stage as an input chosen by the underwriter (not worked out by the tool), and the settings in section 1f.
 - The shared calculators and key ratios in section 1g.
 - The flag format and a helper to create a flag (section 1c).
-- Benchmark set loader: benchmark sets are data files keyed by stage, so M2 can plug into them.
+- Benchmark set loader: benchmark sets are data files keyed by stage, so M2 can plug into them. Each set holds rent ranges by unit type and AMI level, an expense range per unit, cost-per-square-foot ranges (hard, soft, total) and a contingency range; the completed set has no cost or contingency range. The loader checks a set before use and returns a reason instead of a guess when something is missing. A unit with an AMI level is compared only against that AMI level, never against market rent. M3D should flag a contingency that is below its range, not one that is above it. The sets are made-up sample data until real ones replace them.
 **You'll see:** a page where you drop a workbook, read an import report, choose each project's stage and date, and then see the records and the key ratios for each stage.
 
 ### M1: Integrity checks (Layer 1, shared)

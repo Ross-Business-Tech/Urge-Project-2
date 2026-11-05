@@ -39,3 +39,15 @@ export {
   citeCells,
   guardModule,
 } from './flags.js'
+export {
+  checkBenchmarkSet,
+  loadBenchmarks,
+  normalizeUnitType,
+  normalizeAmi,
+  rentBenchmark,
+  expenseBenchmark,
+  costBenchmark,
+  contingencyBenchmark,
+  compareToRange,
+} from './benchmarks/index.js'
+export { BENCHMARK_SETS } from './benchmarks/sets.js'

@@ -31,15 +31,15 @@ Owner: NS. This note lets a new session (or a new teammate) continue M0 without 
 - No lender assumptions (exit cap rate, refinance terms) for now.
 
 ## Left to build in M0
-1. **Benchmark loader** (spec M0): benchmark sets as data files keyed by stage, for M2.
-2. **A spec update** for the T-12 template details, the flag rules, the sample scenarios and the workbook facts (including the per-tab error count).
-3. Ask Ross IT to run `npm test` in CI (`.github/` is theirs).
+1. **A spec update** for the T-12 template details, the flag rules, the sample scenarios and the workbook facts (including the per-tab error count).
+2. Ask Ross IT to run `npm test` in CI (`.github/` is theirs).
 
-Done since the last note: 16 sample scenarios with an answer key and ready-to-load files (`sample-files/`, `src/modules/shared/samples/`); workbook facts for M1 (`facts.sheets` with visibility, data and error count per tab, `facts.errorCells`, `facts.typedOver`, list of computed cells in `workbookMap.js`).
+Done since the last note: the benchmark loader (`src/modules/shared/benchmarks/`: made-up sets per stage in `sets.js`; `loadBenchmarks(stage)`, `rentBenchmark` (AMI units compared only to their own AMI level, never market), `expenseBenchmark`, `costBenchmark`, `contingencyBenchmark`, `compareToRange`); 16 sample scenarios with an answer key and ready-to-load files (`sample-files/`, `src/modules/shared/samples/`); workbook facts for M1 (`facts.sheets` with visibility, data and error count per tab, `facts.errorCells`, `facts.typedOver`, list of computed cells in `workbookMap.js`).
 
 Not built, on purpose for now: a background worker with a Cancel button for very large files, encrypted review files, splitting `calculators.js` into smaller files.
 
 ## Things worth knowing
+- Benchmark numbers are made up. Replace them in `benchmarks/sets.js` when real ones exist; the loader checks them. A contingency above the range is not a concern, only a low one is.
 - The blank applicant template already shows over a thousand error cells (for example `#DIV/0!` on the Cap Table and `#REF!` on hidden helper tabs). M1 should weigh errors by tab: errors on tabs we read matter; errors on untouched helper tabs are noise. `facts.sheets[].errorCount` and `hasData` give it what it needs.
 - To rebuild the sample files and key after changing a scenario: `node src/modules/shared/samples/writeFiles.mjs` and `node src/modules/shared/samples/writeKey.mjs`.
 - The applicant workbook's own loan-payment formula understates debt service (it treats a term in months as periods of the annual rate), so its DSCR looks about twice as good as it is. Our calculators use the standard monthly method.
