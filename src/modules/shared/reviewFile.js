@@ -5,6 +5,7 @@
 // in the browser. A review file is treated as untrusted input, since it could have been edited or come from anywhere.
 
 import { SCHEMA_VERSION } from './schema.js'
+import { STAGE_VALUES, isValidDate } from './projectStage.js'
 
 export const REVIEW_KIND = 'underwriting-review'
 export const REVIEW_FORMAT_VERSION = 1
@@ -25,6 +26,14 @@ function hasForbiddenKey(value, depth = 0) {
 }
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
+
+// A project record the screen can safely show: it has its stage section, a project id, and only allowed stage/date values.
+function isProjectShape(p) {
+  if (!isObject(p) || p.kind !== 'project' || !isObject(p.data) || !isObject(p.data.stage)) return false
+  if (!isObject(p.meta) || typeof p.meta.projectId !== 'string') return false
+  const { stage, asOfDate } = p.data.stage
+  return (stage === null || STAGE_VALUES.includes(stage)) && (asOfDate === null || isValidDate(asOfDate))
+}
 
 export function buildReview(importResult, now = new Date()) {
   return {
@@ -72,7 +81,7 @@ export function parseReview(text) {
   const { firm, projects, facts, report } = review
   const shapeOk =
     isObject(firm) && firm.kind === 'firm' && isObject(firm.data) &&
-    Array.isArray(projects) && projects.every((p) => isObject(p) && p.kind === 'project' && isObject(p.data)) &&
+    Array.isArray(projects) && projects.every(isProjectShape) &&
     isObject(facts) && Array.isArray(facts.sheets) &&
     isObject(report) && isObject(report.workbook) && Array.isArray(report.firmGroups) &&
     Array.isArray(report.projects) && Array.isArray(report.notes) && Array.isArray(report.layoutProblems)

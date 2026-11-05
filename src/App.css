@@ -320,3 +320,77 @@
     color: #0b1020;
   }
 }
+
+/* ---- Stage and date choices ---- */
+
+.controls {
+  margin-top: 4px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0;
+  font-weight: 600;
+}
+
+.field select,
+.field input[type='date'] {
+  min-height: 44px;
+  padding: 8px 10px;
+  font: inherit;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.field select {
+  width: 100%;
+}
+
+.field-row {
+  display: flex;
+  gap: 8px;
+}
+
+.field-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.help {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.button.small {
+  min-height: 44px;
+  margin-top: 0;
+  padding: 6px 14px;
+}
+
+.chip.good {
+  color: #0d6b3a;
+  background: #e1f5e9;
+}
+
+@media (prefers-color-scheme: dark) {
+  .chip.good {
+    color: #8fe0b2;
+    background: #17301f;
+  }
+}
+
+.banner {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.banner.warn {
+  background: var(--warn-bg);
+}

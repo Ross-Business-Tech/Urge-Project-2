@@ -8,7 +8,18 @@ import {
   parseReview,
   reviewFileName,
   ReviewFileError,
+  STAGES,
+  applyStageAndDate,
+  projectReadiness,
+  reviewReadiness,
 } from './modules/shared/index.js'
+
+// Today's date on this device, as YYYY-MM-DD.
+function todayLocal() {
+  const d = new Date()
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
 
 // Download a review as a file. Nothing is sent anywhere.
 function downloadReview(result) {
@@ -63,28 +74,74 @@ function GroupRow({ group }) {
   )
 }
 
-function ProjectCard({ project }) {
+// The two choices only the underwriter can make for a project: its stage and the date its facts are "as of".
+function StageControls({ project, record, onChange }) {
+  const { stage, asOfDate } = record.data.stage
+  const today = todayLocal()
+  const chosen = STAGES.find((s) => s.value === stage)
+  return (
+    <div className="controls">
+      <p className="section-label">Your choices</p>
+      <p className="note">You choose the stage; the tool never guesses it.</p>
+      <label className="field">
+        <span>Stage</span>
+        <select value={stage ?? ''} onChange={(e) => onChange(project.id, { stage: e.target.value || null })}>
+          <option value="">Choose a stage…</option>
+          {STAGES.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </select>
+        {chosen && <span className="help">{chosen.plain}</span>}
+      </label>
+      <label className="field">
+        <span>&quot;As of&quot; date</span>
+        <span className="field-row">
+          <input type="date" value={asOfDate ?? ''} max={today} onChange={(e) => onChange(project.id, { asOfDate: e.target.value || null })} />
+          <button type="button" className="button small" onClick={() => onChange(project.id, { asOfDate: today })}>
+            Today
+          </button>
+        </span>
+        <span className="help">The date the facts in this workbook are true for.</span>
+      </label>
+    </div>
+  )
+}
+
+function ProjectCard({ project, record, onChange }) {
   const visibility = project.state === 'veryHidden' ? 'very hidden tab' : project.state === 'hidden' ? 'hidden tab' : null
+  const { ready } = projectReadiness(record)
+  const chosen = STAGES.find((s) => s.value === record.data.stage.stage)
   return (
     <details className="card">
       <summary>
         <span className="title">{project.name || project.tab}</span>
         <span className="size">{project.hint}</span>
-        {visibility && <span className="chip warn">{visibility}</span>}
+        <span className="chips">
+          {ready ? <span className="chip good">{chosen?.label}</span> : <span className="chip warn">needs stage and date</span>}
+          {visibility && <span className="chip warn">{visibility}</span>}
+        </span>
       </summary>
       <div className="body">
+        <StageControls project={project} record={record} onChange={onChange} />
+        <p className="section-label">What was read</p>
         <ul className="groups">
-          {project.groups.map((g) => (
-            <GroupRow key={g.id} group={g} />
-          ))}
+          {project.groups
+            .filter((g) => g.id !== 'stage')
+            .map((g) => (
+              <GroupRow key={g.id} group={g} />
+            ))}
         </ul>
       </div>
     </details>
   )
 }
 
-function Report({ result, saved, reopenedAt, onSave, onReset }) {
+function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange }) {
   const { report } = result
+  const readiness = reviewReadiness(result.projects)
+  const recordFor = (id) => result.projects.find((r) => r.meta?.projectId === id)
   const withData = report.projects.filter((p) => p.hasData)
   const empty = report.projects.filter((p) => !p.hasData)
   const skipped = new Set(report.layoutProblems.map((l) => l.tab))
@@ -131,9 +188,17 @@ function Report({ result, saved, reopenedAt, onSave, onReset }) {
 
       <h2>The projects</h2>
       {withData.length === 0 && <p className="note">No project tab has any entries.</p>}
-      {withData.map((p) => (
-        <ProjectCard key={p.id} project={p} />
-      ))}
+      {withData.length > 0 && (
+        <p className={readiness.ready ? 'ok' : 'banner warn'} role="status">
+          {readiness.ready
+            ? `All ${plural(readiness.total, 'project')} have a stage and an "as of" date.`
+            : `${readiness.waiting} of ${plural(readiness.total, 'project')} still need a stage and an "as of" date. Open a project to choose them.`}
+        </p>
+      )}
+      {withData.map((p) => {
+        const record = recordFor(p.id)
+        return record ? <ProjectCard key={p.id} project={p} record={record} onChange={onProjectChange} /> : null
+      })}
       {emptyReadable.length > 0 && (
         <p className="note">
           {plural(emptyReadable.length, 'other project tab')} {emptyReadable.length === 1 ? 'is' : 'are'} empty (template only):{' '}
@@ -141,7 +206,6 @@ function Report({ result, saved, reopenedAt, onSave, onReset }) {
         </p>
       )}
 
-      <p className="note">No stage has been chosen for any project yet.</p>
       <div className="actions">
         <button type="button" className="button primary" onClick={onSave}>
           Save this review
@@ -204,13 +268,21 @@ export default function ImportPreview() {
     setState({ status: 'idle' })
   }
 
+  function changeProject(id, patch) {
+    setState((s) => ({
+      ...s,
+      saved: false,
+      result: { ...s.result, projects: s.result.projects.map((p) => (p.meta?.projectId === id ? applyStageAndDate(p, patch) : p)) },
+    }))
+  }
+
   function save() {
     downloadReview(state.result)
     setState({ ...state, saved: true })
   }
 
   if (state.status === 'done') {
-    return <Report result={state.result} saved={state.saved} reopenedAt={state.reopenedAt} onSave={save} onReset={reset} />
+    return <Report result={state.result} saved={state.saved} reopenedAt={state.reopenedAt} onSave={save} onReset={reset} onProjectChange={changeProject} />
   }
 
   return (
