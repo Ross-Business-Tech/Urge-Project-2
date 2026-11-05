@@ -88,13 +88,13 @@ Two linked records describe a review. Field names follow the applicant's workboo
 
 **Project record:** identity (name, address, construction and property type); the `stage` chosen by the underwriter; the team (general contractor, architect, development partners and their ownership %); timeline (construction start, completion and stabilization dates); sources and uses (lien priority, source type, amount, term, rate); budget; income (residential by unit type, commercial leases, other income); expenses; debt terms; and an **optional monthly T-12**.
 
-The **T-12** holds up to 12 monthly columns using the same revenue and expense lines as the applicant workbook, plus monthly occupancy, concessions, NOI and debt service. It may have fewer than 12 months. It is optional, but a completed project without one should be flagged by M1.
+The **T-12** holds up to 12 monthly columns using the same revenue and expense lines as the applicant workbook, plus monthly occupancy, concessions, NOI and debt service. It may have fewer than 12 months. It is optional, but a completed project without one should be flagged by M1. The T-12 is loaded from the separate T-12 template described in 1h.
 
 Every project record carries an **"as of" date**. Every value also carries the **workbook tab and cell it came from**, and the record carries the **workbook version**.
 
 The applicant form has no line called "interest reserve". Wherever this spec says interest reserve, use the Construction Interest, Rent-Up Reserve and Operating Reserve budget lines.
 
-M0 defines the exact fields and provides **made-up sample firms and projects**, each with an answer key stating what every module should produce for it, so every module can be built and tested without waiting for real data.
+M0 defines the exact fields and provides **made-up sample workbooks in the applicant layout** (built from scratch, never copied from a real file), plus a sample T-12 template, each with an answer key stating what every module should produce for it, so every module can be built and tested without waiting for real data.
 
 ### 1c. The flag format (what every risk-type module returns)
 
@@ -121,7 +121,7 @@ Every module exports one function, `run(project, context)`, where `context` hold
 
 ### 1e. Data and privacy
 
-Sample projects use made-up names and numbers only. No real sponsors, lenders, addresses or people. This repository is public. Sample data may be translated from real models only after every name, address, lender and program is replaced and the numbers are altered so no real deal can be recognized.
+Sample projects use made-up names and numbers only. No real sponsors, lenders, addresses or people. This repository is public. Sample data may be translated from real models only after every name, address, lender and program is replaced and the numbers are altered so no real deal can be recognized. Workbooks the underwriter uploads are read in the browser, never sent anywhere and never committed. Test workbooks in the repository are always fake.
 
 ### 1f. Settings (stored by M0, read by other modules)
 
@@ -167,6 +167,19 @@ M0 provides these calculators. Every module uses them and never recomputes them.
 | Operating runway | Budgeted rent-up and operating reserves ÷ average monthly shortfall over the last 3 months; "not burning cash" if there is none | Lease-up |
 | Global DSCR, liquidity cover, fee dependence | Defined and built by M5, using the project figures M0 provides | Firm |
 
+### 1h. Importing the applicant workbook (built by M0)
+
+The underwriter loads data by dropping the applicant's workbook (`.xlsx` or `.xlsm`) onto the page. M0 provides one function, `importWorkbook(file)`, that returns `{ firm, projects, facts, report }`.
+
+- **Runs in the browser only.** The file is never sent to a server and never saved in the repository. Macros are never run. Files over 25 MB, or files that are not spreadsheets, are rejected with a plain message.
+- **Reads the cells already mapped in the schema.** The firm record comes from the Cover, Balance Sheet, Principal PFS, Consolidated Financials and Cap Table tabs. Each project comes from its own Details tab (and Budget tab for development projects). One project tab pair becomes one project record.
+- **Checks before it reads.** For each tab, the importer first checks that the labels at known anchor cells match what the schema expects. If they don't, it reports "layout differs" for that tab and does not read it, so it can never silently read the wrong cells. An unknown workbook version is still attempted but is reported.
+- **The stage is never filled in.** Every imported project starts with the stage and the "as of" date blank. The report shows a hint such as "this came from a Completed Project tab". The underwriter must choose the stage and date for each project before it is used.
+- **Workbook facts, for M1.** Alongside the records the importer returns `facts`: every tab with its visibility (visible, hidden, very hidden) and whether it holds data; every cell showing an error value, with tab and cell; and any cell in M0's list of "cells the workbook computes by formula" (totals, percentages) that holds a typed number instead. M1 uses these for its error, hidden-tab and typed-over-formula checks.
+- **Import report.** For each group: how many fields were filled and how many were blank. Plus the workbook version, the project tabs found against the Cover's project count, tabs with data that the Cover doesn't account for, error cells, and any layout differences.
+- **T-12 is imported separately.** The applicant workbook has no T-12. M0 provides a small T-12 template spreadsheet with the monthly columns from section 1b. The underwriter uploads it against a chosen project.
+- **Save and reopen.** The underwriter can download a review (records, workbook facts, chosen stages and "as of" dates) as a file and reopen it later, with no server involved. This lets an underwriter come back after the next phase of a project is built and compare it with the earlier version.
+
 ---
 
 ## 2. Module specs
@@ -176,12 +189,13 @@ M0 provides these calculators. Every module uses them and never recomputes them.
 **Skill:** data modeling. **Answers:** "What do a firm and its projects look like, and what stage did the underwriter put each project in?"
 **Build:**
 - The firm record and project record (section 1b), including the optional monthly T-12 and the "as of" date.
-- Sample firms and projects covering every stage, with an answer key stating what each module should produce for each one.
+- The workbook importer and import report (section 1h), the workbook facts for M1, the T-12 template, and save and reopen of a review.
+- Sample workbooks and a T-12 template covering every stage, with an answer key stating what each module should produce for each one.
 - The stage as an input chosen by the underwriter (not worked out by the tool), and the settings in section 1f.
 - The shared calculators and key ratios in section 1g.
 - The flag format and a helper to create a flag (section 1c).
 - Benchmark set loader: benchmark sets are data files keyed by stage, so M2 can plug into them.
-**You'll see:** a simple page where you pick a sample project and see its stage, its fields and the key ratios for its stage.
+**You'll see:** a page where you drop a workbook, read an import report, choose each project's stage and date, and then see the records and the key ratios for each stage.
 
 ### M1: Integrity checks (Layer 1, shared)
 
@@ -195,6 +209,7 @@ M0 provides these calculators. Every module uses them and never recomputes them.
 - The project count on the Cover matches the project tabs that contain data, including hidden tabs.
 - A source's typed payment is not lower than the payment its amount, rate and term produce.
 - The T-12, balance sheet and personal statement are no more than 12 months older than the "as of" date.
+- M1 reads the workbook facts from M0 for its error, hidden-tab and typed-over-formula checks, instead of re-reading the file.
 **You'll see:** a pass / fail checklist per project, with the failing cells named.
 **Possible split:** M1-a sources and uses plus errors; M1-b template residue plus cross-tab tie-outs.
 
