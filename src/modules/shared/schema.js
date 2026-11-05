@@ -11,11 +11,16 @@
 //  - table:  repeating rows (a row is one source, one unit type, one month, ...), up to `maxRows`
 //  - grid:   fixed rows (each a named line such as "Land") by one or more columns
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2 // 2: a typed payment is a yearly amount (it was monthly in version 1)
 
-const field = (key, label, type = 'text', cell) => ({ key, label, type, ...(cell ? { cell } : {}) })
-const money = (key, label, cell) => field(key, label, 'dollars', cell)
-const pct = (key, label, cell) => field(key, label, 'percent', cell)
+// Fields may carry limits ({ min, max, integer }) that the editing form and the record editor enforce.
+const field = (key, label, type = 'text', cell, limits) => ({ key, label, type, ...(cell ? { cell } : {}), ...(limits ?? {}) })
+const money = (key, label, cell, limits) => field(key, label, 'dollars', cell, limits)
+const pct = (key, label, cell, limits) => field(key, label, 'percent', cell, limits)
+
+const NONNEG = { min: 0 } // amounts, rents, counts: never negative
+const SHARE = { min: 0, max: 1 } // percentages that cannot go past 0% to 100%
+const WHOLE = { min: 0, integer: true }
 const row = (key, label, cell, section) => ({ key, label, ...(cell ? { cell } : {}), ...(section ? { section } : {}) })
 
 const group = (id, title, kind, where, extra) => ({ id, title, kind, where, ...extra })
@@ -52,15 +57,15 @@ export const firmSchema = [
       field('street', 'Street address', 'text', 'C13'),
       field('cityStateZip', 'City, state, zip', 'text', 'C14'),
       field('principalName', 'Firm principal', 'text', 'C17'),
-      field('developmentProjectCount', 'Number of development projects', 'number', 'C9'),
-      field('completedProjectCount', 'Number of completed projects', 'number', 'C10'),
+      field('developmentProjectCount', 'Number of development projects', 'number', 'C9', WHOLE),
+      field('completedProjectCount', 'Number of completed projects', 'number', 'C10', WHOLE),
     ],
   }),
 
   group('owners', 'Owners', 'table', 'Cover', {
     note: 'The principal plus up to 3 additional owners.',
     maxRows: 4,
-    columns: [field('name', 'Name', 'text', 'C17, C21, C24, C27'), pct('ownershipPct', 'Ownership %', 'C18, C22, C25, C28')],
+    columns: [field('name', 'Name', 'text', 'C17, C21, C24, C27'), pct('ownershipPct', 'Ownership %', 'C18, C22, C25, C28', SHARE)],
   }),
 
   group('balanceSheet', 'Firm balance sheet', 'grid', 'Balance Sheet', {
@@ -129,7 +134,7 @@ export const firmSchema = [
     note: 'One row per fiscal year, history and projections.',
     maxRows: 9,
     columns: [
-      field('fiscalYear', 'Fiscal year', 'number', 'row 5'),
+      field('fiscalYear', 'Fiscal year', 'number', 'row 5', { min: 1900, max: 2200, integer: true }),
       money('operatingCashDistributions', 'Operating cash distributions', 'row 7'),
       money('developerFee', 'Developer fee', 'row 9'),
       money('propertyManagementFee', 'Property management fee', 'row 10'),
@@ -170,7 +175,7 @@ export const firmSchema = [
   group('projects', 'Project list', 'table', 'Cover and each project team table', {
     note: "Which projects belong to the firm and the firm's ownership share in each.",
     maxRows: 12,
-    columns: [field('projectId', 'Project', 'text'), pct('ownershipPct', "Firm's ownership %", 'Details F13:F17')],
+    columns: [field('projectId', 'Project', 'text'), pct('ownershipPct', "Firm's ownership %", 'Details F13:F17', SHARE)],
   }),
 ]
 
@@ -199,7 +204,7 @@ export const projectSchema = [
   }),
 
   group('team', 'Development team', 'grid', 'Details', {
-    columns: [field('firmName', 'Firm name', 'text', 'D'), field('principal', 'Firm principal', 'text', 'E'), pct('ownershipPct', 'Ownership % in deal', 'F')],
+    columns: [field('firmName', 'Firm name', 'text', 'D'), field('principal', 'Firm principal', 'text', 'E'), pct('ownershipPct', 'Ownership % in deal', 'F', SHARE)],
     rows: [
       row('generalContractor', 'General contractor', 'row 11'),
       row('architect', 'Architect', 'row 12'),
@@ -224,19 +229,19 @@ export const projectSchema = [
     note: 'In lien priority order, most senior first.',
     maxRows: 14,
     columns: [
-      field('lienPriority', 'Lien priority', 'number', 'C28:C41'),
+      field('lienPriority', 'Lien priority', 'number', 'C28:C41', { min: 1, integer: true }),
       field('name', 'Name of source', 'text', 'D'),
       field('type', 'Type of source', 'sourceType', 'E'),
-      money('amount', 'Amount', 'F'),
-      field('termMonths', 'Term (months)', 'number', 'G'),
-      pct('interestRate', 'Annual interest rate', 'H'),
-      money('paymentOverride', 'Typed payment (override)', 'K'),
+      money('amount', 'Amount', 'F', NONNEG),
+      field('termMonths', 'Term (months)', 'number', 'G', { min: 0, max: 1200, integer: true }),
+      pct('interestRate', 'Annual interest rate', 'H', SHARE),
+      money('paymentOverride', 'Typed yearly payment (override)', 'K', NONNEG),
     ],
   }),
 
   group('budget', 'Development budget', 'grid', 'Budget', {
     note: 'Optional. The workbook has no budget for completed projects.',
-    columns: [money('amount', 'Amount', 'G')],
+    columns: [money('amount', 'Amount', 'G', NONNEG)],
     rows: [
       row('land', 'Land', 'G3', 'Acquisition'),
       row('buildings', 'Buildings', 'G4', 'Acquisition'),
@@ -317,16 +322,16 @@ export const projectSchema = [
     columns: [
       field('amiLevel', 'Affordability level (AMI)', 'text', 'C'),
       field('unitType', 'Unit type', 'text', 'D'),
-      field('units', 'Number of units', 'number', 'E'),
-      field('baths', 'Baths', 'number', 'F'),
-      field('sqft', 'Square feet per unit', 'number', 'G'),
-      money('monthlyRent', 'Monthly rent per unit', 'H'),
+      field('units', 'Number of units', 'number', 'E', NONNEG),
+      field('baths', 'Baths', 'number', 'F', NONNEG),
+      field('sqft', 'Square feet per unit', 'number', 'G', NONNEG),
+      money('monthlyRent', 'Monthly rent per unit', 'H', NONNEG),
     ],
     fields: [
-      pct('rentIncreaseYear2', 'Rent increase, year 2', 'P58'),
-      pct('rentIncreaseYear3', 'Rent increase, year 3', 'Q58'),
-      pct('rentIncreaseFuture', 'Rent increase, later years', 'R58'),
-      pct('stabilizedVacancy', 'Stabilized vacancy', 'P60'),
+      pct('rentIncreaseYear2', 'Rent increase, year 2', 'P58', SHARE),
+      pct('rentIncreaseYear3', 'Rent increase, year 3', 'Q58', SHARE),
+      pct('rentIncreaseFuture', 'Rent increase, later years', 'R58', SHARE),
+      pct('stabilizedVacancy', 'Stabilized vacancy', 'P60', SHARE),
     ],
   }),
 
@@ -336,36 +341,36 @@ export const projectSchema = [
     columns: [
       field('leaseType', 'Lease type', 'leaseType', 'C'),
       field('description', 'Description', 'text', 'D'),
-      field('sqft', 'Square feet', 'number', 'G'),
-      money('rentPerSqft', 'Rent per square foot', 'H'),
+      field('sqft', 'Square feet', 'number', 'G', NONNEG),
+      money('rentPerSqft', 'Rent per square foot', 'H', NONNEG),
     ],
     fields: [
-      pct('rentIncreaseYear2', 'Rent increase, year 2', 'O84'),
-      pct('rentIncreaseYear3', 'Rent increase, year 3', 'P84'),
-      pct('rentIncreaseFuture', 'Rent increase, later years', 'Q84'),
-      pct('stabilizedVacancy', 'Stabilized vacancy', 'O86'),
+      pct('rentIncreaseYear2', 'Rent increase, year 2', 'O84', SHARE),
+      pct('rentIncreaseYear3', 'Rent increase, year 3', 'P84', SHARE),
+      pct('rentIncreaseFuture', 'Rent increase, later years', 'Q84', SHARE),
+      pct('stabilizedVacancy', 'Stabilized vacancy', 'O86', SHARE),
     ],
   }),
 
   group('otherIncome', 'Other income', 'table', 'Details', {
     note: 'Parking, pets, storage, late fees and the like.',
     maxRows: 10,
-    columns: [field('description', 'Description', 'text', 'D104:D113'), money('monthlyIncome', 'Monthly income', 'G104:G113')],
+    columns: [field('description', 'Description', 'text', 'D104:D113'), money('monthlyIncome', 'Monthly income', 'G104:G113', NONNEG)],
     fields: [
-      pct('inflationYear2', 'Yearly increase, year 2', 'J105'),
-      pct('inflationYear3', 'Yearly increase, year 3', 'K105'),
-      pct('inflationFuture', 'Yearly increase, later years', 'L105'),
+      pct('inflationYear2', 'Yearly increase, year 2', 'J105', SHARE),
+      pct('inflationYear3', 'Yearly increase, year 3', 'K105', SHARE),
+      pct('inflationFuture', 'Yearly increase, later years', 'L105', SHARE),
     ],
   }),
 
   group('operatingExpenses', 'Operating expenses (annual, at stabilization)', 'grid', 'Details', {
-    columns: [money('amount', 'Amount', 'E')],
+    columns: [money('amount', 'Amount', 'E', NONNEG)],
     rows: OPEX_ROWS,
   }),
 
   group('otherExpenses', 'Other operating expenses', 'table', 'Details', {
     maxRows: 5,
-    columns: [field('description', 'Description', 'text', 'D141:D145'), money('amount', 'Amount', 'E141:E145')],
+    columns: [field('description', 'Description', 'text', 'D141:D145'), money('amount', 'Amount', 'E141:E145', NONNEG)],
   }),
 
   group('t12', 'Trailing 12 months (optional)', 'table', 'New (not in the workbook)', {
@@ -373,16 +378,16 @@ export const projectSchema = [
     maxRows: 12,
     columns: [
       field('month', 'Month', 'date', 'new'),
-      money('residentialRevenue', 'Residential revenue', 'new'),
-      money('commercialRevenue', 'Commercial revenue', 'new'),
-      money('otherRevenue', 'Other revenue', 'new'),
+      money('residentialRevenue', 'Residential revenue', 'new', NONNEG),
+      money('commercialRevenue', 'Commercial revenue', 'new', NONNEG),
+      money('otherRevenue', 'Other revenue', 'new', NONNEG),
       money('vacancyLoss', 'Vacancy loss', 'new'),
       money('concessions', 'Concessions and free rent', 'new'),
-      pct('occupancy', 'Occupancy', 'new'),
-      ...OPEX_ROWS.map((r) => money(r.key, r.label, 'new')),
-      money('otherExpenses', 'Other expenses', 'new'),
+      pct('occupancy', 'Occupancy', 'new', SHARE),
+      ...OPEX_ROWS.map((r) => money(r.key, r.label, 'new', NONNEG)),
+      money('otherExpenses', 'Other expenses', 'new', NONNEG),
       money('noiReported', 'NOI as reported', 'new'),
-      money('debtService', 'Debt service paid', 'new'),
+      money('debtService', 'Debt service paid (for the month)', 'new', NONNEG),
     ],
   }),
 ]

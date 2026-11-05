@@ -2,15 +2,23 @@
 //
 // A review file holds everything on screen: the firm record, the project records, the workbook facts and the import
 // report. It is plain JSON the underwriter downloads and opens again later. No server is involved and no copy is kept
-// in the browser. A review file is treated as untrusted input, since it could have been edited or come from anywhere.
+// in the browser.
+//
+// A review file is UNTRUSTED input: it could have been edited, damaged, or come from anywhere. Before anything on screen
+// touches it, every record is checked against the record structure (every group present, every value a plain number,
+// text, yes/no or blank, no more rows than allowed) and the report is checked field by field. A file that is not exactly
+// right is refused with a plain message, instead of being handed to code that assumes it is.
 
-import { SCHEMA_VERSION } from './schema.js'
+import { SCHEMA_VERSION, firmSchema, projectSchema } from './schema.js'
 import { STAGE_VALUES, isValidDate } from './projectStage.js'
 import { DEFAULT_SETTINGS, sanitizeSettings } from './settings.js'
 
 export const REVIEW_KIND = 'underwriting-review'
 export const REVIEW_FORMAT_VERSION = 1
 export const MAX_REVIEW_BYTES = 25 * 1024 * 1024
+
+const MAX_TEXT = 10000
+const MAX_MAP_ENTRIES = 50000
 
 export class ReviewFileError extends Error {}
 
@@ -27,6 +35,9 @@ function hasForbiddenKey(value, depth = 0) {
 }
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
+const isText = (v, max = MAX_TEXT) => typeof v === 'string' && v.length <= max
+const isScalar = (v) => v === null || typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v)) || isText(v)
+const isCount = (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0
 
 // Records saved before the provenance maps existed get empty ones; anything else odd is rejected.
 function hasMaps(record) {
@@ -36,12 +47,75 @@ function hasMaps(record) {
   return isObject(record.sources) && isObject(record.originals)
 }
 
-// A project record the screen can safely show: it has its stage section, a project id, and only allowed stage/date values.
-function isProjectShape(p) {
-  if (!isObject(p) || p.kind !== 'project' || !isObject(p.data) || !isObject(p.data.stage) || !hasMaps(p)) return false
-  if (!isObject(p.meta) || typeof p.meta.projectId !== 'string') return false
-  const { stage, asOfDate } = p.data.stage
-  return (stage === null || STAGE_VALUES.includes(stage)) && (asOfDate === null || isValidDate(asOfDate))
+function validGroup(group, data) {
+  if (!isObject(data)) return false
+  if (!(group.fields ?? []).every((f) => isScalar(data[f.key]))) return false
+  const rowOk = (row, columns) => isObject(row) && columns.every((c) => isScalar(row[c.key]))
+  if (group.kind === 'table') return Array.isArray(data.rows) && data.rows.length <= group.maxRows && data.rows.every((row) => rowOk(row, group.columns))
+  if (group.kind === 'grid') return isObject(data.lines) && group.rows.every((r) => rowOk(data.lines[r.key], group.columns))
+  return true
+}
+
+// A record the screen and the calculators can safely read.
+function validRecord(record, schema, kind) {
+  if (!isObject(record) || record.kind !== kind || !isObject(record.data) || !hasMaps(record)) return false
+  if (Object.keys(record.sources).length > MAX_MAP_ENTRIES || Object.keys(record.originals).length > MAX_MAP_ENTRIES) return false
+  if (!Object.values(record.sources).every((s) => isText(s, 300))) return false
+  if (!schema.every((g) => validGroup(g, record.data[g.id]))) return false
+  if (kind === 'project') {
+    if (!isObject(record.meta) || !isText(record.meta.projectId, 200)) return false
+    const { stage, asOfDate } = record.data.stage
+    if (!(stage === null || STAGE_VALUES.includes(stage))) return false
+    if (!(asOfDate === null || isValidDate(asOfDate))) return false
+  }
+  return true
+}
+
+const validGroupSummary = (g) =>
+  isObject(g) && isText(g.id, 200) && isText(g.title, 300) && ['filled', 'blank', 'errors', 'bad'].every((k) => isCount(g[k])) && typeof g.read === 'boolean'
+
+function validReport(report) {
+  if (!isObject(report) || !(report.fileName === null || isText(report.fileName, 500))) return false
+  const w = report.workbook
+  if (!isObject(w) || !(w.version === null || isText(w.version, 200)) || typeof w.versionKnown !== 'boolean') return false
+  if (!['sheetCount', 'visible', 'hidden', 'veryHidden'].every((k) => isCount(w[k]))) return false
+  const projectOk = (p) =>
+    isObject(p) && isText(p.id, 200) && isText(p.tab, 300) && ['development', 'completed'].includes(p.kind) && ['visible', 'hidden', 'veryHidden'].includes(p.state) &&
+    isText(p.hint, 500) && typeof p.hasData === 'boolean' && (p.name === null || isText(p.name, 500)) && Array.isArray(p.groups) && p.groups.every(validGroupSummary)
+  return (
+    Array.isArray(report.firmGroups) && report.firmGroups.every(validGroupSummary) &&
+    Array.isArray(report.projects) && report.projects.every(projectOk) &&
+    Array.isArray(report.notes) && report.notes.every((n) => isText(n, 2000)) &&
+    Array.isArray(report.layoutProblems) && report.layoutProblems.every((l) => isObject(l) && isText(l.tab, 300) && Array.isArray(l.problems) && l.problems.every((p) => isText(p, 1000))) &&
+    (report.errorCells === undefined || (Array.isArray(report.errorCells) && report.errorCells.every((c) => isObject(c) && isText(c.tab, 300) && isText(c.cell, 50) && isText(c.value, 50))))
+  )
+}
+
+// The review must hang together: each project the report says has data has a record, and no record is left without one.
+function consistent(review) {
+  const ids = review.projects.map((p) => p.meta.projectId)
+  if (new Set(ids).size !== ids.length) return false
+  const withData = review.report.projects.filter((p) => p.hasData).map((p) => p.id)
+  return withData.length === ids.length && withData.every((id) => ids.includes(id))
+}
+
+// Version 1 of the record layout treated a typed payment as MONTHLY. From version 2 it is YEARLY, like the applicant
+// workbook. An older review is converted so its numbers keep their meaning, history included.
+function migrateToVersion2(review) {
+  for (const project of review.projects) {
+    for (const row of project.data.sources.rows) if (typeof row.paymentOverride === 'number') row.paymentOverride *= 12
+    for (const [path, entry] of Object.entries(project.originals)) {
+      if (/^sources\.rows\.\d+\.paymentOverride$/.test(path) && isObject(entry) && typeof entry.value === 'number') entry.value *= 12
+      if (path === 'sources.removedRows' && Array.isArray(entry)) {
+        for (const removed of entry) {
+          if (isObject(removed?.row) && typeof removed.row.paymentOverride === 'number') removed.row.paymentOverride *= 12
+          const original = removed?.originals?.paymentOverride
+          if (isObject(original) && typeof original.value === 'number') original.value *= 12
+        }
+      }
+    }
+  }
+  review.schemaVersion = 2
 }
 
 export function buildReview(importResult, now = new Date()) {
@@ -89,13 +163,14 @@ export function parseReview(text) {
     throw new ReviewFileError('That file contains content that is not allowed, so it was not opened.')
   }
   const { firm, projects, facts, report } = review
-  const shapeOk =
-    isObject(firm) && firm.kind === 'firm' && isObject(firm.data) && hasMaps(firm) &&
-    Array.isArray(projects) && projects.every(isProjectShape) &&
-    isObject(facts) && Array.isArray(facts.sheets) &&
-    isObject(report) && isObject(report.workbook) && Array.isArray(report.firmGroups) &&
-    Array.isArray(report.projects) && Array.isArray(report.notes) && Array.isArray(report.layoutProblems)
-  if (!shapeOk) throw new ReviewFileError('That saved review is damaged or incomplete, so it was not opened.')
+  const sound =
+    validRecord(firm, firmSchema, 'firm') &&
+    Array.isArray(projects) && projects.every((p) => validRecord(p, projectSchema, 'project')) &&
+    isObject(facts) && Array.isArray(facts.sheets) && facts.sheets.every((s) => isObject(s) && isText(s.name, 300) && ['visible', 'hidden', 'veryHidden'].includes(s.state)) &&
+    validReport(report) &&
+    consistent(review)
+  if (!sound) throw new ReviewFileError('That saved review is damaged or incomplete, so it was not opened.')
+  if (review.schemaVersion < 2) migrateToVersion2(review)
   // Settings are optional in a file; anything missing or out of range falls back to the default.
   review.settings = sanitizeSettings(review.settings)
   return review

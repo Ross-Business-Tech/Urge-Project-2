@@ -63,7 +63,7 @@ function ChoiceSelect({ type, value, onChange }) {
 }
 
 // One value: shows it, lets the person change it, and says where it came from.
-function FieldInput({ label, type, path, record, onEdit }) {
+function FieldInput({ label, type, path, record, onEdit, limits }) {
   const value = getValue(record, path)
   const prov = provenance(record, path)
   const [error, setError] = useState(null)
@@ -110,7 +110,7 @@ function FieldInput({ label, type, path, record, onEdit }) {
           defaultValue={formatForInput(type, value)}
           placeholder={type === 'yearMonth' ? '2026 or 2026-03' : ''}
           onBlur={(e) => {
-            const parsed = parseInput(type, e.target.value)
+            const parsed = parseInput(type, e.target.value, limits)
             if (parsed.error) setError(parsed.error)
             else {
               e.target.value = formatForInput(type, parsed.value) // tidy what was typed, even if the value did not change
@@ -133,13 +133,13 @@ function FieldInput({ label, type, path, record, onEdit }) {
           {error}
         </span>
       )}
-      <Provenance prov={prov} type={type} onRestore={() => onEdit((r) => setValue(r, path, prov.original))} />
+      <Provenance prov={prov} type={type} onRestore={() => onEdit((r) => setValue(r, path, prov.original, { restore: true }))} />
     </label>
   )
 }
 
 function FieldList({ group, fields, record, onEdit }) {
-  return fields.map((f) => <FieldInput key={f.key} label={f.label} type={f.type} path={`${group.id}.${f.key}`} record={record} onEdit={onEdit} />)
+  return fields.map((f) => <FieldInput key={f.key} label={f.label} type={f.type} limits={f} path={`${group.id}.${f.key}`} record={record} onEdit={onEdit} />)
 }
 
 function rowTitle(group, row, index) {
@@ -173,7 +173,7 @@ function TableEditor({ group, record, onEdit }) {
           <summary>{rowTitle(group, row, i)}</summary>
           <div className="row-body">
             {group.columns.map((c) => (
-              <FieldInput key={c.key} label={c.label} type={c.type} path={`${group.id}.rows.${i}.${c.key}`} record={record} onEdit={onEdit} />
+              <FieldInput key={c.key} label={c.label} type={c.type} limits={c} path={`${group.id}.rows.${i}.${c.key}`} record={record} onEdit={onEdit} />
             ))}
             <button type="button" className="button small danger" onClick={() => remove(i)}>
               Remove this row
@@ -212,12 +212,12 @@ function GridEditor({ group, record, onEdit }) {
           <span className="line-label">{r.label}</span>
           <div className="line-inputs">
             {group.columns.map((c) => (
-              <FieldInput key={c.key} label={c.label} type={c.type} path={`${group.id}.lines.${r.key}.${c.key}`} record={record} onEdit={onEdit} />
+              <FieldInput key={c.key} label={c.label} type={c.type} limits={c} path={`${group.id}.lines.${r.key}.${c.key}`} record={record} onEdit={onEdit} />
             ))}
           </div>
         </div>
       ) : (
-        <FieldInput key={r.key} label={r.label} type={group.columns[0].type} path={`${group.id}.lines.${r.key}.${group.columns[0].key}`} record={record} onEdit={onEdit} />
+        <FieldInput key={r.key} label={r.label} type={group.columns[0].type} limits={group.columns[0]} path={`${group.id}.lines.${r.key}.${group.columns[0].key}`} record={record} onEdit={onEdit} />
       ),
     )
 
