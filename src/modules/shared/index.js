@@ -24,3 +24,18 @@ export {
   fmt,
 } from './calculators.js'
 export { buildT12Template, parseT12Template, T12_SHEET, T12_SOURCE, T12_TEMPLATE_VERSION } from './import/t12Template.js'
+export {
+  SEVERITIES,
+  TRANSITIONS,
+  MODULE_LAYERS,
+  FLAG_FIELD_DOCS,
+  FlagError,
+  compareSeverity,
+  validateFlag,
+  makeFlag,
+  createFlagMaker,
+  missingDataFlag,
+  flagFromUnavailable,
+  citeCells,
+  guardModule,
+} from './flags.js'
