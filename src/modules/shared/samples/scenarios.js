@@ -324,4 +324,22 @@ export const scenarios = [
       summary: 'The calculators count it (announced in their notes), so DSCR drops from 2.71 to about 1.16, under the 1.20 minimum. M1 asks the underwriter to confirm.',
     },
   },
+  {
+    id: 's16-typed-over-total',
+    title: 'A total typed over its formula',
+    stage: 'development',
+    asOf: '2026-01-15',
+    what: 'Total development costs on the Budget tab holds a typed 5,000,000 instead of the formula, while the budget lines add to 5,550,000. The Sources tab total is a normal formula (the control).',
+    build: () => ({
+      firm: healthyFirm(),
+      projects: [{ record: healthyProject(), budget: { G102: 5000000 }, details: { F42: { formula: 'SUM(F28:F41)', value: 5550000 } } }],
+    }),
+    key: {
+      ratios: { dscr: 2.71 },
+      flags: [
+        { module: 'M1', id: 'M1-typed-over-formula', severity: 'medium', about: 'Budget G102 (total development costs) is a typed 5,000,000, but the lines add to 5,550,000. Details F42 is a formula and is fine.' },
+      ],
+      summary: 'The workbook facts list one typed-over cell. M1 compares it with our own total and flags the 550,000 difference.',
+    },
+  },
 ]

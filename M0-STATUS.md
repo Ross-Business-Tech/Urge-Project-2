@@ -31,15 +31,17 @@ Owner: NS. This note lets a new session (or a new teammate) continue M0 without 
 - No lender assumptions (exit cap rate, refinance terms) for now.
 
 ## Left to build in M0
-1. **Sample workbooks and the answer key** (spec 1b, 1h): fake workbooks in the applicant layout covering every stage, plus a sample T-12, each with a written answer key of what every module should produce. Cover the planted-problem cases: sources not equal to uses, thin contingency, error cells, template residue, hidden tab with data, stage contradicting the data, DSCR under the minimum, a project that passes DSCR but has low occupancy and high rent, a healthy project under a failing firm, missing T-12, partial T-12.
-2. **Workbook facts for M1** (spec 1h): every tab's visibility, every error cell, and typed numbers where the workbook should have formulas.
-3. **Benchmark loader** (spec M0): benchmark sets as data files keyed by stage, for M2.
-4. **A spec update** for the T-12 template details and the flag rules.
-5. Ask Ross IT to run `npm test` in CI (`.github/` is theirs).
+1. **Benchmark loader** (spec M0): benchmark sets as data files keyed by stage, for M2.
+2. **A spec update** for the T-12 template details, the flag rules, the sample scenarios and the workbook facts (including the per-tab error count).
+3. Ask Ross IT to run `npm test` in CI (`.github/` is theirs).
+
+Done since the last note: 16 sample scenarios with an answer key and ready-to-load files (`sample-files/`, `src/modules/shared/samples/`); workbook facts for M1 (`facts.sheets` with visibility, data and error count per tab, `facts.errorCells`, `facts.typedOver`, list of computed cells in `workbookMap.js`).
 
 Not built, on purpose for now: a background worker with a Cancel button for very large files, encrypted review files, splitting `calculators.js` into smaller files.
 
 ## Things worth knowing
+- The blank applicant template already shows over a thousand error cells (for example `#DIV/0!` on the Cap Table and `#REF!` on hidden helper tabs). M1 should weigh errors by tab: errors on tabs we read matter; errors on untouched helper tabs are noise. `facts.sheets[].errorCount` and `hasData` give it what it needs.
+- To rebuild the sample files and key after changing a scenario: `node src/modules/shared/samples/writeFiles.mjs` and `node src/modules/shared/samples/writeKey.mjs`.
 - The applicant workbook's own loan-payment formula understates debt service (it treats a term in months as periods of the annual rate), so its DSCR looks about twice as good as it is. Our calculators use the standard monthly method.
 - `node --test` needs a quoted file pattern on Node 22 (already set in `package.json`).
 - If a test or screen fails on a real-looking workbook, test it outside the repo and put only the fake reproduction in `__tests__`.

@@ -117,3 +117,41 @@ test('the committed sample files all load', async () => {
     if (s.t12) assert.ok(existsSync(new URL(`../../../../sample-files/${s.id}-t12.xlsx`, import.meta.url)), `${s.id} t12`)
   }
 })
+
+test('workbook facts: tab visibility, error cells and typed-over totals', async () => {
+  const by = Object.fromEntries(scenarios.map((s) => [s.id, s]))
+
+  const clean = await importScenario(by['s01-healthy-development'])
+  assert.equal(clean.facts.errorCellsTotal, 0)
+  assert.equal(clean.facts.typedOverTotal, 0)
+  const proj = clean.facts.sheets.find((s) => s.name === 'Development Project 1 Details')
+  assert.deepEqual([proj.state, proj.hasData, proj.errorCount], ['visible', true, 0])
+  assert.equal(clean.facts.sheets.find((s) => s.name === 'Cover').hasData, null)
+
+  const errors = await importScenario(by['s04-error-cells'])
+  assert.deepEqual(errors.facts.errorCells.map((e) => `${e.tab}!${e.cell}=${e.value}`).sort(), ['Development Project 1 Details!E139=#REF!', 'Development Project 1 Details!H28=#DIV/0!'])
+  assert.equal(errors.facts.sheets.find((s) => s.name === 'Development Project 1 Details').errorCount, 2)
+
+  const hidden = await importScenario(by['s06-hidden-tab-with-data'])
+  const tab = hidden.facts.sheets.find((s) => s.name === 'Development Project 2 Details')
+  assert.deepEqual([tab.state, tab.hasData], ['veryHidden', true])
+
+  const typed = await importScenario(by['s16-typed-over-total'])
+  assert.deepEqual(typed.facts.typedOver, [{ tab: 'Development Project 1 Budget', cell: 'G102', value: 5000000 }])
+})
+
+test('facts survive saving a review, and an older review without them still opens', async () => {
+  const { buildReview, serializeReview, parseReview } = await import('../reviewFile.js')
+  const out = await importScenario(scenarios.find((s) => s.id === 's16-typed-over-total'))
+  const back = parseReview(serializeReview(buildReview(out)))
+  assert.deepEqual(back.facts.typedOver, out.facts.typedOver)
+
+  const old = JSON.parse(serializeReview(buildReview(out)))
+  old.facts = { sheets: old.facts.sheets.map((s) => ({ name: s.name, state: s.state })) }
+  const opened = parseReview(JSON.stringify(old))
+  assert.deepEqual([opened.facts.errorCells, opened.facts.typedOver, opened.facts.sheets[0].errorCount], [[], [], 0])
+
+  const bad = JSON.parse(serializeReview(buildReview(out)))
+  bad.facts.typedOver = [{ tab: 'x', cell: 'A1', value: 'lots' }]
+  assert.throws(() => parseReview(JSON.stringify(bad)))
+})
