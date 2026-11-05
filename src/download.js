@@ -4,15 +4,16 @@ import { buildReview, serializeReview, reviewFileName } from './modules/shared/i
 // The "Save what I have" button on the crash screen reads it.
 export const rescueStore = { current: null }
 
-// Download a review as a file. Nothing is sent anywhere.
-export function downloadReview(result) {
-  const blob = new Blob([serializeReview(buildReview(result))], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
+// Download bytes as a file. Nothing is sent anywhere.
+export function downloadBytes(bytes, fileName, type) {
+  const url = URL.createObjectURL(new Blob([bytes], { type }))
   const link = document.createElement('a')
   link.href = url
-  link.download = reviewFileName()
+  link.download = fileName
   document.body.appendChild(link)
   link.click()
   link.remove()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
+
+export const downloadReview = (result) => downloadBytes(serializeReview(buildReview(result)), reviewFileName(), 'application/json')

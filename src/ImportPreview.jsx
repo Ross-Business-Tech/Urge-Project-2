@@ -16,6 +16,7 @@ import {
 } from './modules/shared/index.js'
 import { GroupEditor } from './RecordEditor.jsx'
 import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
+import { T12Tools } from './T12Tools.jsx'
 import { downloadReview, rescueStore } from './download.js'
 
 // Today's date on this device, as YYYY-MM-DD.
@@ -67,7 +68,10 @@ const GroupRow = memo(function GroupRow({ schemaGroup, reportGroup, record, reco
             </div>
           )}
         </summary>
-        <div className="editor">{open && <GroupEditor group={schemaGroup} record={record} onEdit={edit} />}</div>
+        <div className="editor">
+          {open && schemaGroup.id === 't12' && <T12Tools record={record} onEdit={edit} />}
+          {open && <GroupEditor group={schemaGroup} record={record} onEdit={edit} />}
+        </div>
       </details>
     </li>
   )

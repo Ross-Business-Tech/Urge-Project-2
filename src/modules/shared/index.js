@@ -8,7 +8,7 @@ export { checkMapCoverage } from './import/workbookMap.js'
 export { buildReview, serializeReview, parseReview, reviewFileName, ReviewFileError, MAX_REVIEW_BYTES } from './reviewFile.js'
 export { STAGE_VALUES, isValidDate, applyStageAndDate, projectReadiness, reviewReadiness } from './projectStage.js'
 export { formatForInput, parseInput, isEmpty } from './fieldFormat.js'
-export { getValue, setValue, provenance, addTableRow, removeTableRow, countGroup } from './recordEdit.js'
+export { getValue, setValue, provenance, addTableRow, removeTableRow, countGroup, replaceT12Rows } from './recordEdit.js'
 export { DEFAULT_SETTINGS, SETTING_DEFS, checkSetting, sanitizeSettings } from './settings.js'
 export {
   totalSources,
@@ -23,3 +23,4 @@ export {
   ratioIdsForStage,
   fmt,
 } from './calculators.js'
+export { buildT12Template, parseT12Template, T12_SHEET, T12_SOURCE, T12_TEMPLATE_VERSION } from './import/t12Template.js'
