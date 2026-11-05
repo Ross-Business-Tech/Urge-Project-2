@@ -127,7 +127,7 @@ export const firmSchema = [
 
   group('earnings', 'Firm earnings by year', 'table', 'Consolidated Financials', {
     note: 'One row per fiscal year, history and projections.',
-    maxRows: 8,
+    maxRows: 9,
     columns: [
       field('fiscalYear', 'Fiscal year', 'number', 'row 5'),
       money('operatingCashDistributions', 'Operating cash distributions', 'row 7'),

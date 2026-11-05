@@ -7,6 +7,9 @@
   --accent: #1d4ed8;
   --accent-bg: #e8eefc;
   --chip-bg: #eef0f3;
+  --danger: #b42318;
+  --danger-bg: #fdecea;
+  --warn-bg: #fff4d6;
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
@@ -27,6 +30,9 @@
     --accent: #8fb0ff;
     --accent-bg: #1f2a44;
     --chip-bg: #262a35;
+    --danger: #ff9b8f;
+    --danger-bg: #3a1f1c;
+    --warn-bg: #3a3118;
   }
 }
 

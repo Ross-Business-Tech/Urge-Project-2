@@ -12,6 +12,7 @@
     "publish:preview": "node scripts/herenow-publish.mjs preview"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
