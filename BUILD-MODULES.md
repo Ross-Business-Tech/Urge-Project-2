@@ -139,13 +139,17 @@ A project passes the **first stability screen** when DSCR and NOI meet their thr
 
 M0 provides these calculators. Every module uses them and never recomputes them. They use only the stored inputs and the project's "as of" date, never today's date. If an input is missing, a calculator returns "not available" with the reason. It never returns zero and never crashes.
 
+**Believable inputs.** An input that is not believable is refused the same way as a missing one, with a reason that names the value. Percentages (rates, vacancy, occupancy) must be between 0% and 100%; money amounts, rents, units and square feet must not be negative or past a trillion; a loan term must be a whole number of months, from 0 to 1,200. A percentage typed as 6.5 is shown and entered as 6.5%, so a stored value of 6.5 (650%) is refused. No result is ever NaN or Infinity; a division by zero gives "not available".
+
+**Months.** T-12 rows are matched by calendar month (`2026-06` and `2026-06-30` are the same month). A month entered twice counts once, the later entry wins, and it is reported. A row without a real month is left out and reported. The stability streak counts only back-to-back months, so a missing month ends it, and the report names the missing month.
+
 **Base calculators**
 
 | Calculator | How it is worked out |
 |------------|----------------------|
 | Total sources | Sum of all source amounts |
 | Total uses and total development cost | Sum of all acquisition, hard cost and soft cost lines |
-| Annual debt service | For each source, 12 × its monthly payment. The monthly payment is the typed payment if one was entered, otherwise the standard loan payment from amount, annual rate ÷ 12, and term in months. A zero rate means amount ÷ term; a zero term means no payment |
+| Annual debt service | For each source, its payments over a year. A **typed payment is a yearly amount** (as in the applicant workbook) and replaces the calculated payment. Otherwise it is 12 × the standard monthly loan payment from amount, annual rate ÷ 12, and term in months. A zero rate means amount ÷ term; a zero term means no payment (as for a grant). Debt sources need a term and a rate, or a typed payment. A source not typed as debt that has a term and a rate is counted too, as in the applicant workbook, and is announced on the DSCR card |
 | NOI | Residential, commercial and other income after vacancy, minus operating expenses (including replacement reserves) |
 | DSCR | NOI ÷ annual debt service. For monthly T-12 data, monthly NOI ÷ monthly debt service |
 | Total debt | Sources typed as hard debt, government debt or mezzanine debt |
@@ -173,12 +177,18 @@ The underwriter loads data by dropping the applicant's workbook (`.xlsx` or `.xl
 
 - **Runs in the browser only.** The file is never sent to a server and never saved in the repository. Macros are never run. Files over 25 MB, or files that are not spreadsheets, are rejected with a plain message.
 - **Reads the cells already mapped in the schema.** The firm record comes from the Cover, Balance Sheet, Principal PFS, Consolidated Financials and Cap Table tabs. Each project comes from its own Details tab (and Budget tab for development projects). One project tab pair becomes one project record.
-- **Checks before it reads.** For each tab, the importer first checks that the labels at known anchor cells match what the schema expects. If they don't, it reports "layout differs" for that tab and does not read it, so it can never silently read the wrong cells. An unknown workbook version is still attempted but is reported.
+- **Checks before it reads.** For each tab, the importer first checks that the labels at known cells match what the schema expects, **including the header of every column it reads**, so moved or swapped columns are noticed. If they don't match, it reports "layout differs" for that tab and does not read it. An unknown workbook version is still attempted but is reported.
+- **Limits.** The importer reads each sheet in a single pass, counts what a zip actually inflates (it does not trust the size the file declares), and refuses files that expand past its limits (25 MB file, 200 MB inflated in total, 2 million cells in a sheet). It reads both of Excel's date systems (1900 and 1904). Each project is identified by its full tab name. Password-protected and old-format (.xls) files get their own message.
+- **Saved reviews are checked on reopening.** Every record is checked against the record structure (every group present, every value a plain number, text, yes/no or blank, no more rows than allowed) and the report field by field. A file that is not exactly right is refused, never rendered. The record layout is now **version 2** (a typed payment is yearly); older reviews are converted.
 - **The stage is never filled in.** Every imported project starts with the stage and the "as of" date blank. The report shows a hint such as "this came from a Completed Project tab". The underwriter must choose the stage and date for each project before it is used.
 - **Workbook facts, for M1.** Alongside the records the importer returns `facts`: every tab with its visibility (visible, hidden, very hidden) and whether it holds data; every cell showing an error value, with tab and cell; and any cell in M0's list of "cells the workbook computes by formula" (totals, percentages) that holds a typed number instead. M1 uses these for its error, hidden-tab and typed-over-formula checks.
 - **Import report.** For each group: how many fields were filled and how many were blank. Plus the workbook version, the project tabs found against the Cover's project count, tabs with data that the Cover doesn't account for, error cells, and any layout differences.
 - **T-12 is imported separately.** The applicant workbook has no T-12. M0 provides a small T-12 template spreadsheet with the monthly columns from section 1b. The underwriter uploads it against a chosen project.
 - **Save and reopen.** The underwriter can download a review (records, workbook facts, chosen stages and "as of" dates) as a file and reopen it later, with no server involved. This lets an underwriter come back after the next phase of a project is built and compare it with the earlier version.
+
+### 1i. No network (built by M0)
+
+The built page carries a Content-Security-Policy with `connect-src 'none'`, so the browser itself refuses any network request. A workbook the underwriter loads cannot leave the device, even if a library were compromised. If the page crashes, it offers to save the last good state.
 
 ---
 
@@ -207,7 +217,9 @@ The underwriter loads data by dropping the applicant's workbook (`.xlsx` or `.xl
 - Cross-tab tie-outs (a number that appears on two tabs must match).
 - The chosen stage is not clearly contradicted by the data (for example development with T-12 rent, completed with no rent roll or T-12, a development project whose stabilization date has passed, or a completed project whose construction completion is in the future). Raise a flag; never change the stage.
 - The project count on the Cover matches the project tabs that contain data, including hidden tabs.
-- A source's typed payment is not lower than the payment its amount, rate and term produce.
+- A source's typed yearly payment is not lower than the yearly payment its amount, rate and term produce.
+- A source typed as equity, a grant, or "Other" has a rate and a term (it is counted in debt service, and the underwriter should confirm it is not a loan typed under the wrong label).
+- A percentage or amount in the workbook is outside its believable range (for example a rate of 6.5 instead of 6.5%), so the calculators refuse it.
 - The T-12, balance sheet and personal statement are no more than 12 months older than the "as of" date.
 - M1 reads the workbook facts from M0 for its error, hidden-tab and typed-over-formula checks, instead of re-reading the file.
 **You'll see:** a pass / fail checklist per project, with the failing cells named.
