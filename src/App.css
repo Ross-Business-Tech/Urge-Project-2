@@ -516,3 +516,76 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ---- Key ratios ---- */
+
+.ratios {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.ratio {
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.ratio.na {
+  border-style: dashed;
+}
+
+.ratio-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+
+.ratio-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ratio-value {
+  margin: 4px 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ratio-value.muted {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ratio-detail {
+  margin: 3px 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.link.needs {
+  margin-right: 12px;
+  min-height: 32px;
+  font-weight: 600;
+}
+
+.chip.amber {
+  color: #7a4b00;
+  background: #ffe9b8;
+}
+
+@media (prefers-color-scheme: dark) {
+  .chip.amber {
+    color: #ffd98a;
+    background: #3a3118;
+  }
+}

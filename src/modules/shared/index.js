@@ -9,3 +9,17 @@ export { buildReview, serializeReview, parseReview, reviewFileName, ReviewFileEr
 export { STAGE_VALUES, isValidDate, applyStageAndDate, projectReadiness, reviewReadiness } from './projectStage.js'
 export { formatForInput, parseInput, isEmpty } from './fieldFormat.js'
 export { getValue, setValue, provenance, addTableRow, removeTableRow, countGroup } from './recordEdit.js'
+export { DEFAULT_SETTINGS, SETTING_DEFS, checkSetting, sanitizeSettings } from './settings.js'
+export {
+  totalSources,
+  totalUses,
+  totalDevelopmentCost,
+  monthlyPayment,
+  annualDebtService,
+  totalDebt,
+  noi,
+  dscr,
+  keyRatios,
+  ratioIdsForStage,
+  fmt,
+} from './calculators.js'

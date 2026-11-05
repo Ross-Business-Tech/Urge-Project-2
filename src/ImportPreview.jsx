@@ -15,8 +15,10 @@ import {
   applyStageAndDate,
   projectReadiness,
   reviewReadiness,
+  DEFAULT_SETTINGS,
 } from './modules/shared/index.js'
 import { GroupEditor } from './RecordEditor.jsx'
+import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
 
 // Today's date on this device, as YYYY-MM-DD.
 function todayLocal() {
@@ -42,17 +44,25 @@ function plural(n, word) {
   return `${n} ${word}${n === 1 ? '' : 's'}`
 }
 
+// Jump to a group's form: open it and every card around it, then scroll to it.
+function openGroup(recordKey, groupId) {
+  const el = document.querySelector(`[data-group="${recordKey}:${groupId}"]`)
+  if (!el) return
+  for (let node = el; node; node = node.parentElement?.closest('details')) node.open = true
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+}
+
 // Groups that have no tab to read from in the applicant workbook.
 const NO_TAB = new Set(['projects', 't12', 'stage'])
 
 // One group of a record: a summary line with a live fill bar that opens into the editing form.
-function GroupRow({ schemaGroup, reportGroup, record, onEdit }) {
+function GroupRow({ schemaGroup, reportGroup, record, recordKey, onEdit }) {
   const live = countGroup(schemaGroup, record.data[schemaGroup.id])
   const pct = live.total === 0 ? 0 : Math.round((live.filled / live.total) * 100)
   const unread = reportGroup && !reportGroup.read && !NO_TAB.has(schemaGroup.id)
   return (
     <li className="group-row">
-      <details className="group-details">
+      <details className="group-details" data-group={`${recordKey}:${schemaGroup.id}`}>
         <summary>
           <div className="group-head">
             <span>{schemaGroup.title}</span>
@@ -112,7 +122,7 @@ function StageControls({ project, record, onChange }) {
   )
 }
 
-function ProjectCard({ project, record, onChange, onEdit }) {
+function ProjectCard({ project, record, settings, onChange, onEdit }) {
   const visibility = project.state === 'veryHidden' ? 'very hidden tab' : project.state === 'hidden' ? 'hidden tab' : null
   const { ready } = projectReadiness(record)
   const chosen = STAGES.find((s) => s.value === record.data.stage.stage)
@@ -128,6 +138,7 @@ function ProjectCard({ project, record, onChange, onEdit }) {
       </summary>
       <div className="body">
         <StageControls project={project} record={record} onChange={onChange} />
+        <KeyRatios record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
         <p className="section-label">Values (tap a group to view or edit)</p>
         <ul className="groups">
           {projectSchema
@@ -138,6 +149,7 @@ function ProjectCard({ project, record, onChange, onEdit }) {
                 schemaGroup={g}
                 reportGroup={project.groups.find((x) => x.id === g.id)}
                 record={record}
+                recordKey={project.id}
                 onEdit={(fn) => onEdit(project.id, fn)}
               />
             ))}
@@ -147,7 +159,7 @@ function ProjectCard({ project, record, onChange, onEdit }) {
   )
 }
 
-function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, onEdit }) {
+function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, onEdit, onSettings }) {
   const { report } = result
   const readiness = reviewReadiness(result.projects)
   const recordFor = (id) => result.projects.find((r) => r.meta?.projectId === id)
@@ -198,12 +210,14 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
             schemaGroup={g}
             reportGroup={report.firmGroups.find((x) => x.id === g.id)}
             record={result.firm}
+            recordKey="firm"
             onEdit={(fn) => onEdit('firm', fn)}
           />
         ))}
       </ul>
 
       <h2>The projects</h2>
+      <SettingsPanel settings={result.settings} onChange={onSettings} />
       {withData.length === 0 && <p className="note">No project tab has any entries.</p>}
       {withData.length > 0 && (
         <p className={readiness.ready ? 'ok' : 'banner warn'} role="status">
@@ -214,7 +228,7 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
       )}
       {withData.map((p) => {
         const record = recordFor(p.id)
-        return record ? <ProjectCard key={p.id} project={p} record={record} onChange={onProjectChange} onEdit={onEdit} /> : null
+        return record ? <ProjectCard key={p.id} project={p} record={record} settings={result.settings} onChange={onProjectChange} onEdit={onEdit} /> : null
       })}
       {emptyReadable.length > 0 && (
         <p className="note">
@@ -269,7 +283,7 @@ export default function ImportPreview() {
         setState({ status: 'done', result: review, saved: true, reopenedAt: review.savedAt })
       } else {
         const result = await importWorkbook(file, { fileName: file.name })
-        setState({ status: 'done', result, saved: false })
+        setState({ status: 'done', result: { ...result, settings: { ...DEFAULT_SETTINGS } }, saved: false })
       }
     } catch (err) {
       const message =
@@ -297,6 +311,7 @@ export default function ImportPreview() {
     }))
   }
 
+  const changeSettings = (patch) => setState((s) => ({ ...s, saved: false, result: { ...s.result, settings: { ...s.result.settings, ...patch } } }))
   const changeProject = (id, patch) => editRecord(id, (p) => applyStageAndDate(p, patch))
 
   function save() {
@@ -305,7 +320,7 @@ export default function ImportPreview() {
   }
 
   if (state.status === 'done') {
-    return <Report result={state.result} saved={state.saved} reopenedAt={state.reopenedAt} onSave={save} onReset={reset} onProjectChange={changeProject} onEdit={editRecord} />
+    return <Report result={state.result} saved={state.saved} reopenedAt={state.reopenedAt} onSave={save} onReset={reset} onProjectChange={changeProject} onEdit={editRecord} onSettings={changeSettings} />
   }
 
   return (

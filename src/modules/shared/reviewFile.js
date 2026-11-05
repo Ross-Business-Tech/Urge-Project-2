@@ -6,6 +6,7 @@
 
 import { SCHEMA_VERSION } from './schema.js'
 import { STAGE_VALUES, isValidDate } from './projectStage.js'
+import { DEFAULT_SETTINGS, sanitizeSettings } from './settings.js'
 
 export const REVIEW_KIND = 'underwriting-review'
 export const REVIEW_FORMAT_VERSION = 1
@@ -53,6 +54,7 @@ export function buildReview(importResult, now = new Date()) {
     projects: importResult.projects,
     facts: importResult.facts,
     report: importResult.report,
+    settings: importResult.settings ?? { ...DEFAULT_SETTINGS },
   }
 }
 
@@ -94,5 +96,7 @@ export function parseReview(text) {
     isObject(report) && isObject(report.workbook) && Array.isArray(report.firmGroups) &&
     Array.isArray(report.projects) && Array.isArray(report.notes) && Array.isArray(report.layoutProblems)
   if (!shapeOk) throw new ReviewFileError('That saved review is damaged or incomplete, so it was not opened.')
+  // Settings are optional in a file; anything missing or out of range falls back to the default.
+  review.settings = sanitizeSettings(review.settings)
   return review
 }
