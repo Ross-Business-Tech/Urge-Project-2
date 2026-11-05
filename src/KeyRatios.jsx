@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { keyRatios, fmt, SETTING_DEFS, DEFAULT_SETTINGS, checkSetting, parseInput, formatForInput } from './modules/shared/index.js'
 
 const STATUS = {
@@ -22,7 +22,10 @@ function display(ratio) {
 
 // The headline ratios for a project's stage. A ratio that cannot be worked out says why and offers to jump to the group to fill in.
 export function KeyRatios({ record, settings, onOpenGroup }) {
-  if (!record.data.stage.stage) {
+  const hasStage = Boolean(record.data.stage.stage)
+  // Records are never changed in place, so the ratios only need working out again when the record or settings change.
+  const ratios = useMemo(() => (hasStage ? keyRatios(record, settings) : []), [hasStage, record, settings])
+  if (!hasStage) {
     return (
       <>
         <p className="section-label">Key ratios</p>
@@ -30,7 +33,6 @@ export function KeyRatios({ record, settings, onOpenGroup }) {
       </>
     )
   }
-  const ratios = keyRatios(record, settings)
   return (
     <>
       <p className="section-label">Key ratios ({ratios.length})</p>

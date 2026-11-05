@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import {
   importWorkbook,
   ImportError,
   MAX_FILE_BYTES,
-  buildReview,
-  serializeReview,
   parseReview,
-  reviewFileName,
   ReviewFileError,
   STAGES,
   firmSchema,
@@ -19,6 +16,7 @@ import {
 } from './modules/shared/index.js'
 import { GroupEditor } from './RecordEditor.jsx'
 import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
+import { downloadReview, rescueStore } from './download.js'
 
 // Today's date on this device, as YYYY-MM-DD.
 function todayLocal() {
@@ -27,26 +25,13 @@ function todayLocal() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
-// Download a review as a file. Nothing is sent anywhere.
-function downloadReview(result) {
-  const blob = new Blob([serializeReview(buildReview(result))], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = reviewFileName()
-  document.body.appendChild(link)
-  link.click()
-  link.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
-}
-
 function plural(n, word) {
   return `${n} ${word}${n === 1 ? '' : 's'}`
 }
 
 // Jump to a group's form: open it and every card around it, then scroll to it.
 function openGroup(recordKey, groupId) {
-  const el = document.querySelector(`[data-group="${recordKey}:${groupId}"]`)
+  const el = document.querySelector(`[data-group="${CSS.escape(`${recordKey}:${groupId}`)}"]`)
   if (!el) return
   for (let node = el; node; node = node.parentElement?.closest('details')) node.open = true
   el.scrollIntoView({ block: 'center', behavior: 'smooth' })
@@ -55,14 +40,17 @@ function openGroup(recordKey, groupId) {
 // Groups that have no tab to read from in the applicant workbook.
 const NO_TAB = new Set(['projects', 't12', 'stage'])
 
-// One group of a record: a summary line with a live fill bar that opens into the editing form.
-function GroupRow({ schemaGroup, reportGroup, record, recordKey, onEdit }) {
+// One group of a record: a summary line with a live fill bar that opens into the editing form. The form is only built
+// once the group is opened, and the row only redraws when its own record changes, so a big workbook stays fast.
+const GroupRow = memo(function GroupRow({ schemaGroup, reportGroup, record, recordKey, onEdit }) {
+  const [open, setOpen] = useState(false)
+  const edit = useCallback((fn) => onEdit(recordKey, fn), [onEdit, recordKey])
   const live = countGroup(schemaGroup, record.data[schemaGroup.id])
   const pct = live.total === 0 ? 0 : Math.round((live.filled / live.total) * 100)
   const unread = reportGroup && !reportGroup.read && !NO_TAB.has(schemaGroup.id)
   return (
     <li className="group-row">
-      <details className="group-details" data-group={`${recordKey}:${schemaGroup.id}`}>
+      <details className="group-details" data-group={`${recordKey}:${schemaGroup.id}`} onToggle={(e) => setOpen(e.currentTarget.open)}>
         <summary>
           <div className="group-head">
             <span>{schemaGroup.title}</span>
@@ -79,13 +67,11 @@ function GroupRow({ schemaGroup, reportGroup, record, recordKey, onEdit }) {
             </div>
           )}
         </summary>
-        <div className="editor">
-          <GroupEditor group={schemaGroup} record={record} onEdit={onEdit} />
-        </div>
+        <div className="editor">{open && <GroupEditor group={schemaGroup} record={record} onEdit={edit} />}</div>
       </details>
     </li>
   )
-}
+})
 
 // The two choices only the underwriter can make for a project: its stage and the date its facts are "as of".
 function StageControls({ project, record, onChange }) {
@@ -122,12 +108,15 @@ function StageControls({ project, record, onChange }) {
   )
 }
 
-function ProjectCard({ project, record, settings, onChange, onEdit }) {
+const PROJECT_GROUPS = projectSchema.filter((g) => g.id !== 'stage')
+
+const ProjectCard = memo(function ProjectCard({ project, record, settings, onChange, onEdit }) {
+  const [open, setOpen] = useState(false)
   const visibility = project.state === 'veryHidden' ? 'very hidden tab' : project.state === 'hidden' ? 'hidden tab' : null
   const { ready } = projectReadiness(record)
   const chosen = STAGES.find((s) => s.value === record.data.stage.stage)
   return (
-    <details className="card">
+    <details className="card" onToggle={(e) => setOpen(e.currentTarget.open)}>
       <summary>
         <span className="title">{project.name || project.tab}</span>
         <span className="size">{project.hint}</span>
@@ -136,28 +125,21 @@ function ProjectCard({ project, record, settings, onChange, onEdit }) {
           {visibility && <span className="chip warn">{visibility}</span>}
         </span>
       </summary>
-      <div className="body">
-        <StageControls project={project} record={record} onChange={onChange} />
-        <KeyRatios record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
-        <p className="section-label">Values (tap a group to view or edit)</p>
-        <ul className="groups">
-          {projectSchema
-            .filter((g) => g.id !== 'stage')
-            .map((g) => (
-              <GroupRow
-                key={g.id}
-                schemaGroup={g}
-                reportGroup={project.groups.find((x) => x.id === g.id)}
-                record={record}
-                recordKey={project.id}
-                onEdit={(fn) => onEdit(project.id, fn)}
-              />
+      {open && (
+        <div className="body">
+          <StageControls project={project} record={record} onChange={onChange} />
+          <KeyRatios record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
+          <p className="section-label">Values (tap a group to view or edit)</p>
+          <ul className="groups">
+            {PROJECT_GROUPS.map((g) => (
+              <GroupRow key={g.id} schemaGroup={g} reportGroup={project.groups.find((x) => x.id === g.id)} record={record} recordKey={project.id} onEdit={onEdit} />
             ))}
-        </ul>
-      </div>
+          </ul>
+        </div>
+      )}
     </details>
   )
-}
+})
 
 function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, onEdit, onSettings }) {
   const { report } = result
@@ -211,7 +193,7 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
             reportGroup={report.firmGroups.find((x) => x.id === g.id)}
             record={result.firm}
             recordKey="firm"
-            onEdit={(fn) => onEdit('firm', fn)}
+            onEdit={onEdit}
           />
         ))}
       </ul>
@@ -257,6 +239,12 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
 export default function ImportPreview() {
   const [state, setState] = useState({ status: 'idle' })
   const [dragging, setDragging] = useState(false)
+  const latest = useRef(0) // a ticket per file chosen, so a slow file cannot overwrite a newer choice
+
+  // Keep a copy of the review on screen where the crash screen can find it.
+  useEffect(() => {
+    rescueStore.current = state.status === 'done' ? state.result : null
+  }, [state])
 
   // Warn before leaving the page with work that has not been saved to a file.
   const unsaved = state.status === 'done' && !state.saved
@@ -272,6 +260,7 @@ export default function ImportPreview() {
 
   async function handleFile(file) {
     if (!file) return
+    const ticket = ++latest.current
     if (file.size > MAX_FILE_BYTES) {
       setState({ status: 'error', message: 'That file is larger than 25 MB, which is too big for this tool.' })
       return
@@ -280,12 +269,15 @@ export default function ImportPreview() {
     try {
       if (/\.json$/i.test(file.name)) {
         const review = parseReview(await file.text())
+        if (ticket !== latest.current) return // a newer file was chosen while this one was being read
         setState({ status: 'done', result: review, saved: true, reopenedAt: review.savedAt })
       } else {
         const result = await importWorkbook(file, { fileName: file.name })
+        if (ticket !== latest.current) return
         setState({ status: 'done', result: { ...result, settings: { ...DEFAULT_SETTINGS } }, saved: false })
       }
     } catch (err) {
+      if (ticket !== latest.current) return
       const message =
         err instanceof ImportError || err instanceof ReviewFileError
           ? err.message
@@ -296,11 +288,12 @@ export default function ImportPreview() {
 
   function reset() {
     if (unsaved && !window.confirm('This review has not been saved. Leave without saving?')) return
+    latest.current++ // cancels any file still being read
     setState({ status: 'idle' })
   }
 
   // Change one record ('firm' or a project id) with a function that returns the edited copy. Marks the review unsaved.
-  function editRecord(target, fn) {
+  const editRecord = useCallback((target, fn) => {
     setState((s) => ({
       ...s,
       saved: false,
@@ -309,14 +302,14 @@ export default function ImportPreview() {
           ? { ...s.result, firm: fn(s.result.firm) }
           : { ...s.result, projects: s.result.projects.map((p) => (p.meta?.projectId === target ? fn(p) : p)) },
     }))
-  }
+  }, [])
 
-  const changeSettings = (patch) => setState((s) => ({ ...s, saved: false, result: { ...s.result, settings: { ...s.result.settings, ...patch } } }))
-  const changeProject = (id, patch) => editRecord(id, (p) => applyStageAndDate(p, patch))
+  const changeSettings = useCallback((patch) => setState((s) => ({ ...s, saved: false, result: { ...s.result, settings: { ...s.result.settings, ...patch } } })), [])
+  const changeProject = useCallback((id, patch) => editRecord(id, (p) => applyStageAndDate(p, patch)), [editRecord])
 
   function save() {
     downloadReview(state.result)
-    setState({ ...state, saved: true })
+    setState((s) => ({ ...s, saved: true }))
   }
 
   if (state.status === 'done') {
