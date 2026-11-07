@@ -9,9 +9,11 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "smoke": "node scripts/smoke-test.cjs",
-    "publish:preview": "node scripts/herenow-publish.mjs preview"
+    "publish:preview": "node scripts/herenow-publish.mjs preview",
+    "test": "node --test \"src/**/*.test.js\""
   },
   "dependencies": {
+    "fflate": "^0.8.3",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   },
