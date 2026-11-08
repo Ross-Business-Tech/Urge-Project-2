@@ -3,7 +3,7 @@ import './scenarios.css'
 import { fmt, DEFAULT_SETTINGS, STAGES } from '../shared/index.js'
 import { CASES, FILL_OCCUPANCY, resolveLevers } from './levers.js'
 import { runScenarios } from './engine.js'
-import { runScenarioChecks } from './index.js'
+import { runScenarioChecks, basisSentence } from './index.js'
 
 // A lever's setting in words: "-10%", "+1.5%", "6 months".
 function leverText(def, value) {
@@ -92,11 +92,35 @@ function CaseResults({ result, settings, stage, onOpenGroup }) {
   )
 }
 
+// What the three cases start from, and (for a lease-up project) the T-12 beside it as a reference.
+function Basis({ basis, stage, choice, onChoose }) {
+  const ref = basis.reference
+  return (
+    <div className="sc-basis" role="status">
+      <p>
+        <strong>Starting from:</strong> {basisSentence(basis)}
+      </p>
+      {ref?.summary && (
+        <p className="ratio-detail">
+          For reference, the T-12 shows: {ref.summary}. It is not the starting point, because a building that is still filling earns less than it will when full.
+        </p>
+      )}
+      {ref?.reason && <p className="ratio-detail">No T-12 reference: {ref.reason}</p>}
+      {stage === 'completed' && basis.t12Usable && (
+        <button type="button" className="button small" onClick={() => onChoose(choice === 'projection' ? 'auto' : 'projection')}>
+          {choice === 'projection' ? 'Start from the T-12 actuals instead' : "Compare: start from the applicant's projection instead"}
+        </button>
+      )}
+    </div>
+  )
+}
+
 // The scenario screen for one project: three cases side by side (stacked on a phone), a slider for each lever in each
 // case, and what the downside means for the review. The sliders only change this screen; they are not saved with the record.
 export function ScenarioPanel({ record, settings = DEFAULT_SETTINGS, onOpenGroup }) {
   const stage = record.data.stage.stage
   const [levers, setLevers] = useState(null) // null until a slider is moved: the starting values are used
+  const [basisChoice, setBasisChoice] = useState('auto') // 'projection' = compare with the applicant's numbers (completed projects)
   const setting = (caseId, leverId, value) =>
     setLevers((current) => {
       const all = current ?? resolveLevers(stage, null).cases
@@ -108,10 +132,11 @@ export function ScenarioPanel({ record, settings = DEFAULT_SETTINGS, onOpenGroup
   if (forStage !== stage) {
     setForStage(stage)
     setLevers(null)
+    setBasisChoice('auto')
   }
 
-  const out = useMemo(() => (stage ? runScenarios(record, { settings, levers }) : null), [record, settings, levers, stage])
-  const review = useMemo(() => (stage ? runScenarioChecks(record, { settings, scenarios: levers ?? undefined }) : null), [record, settings, levers, stage])
+  const out = useMemo(() => (stage ? runScenarios(record, { settings, levers, basis: basisChoice }) : null), [record, settings, levers, basisChoice, stage])
+  const review = useMemo(() => (stage ? runScenarioChecks(record, { settings, scenarios: levers ?? undefined, basis: basisChoice }) : null), [record, settings, levers, basisChoice, stage])
 
   if (!stage) {
     return (
@@ -133,11 +158,13 @@ export function ScenarioPanel({ record, settings = DEFAULT_SETTINGS, onOpenGroup
         screen.
       </p>
 
+      {out.ok !== false && <Basis basis={out.basis} stage={stage} choice={basisChoice} onChoose={setBasisChoice} />}
+
       <div className="sc-cases">
         {CASES.map((c) => (
           <div className={`sc-case sc-${c.id}`} key={c.id}>
             <h3>{c.label}</h3>
-            <p className="ratio-detail">{c.plain}</p>
+            <p className="ratio-detail">{c.id === 'base' && out.basis.kind === 'actuals' ? 'The property as it has actually performed (T-12)' : c.plain}</p>
 
             <div className="sc-levers">
               {out.defs.map((def) => {

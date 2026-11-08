@@ -14,6 +14,12 @@ export { CASES, FILL_OCCUPANCY, DEFAULT_EXIT_CAP, leversForStage, resolveLevers 
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 
+// What the three cases start from, as a phrase that follows "Starting from".
+export function basisSentence(basis) {
+  if (basis.kind === 'actuals') return `the T-12 actuals (the average of ${basis.months} month${basis.months === 1 ? '' : 's'}, times 12).`
+  return basis.reason ? `the applicant's projection. ${basis.reason}` : "the applicant's projection."
+}
+
 // The levers that are turned in a case, in words ("rents -10%, expenses +10%").
 const describeLever = (def, value) => {
   if (value === 0 && def.id !== 'exitCapRate') return null
@@ -24,11 +30,12 @@ const describeLever = (def, value) => {
 const describeCase = (defs, values) => defs.map((d) => describeLever(d, values[d.id])).filter(Boolean).join(', ') || 'no changes'
 
 // Cells that feed the scenario results, named the way the applicant's workbook names them.
-function inputPaths(record, extra = []) {
+function inputPaths(record, extra = [], loansOnly = false) {
   const d = record.data
   const paths = []
   const rows = (group, keys) => d[group].rows.forEach((row, i) => keys.forEach((k) => isNum(row[k]) && paths.push(`${group}.rows.${i}.${k}`)))
   rows('sources', ['amount', 'termMonths', 'interestRate', 'paymentOverride'])
+  if (loansOnly) return [...paths, ...extra] // the income and expenses come from the T-12, not from these cells
   rows('residentialIncome', ['units', 'monthlyRent'])
   rows('commercialIncome', ['sqft', 'rentPerSqft'])
   rows('otherIncome', ['monthlyIncome'])
@@ -44,7 +51,7 @@ const budgetPaths = (record, keys) => keys.filter((k) => isNum(record.data.budge
 export const runScenarioChecks = (project, context = {}) => {
   const settings = sanitizeSettings(context?.settings)
   const notes = []
-  const result = runScenarios(project, { settings, levers: context?.scenarios })
+  const result = runScenarios(project, { settings, levers: context?.scenarios, basis: context?.basis })
 
   // No stage: the check cannot run. A flag needs a stage, so development is named and the note says why.
   if (!result.ok) {
@@ -58,7 +65,10 @@ export const runScenarioChecks = (project, context = {}) => {
   const { stage, defs, levers, cases } = result
   const maker = createFlagMaker('M4', project)
   const flags = []
-  notes.push(`Stage used: ${stage}.`, ...result.notes)
+  const { basis } = result
+  notes.push(`Stage used: ${stage}.`, `Starting from ${basisSentence(basis)}`, ...result.notes)
+  if (basis.reference?.summary) notes.push(`For reference, the T-12 shows: ${basis.reference.summary}.`)
+  if (basis.reference?.reason) notes.push(`The T-12 could not be used as a reference: ${basis.reference.reason}`)
   for (const c of ['downside', 'base', 'upside']) notes.push(`${c[0].toUpperCase()}${c.slice(1)}: ${describeCase(defs, levers[c])}.`)
 
   const unavailable = ['base', 'downside', 'upside'].map((c) => cases[c]).find((r) => !r.ok)
@@ -68,7 +78,9 @@ export const runScenarioChecks = (project, context = {}) => {
   }
 
   const { downside, base } = cases
-  const refs = citeCells(project, inputPaths(project)).slice(0, 50)
+  const t12Paths = basis.kind === 'actuals' ? basis.rowIndexes.flatMap((i) => [`t12.rows.${i}.residentialRevenue`, `t12.rows.${i}.vacancyLoss`]) : []
+  const refs = citeCells(project, [...t12Paths, ...inputPaths(project, [], basis.kind === 'actuals')]).slice(0, 50)
+  const from = basis.kind === 'actuals' ? ` Starting from the last ${basis.months} month${basis.months === 1 ? '' : 's'} of actuals (T-12).` : ''
   const min = settings.minDscr
   const against = `against the lender's minimum of ${fmt.times(min)}`
   const baseText = isNum(base.dscr) ? `base case ${fmt.times(base.dscr)}` : 'base case not available'
@@ -79,7 +91,7 @@ export const runScenarioChecks = (project, context = {}) => {
         id: 'M4-base-dscr-below-minimum',
         severity: 'high',
         title: 'Even before any stress, the income does not cover the loan payments by the lender’s minimum.',
-        evidence: `Base case DSCR ${fmt.times(base.dscr)} ${against}. NOI ${fmt.usd(base.noi)} on yearly loan payments of ${fmt.usd(base.debtService)}.`,
+        evidence: `Base case DSCR ${fmt.times(base.dscr)} ${against}. NOI ${fmt.usd(base.noi)} on yearly loan payments of ${fmt.usd(base.debtService)}.${from}`,
         cell_refs: refs,
         follow_up: 'The numbers already miss the lender’s coverage test as entered. What changes (more equity, lower rent assumptions, a smaller loan) would bring it to the minimum?',
       }),
@@ -93,7 +105,7 @@ export const runScenarioChecks = (project, context = {}) => {
           id: 'M4-downside-dscr-shortfall',
           severity: 'high',
           title: 'In the downside case, the income no longer covers the loan payments.',
-          evidence: `Downside DSCR ${fmt.times(downside.dscr)} (${baseText}). Short by ${fmt.usd(downside.yearlyShortfall)} a year. Stress: ${describeCase(defs, levers.downside)}.`,
+          evidence: `Downside DSCR ${fmt.times(downside.dscr)} (${baseText}). Short by ${fmt.usd(downside.yearlyShortfall)} a year. Stress: ${describeCase(defs, levers.downside)}.${from}`,
           cell_refs: refs,
           follow_up: `In the downside case (${describeCase(defs, levers.downside)}), who covers the ${fmt.usd(downside.yearlyShortfall)} a year gap, and for how long can they?`,
         }),
@@ -104,7 +116,7 @@ export const runScenarioChecks = (project, context = {}) => {
           id: 'M4-downside-dscr-thin',
           severity: 'medium',
           title: 'In the downside case, coverage falls below the lender’s minimum.',
-          evidence: `Downside DSCR ${fmt.times(downside.dscr)} ${against} (${baseText}). Stress: ${describeCase(defs, levers.downside)}.`,
+          evidence: `Downside DSCR ${fmt.times(downside.dscr)} ${against} (${baseText}). Stress: ${describeCase(defs, levers.downside)}.${from}`,
           cell_refs: refs,
           follow_up: 'Is there a cure if coverage dips under the lender’s minimum, such as a guarantee, a reserve or a cash sweep?',
         }),

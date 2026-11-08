@@ -15,6 +15,7 @@ import {
   DEBT_SOURCE_TYPES,
 } from '../shared/index.js'
 import { CASES, FILL_OCCUPANCY, resolveLevers } from './levers.js'
+import { t12Basis } from './actuals.js'
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v))
@@ -172,18 +173,39 @@ export function evaluateCase(original, stage, settings, lv) {
 // All three cases
 // ---------------------------------------------------------------------------------------------
 
+// What the cases start from (decided with the underwriter):
+//  - completed:   the T-12 actuals, when there is a usable one; otherwise the applicant's projection, with the reason.
+//  - lease_up:    the projection (a building still filling has actuals that are low because it is not full yet), with the
+//                 T-12 shown beside it as a reference.
+//  - development: the projection (there is no T-12).
+// options.basis = 'projection' forces the projection for a completed project, so the two can be compared.
+function chooseBasis(project, stage, settings, wanted) {
+  if (stage === 'development') return { kind: 'projection', record: project, reason: null, reference: null, t12Usable: false }
+  const t = t12Basis(project, settings)
+  if (stage === 'lease_up') {
+    const reference = t.ok ? { summary: t.summary, annualNoi: t.annualNoi, months: t.months } : { reason: t.reason }
+    return { kind: 'projection', record: project, reason: null, reference, t12Usable: t.ok }
+  }
+  if (t.ok && wanted !== 'projection') return { kind: 'actuals', record: t.record, months: t.months, annualNoi: t.annualNoi, summary: t.summary, rowIndexes: t.rowIndexes, t12Usable: true }
+  const reason = !t.ok ? `There is no usable T-12, so the applicant's projection is used. ${t.reason}` : 'You chose to start from the applicant\'s projection.'
+  return { kind: 'projection', record: project, reason, reference: null, t12Usable: t.ok }
+}
+
 // Runs downside, base and upside for a project. `requested` can change any lever for any case (see resolveLevers).
-// Returns { ok: false, reason } when the project has no stage, otherwise { ok: true, stage, defs, levers, cases, notes }.
-export function runScenarios(project, { settings = DEFAULT_SETTINGS, levers: requested } = {}) {
+// Returns { ok: false, reason } when the project has no stage, otherwise { ok: true, stage, defs, levers, cases, basis, notes }.
+export function runScenarios(project, { settings = DEFAULT_SETTINGS, levers: requested, basis: wanted = 'auto' } = {}) {
   const stage = project?.data?.stage?.stage
   if (!stage) return { ok: false, reason: 'Choose the project’s stage first. The stage decides which levers apply.', needs: [{ group: 'stage', label: 'Stage and review date' }] }
   const { defs, cases: levers, problems } = resolveLevers(stage, requested)
-  const cases = Object.fromEntries(CASES.map((c) => [c.id, evaluateCase(project, stage, settings, levers[c.id])]))
+  const basis = chooseBasis(project, stage, settings, wanted)
+  const start = basis.record
+  const cases = Object.fromEntries(CASES.map((c) => [c.id, evaluateCase(start, stage, settings, levers[c.id])]))
   // A stress test on a project whose own numbers cannot be worked out would be a guess dressed up as a result. The levers
   // are applied to the project as entered, so if that is refused, every case says so, whatever its sliders are.
-  const asEntered = evaluateCase(project, stage, settings, Object.fromEntries(defs.map((d) => [d.id, d.neutral])))
+  const asEntered = evaluateCase(start, stage, settings, Object.fromEntries(defs.map((d) => [d.id, d.neutral])))
   if (!asEntered.ok) {
     for (const c of CASES) cases[c.id] = { ok: false, reason: `The project as entered cannot be worked out, so it cannot be stress-tested. ${asEntered.reason}`, needs: asEntered.needs }
   }
-  return { ok: true, stage, defs, levers, cases, notes: problems }
+  const { record: _record, ...basisInfo } = basis
+  return { ok: true, stage, defs, levers, cases, basis: basisInfo, notes: problems }
 }

@@ -126,3 +126,18 @@
   min-height: 32px;
   font-weight: 600;
 }
+
+.sc-basis {
+  margin: 10px 0;
+  padding: 10px 12px;
+  background: var(--accent-bg);
+  border-radius: 12px;
+}
+
+.sc-basis p {
+  margin: 0 0 6px;
+}
+
+.sc-basis .button {
+  margin-top: 4px;
+}

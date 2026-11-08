@@ -8,7 +8,11 @@ import { ScenarioPanel } from './ScenarioPanel.jsx'
 export default function ScenarioDemo() {
   const [id, setId] = useState(samples[0].id)
   const sample = samples.find((s) => s.id === id)
-  const record = useMemo(() => applyStageAndDate(sample.build().projects[0].record, { stage: sample.stage, asOfDate: sample.asOf }), [sample])
+  const record = useMemo(() => {
+    const project = sample.build().projects[0].record
+    if (sample.t12) project.data.t12.rows = sample.t12.rows // the samples that come with a T-12 file
+    return applyStageAndDate(project, { stage: sample.stage, asOfDate: sample.asOf })
+  }, [sample])
   const stageLabel = STAGES.find((s) => s.value === sample.stage)?.label
 
   return (

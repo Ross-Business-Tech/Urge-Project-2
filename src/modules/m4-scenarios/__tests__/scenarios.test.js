@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { applyStageAndDate, blankProject, dscr, noi, annualDebtService, keyRatios, makeFlag, DEFAULT_SETTINGS } from '../../shared/index.js'
 import { healthyProject } from '../../shared/samples/baseline.js'
-import { scenarios } from '../../shared/samples/scenarios.js'
+import { scenarios, t12Rows } from '../../shared/samples/scenarios.js'
 import { run, runScenarios, leversForStage, resolveLevers, applyLevers, CASES } from '../index.js'
 
 const staged = (stage = 'development', record = healthyProject()) => applyStageAndDate(record, { stage, asOfDate: '2026-01-15' })
@@ -324,4 +324,120 @@ test('the notes say which stage and which lever settings each case used', () => 
   assert.ok(notes.includes('Stage used: completed.'))
   assert.ok(notes.some((n) => n.startsWith('Downside: ') && /rent change -10%/.test(n)))
   assert.ok(notes.some((n) => n.startsWith('Base: no changes')))
+})
+
+// ---------------------------------------------------------------- starting from the T-12
+const withT12 = (stage, rows, record) => {
+  const p = staged(stage, record)
+  p.data.t12.rows = rows
+  return p
+}
+const trailingNoi = (p) => keyRatios(p, DEFAULT_SETTINGS).find((r) => r.id === 'trailing').value * noi(p).value // M0's own T-12 NOI a year
+
+test('completed with a usable T-12: the base case is the real performance, and it agrees with the shared T-12 ratio', () => {
+  const p = withT12('completed', t12Rows({ months: 12 }))
+  const out = runScenarios(p)
+  assert.equal(out.basis.kind, 'actuals')
+  assert.equal(out.basis.months, 12)
+  // 12 x (57,000 residential + 8,333 retail + 1,000 other - 16,667 expenses) is what M0 shows as the T-12 NOI.
+  near(trailingNoi(p), 595992, 1)
+  near(out.cases.base.noi, trailingNoi(p), 0.5)
+  assert.notEqual(out.cases.base.noi, noi(p).value, 'not the projected 586,000')
+  assert.equal(out.cases.base.debtService, annualDebtService(p).value, 'loan payments are the same either way')
+  assert.match(out.basis.summary, /T-12 NOI \$595,992 a year against \$586,000 underwritten/)
+})
+
+test('the downside is worked from what was collected: 10% off real rent, 5 points more vacancy, 10% more real expenses', () => {
+  const p = withT12('completed', t12Rows({ months: 12 }))
+  const stress = { rentChange: -0.1, vacancyChange: 0.05, expenseGrowth: 0.1, takeoutRate: 0 }
+  const d = runScenarios(p, { levers: { downside: stress } }).cases.downside
+  const rent = 12 * (40 * 1500) // residential billed in a year
+  const retail = 12 * 8333
+  const lossShare = (rent * 0.05) / (rent + retail) // the T-12's own vacancy, spread over the rent billed
+  const expected = (rent + retail) * 0.9 * (1 - (lossShare + 0.05)) + 12 * 1000 - 12 * (4167 + 10000 + 1667 + 833) * 1.1
+  near(d.noi, expected, 1)
+})
+
+test('running from the T-12 never changes the project, and the T-12 is not read when nothing asks for it', () => {
+  const p = withT12('completed', t12Rows({ months: 12 }))
+  const before = JSON.stringify(p)
+  runScenarios(p)
+  run(p, {})
+  assert.equal(JSON.stringify(p), before)
+})
+
+test('the reviewer can compare with the applicant\'s projection, which gives exactly the old numbers', () => {
+  const p = withT12('completed', t12Rows({ months: 12 }))
+  const out = runScenarios(p, { basis: 'projection' })
+  assert.equal(out.basis.kind, 'projection')
+  assert.equal(out.basis.t12Usable, true, 'so the screen can offer to switch back')
+  assert.equal(out.cases.base.noi, 586000)
+  assert.deepEqual(out.cases, runScenarios(staged('completed')).cases)
+})
+
+test('a short T-12 is annualized from the months it has, and the engine says how many', () => {
+  const out = runScenarios(withT12('completed', t12Rows({ months: 5 })))
+  assert.equal(out.basis.kind, 'actuals')
+  assert.equal(out.basis.months, 5)
+  assert.match(basisText(out), /5 months/)
+})
+const basisText = (out) => out.basis.summary
+
+test('completed without a usable T-12 falls back to the projection and says why', () => {
+  const none = runScenarios(staged('completed'))
+  assert.equal(none.basis.kind, 'projection')
+  assert.match(none.basis.reason, /no usable T-12.*No T-12 has been entered/i)
+  assert.equal(none.cases.base.noi, 586000)
+
+  const odd = t12Rows({ months: 12 })
+  odd[3].occupancy = 5 // 500%
+  const refused = runScenarios(withT12('completed', odd))
+  assert.equal(refused.basis.kind, 'projection')
+  assert.match(refused.basis.reason, /occupancy/i)
+
+  const undated = t12Rows({ months: 12 }).map((r) => ({ ...r, month: null }))
+  assert.equal(runScenarios(withT12('completed', undated)).basis.kind, 'projection')
+
+  const lossy = t12Rows({ months: 12 }).map((r) => ({ ...r, vacancyLoss: 5000000 }))
+  const lost = runScenarios(withT12('completed', lossy))
+  assert.equal(lost.basis.kind, 'projection')
+  assert.match(lost.basis.reason, /more than the rent that was billed/)
+})
+
+test('lease-up starts from the projection and shows the T-12 only as a reference', () => {
+  const p = withT12('lease_up', t12Rows({ months: 6, occupancy: 0.6 }))
+  const out = runScenarios(p)
+  assert.equal(out.basis.kind, 'projection')
+  assert.equal(out.cases.base.noi, 586000)
+  assert.match(out.basis.reference.summary, /T-12 NOI \$343,992 a year \(from 6 months\) against \$586,000 underwritten/)
+  assert.deepEqual(out.cases, runScenarios(staged('lease_up')).cases, 'the T-12 does not move a single number')
+  assert.match(runScenarios(staged('lease_up')).basis.reference.reason, /No T-12/)
+  assert.ok(run(p, {}).notes.some((n) => /For reference, the T-12 shows/.test(n)))
+})
+
+test('development has no T-12 basis at all', () => {
+  const out = runScenarios(staged('development'))
+  assert.equal(out.basis.kind, 'projection')
+  assert.equal(out.basis.reference, null)
+  assert.equal(out.basis.reason, null)
+})
+
+test('a flag from actuals says so, and cites the T-12 cells instead of the projected income cells', () => {
+  const p = withT12('completed', t12Rows({ months: 12 }))
+  p.data.sources.rows[0].amount = 5500000 // a loan big enough to be stressed
+  p.sources = { 'sources.rows.0.amount': 'Details!F28', 't12.rows.0.residentialRevenue': 'T-12 template!B2', 'residentialIncome.rows.0.monthlyRent': 'Details!H58' }
+  const { flags, notes } = run(p, {})
+  assert.ok(flags.length > 0)
+  for (const f of flags) assert.match(f.evidence, /Starting from the last 12 months of actuals \(T-12\)\./)
+  const refs = flags[0].cell_refs
+  assert.ok(refs.includes('T-12 template!B2'))
+  assert.ok(refs.includes('Details!F28'), 'the loan terms still matter')
+  assert.ok(!refs.includes('Details!H58'), 'the projected rent is not what was stressed')
+  assert.ok(notes.some((n) => /Starting from the T-12 actuals \(the average of 12 months, times 12\)/.test(n)))
+})
+
+test('a bad T-12 input is never repaired: the project as entered is refused in every case', () => {
+  const p = withT12('completed', t12Rows({ months: 12 }), scenario('s14-rate-typed-as-whole-number'))
+  const out = runScenarios(p)
+  assert.ok(CASES.every((c) => !out.cases[c.id].ok))
 })
