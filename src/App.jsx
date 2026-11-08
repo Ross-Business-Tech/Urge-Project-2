@@ -3,6 +3,7 @@ import './App.css'
 import ImportPreview from './ImportPreview.jsx'
 import { RescueBoundary } from './RescueBoundary.jsx'
 import FlagFormat from './FlagFormat.jsx'
+import ScenarioDemo from './modules/m4-scenarios/ScenarioDemo.jsx'
 import { rescueStore } from './download.js'
 import {
   firmSchema,
@@ -169,6 +170,12 @@ const VIEWS = [
     lede: 'The record structure, grouped the way the applicant workbook groups it. Tap a group to see its fields. Blue "new" tags mark things the workbook does not have.',
   },
   {
+    id: 'scenarios',
+    label: 'Scenarios',
+    heading: 'Stress-test a project',
+    lede: 'What happens to the loan in the downside, base and upside cases? Pick a made-up sample project, or open a project in "Load workbook" to stress your own. Move the sliders to try your own numbers.',
+  },
+  {
     id: 'flags',
     label: 'Flag format',
     heading: 'What a flag looks like',
@@ -213,6 +220,7 @@ export default function App() {
           <ImportPreview />
         </RescueBoundary>
       </div>
+      {current.id === 'scenarios' && <ScenarioDemo />}
       {current.id === 'flags' && <FlagFormat />}
       {current.schema && (
         <>
