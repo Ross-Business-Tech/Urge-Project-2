@@ -1,0 +1,310 @@
+/* Stage-change screen (M3T). Uses the page's colour variables, so it follows light and dark mode. */
+
+.transitions {
+  margin: 12px 0;
+  min-width: 0;
+}
+
+/* Timeline: a row of steps on wide screens, a column on phones. */
+.tr-timeline {
+  list-style: none;
+  margin: 8px 0 14px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tr-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.tr-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--card);
+}
+
+.tr-transition .tr-dot {
+  border-radius: 3px;
+  transform: rotate(45deg);
+}
+
+.tr-done .tr-dot {
+  background: var(--muted);
+  border-color: var(--muted);
+}
+
+.tr-current .tr-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-bg);
+}
+
+.tr-next .tr-dot {
+  border-color: var(--accent);
+}
+
+.tr-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tr-step-label {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.tr-state {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tr-current .tr-state,
+.tr-next .tr-state {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.tr-when {
+  font-size: 0.85rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.tr-done .tr-step-label {
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .tr-timeline {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .tr-step {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 10px;
+    padding-bottom: 10px;
+  }
+
+  .tr-dot {
+    flex: none;
+    margin-top: 3px;
+  }
+
+  .tr-step-body {
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 8px;
+    align-items: baseline;
+  }
+
+  .tr-when {
+    flex-basis: 100%;
+  }
+}
+
+/* Next transition card */
+.tr-nextcard {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: var(--card);
+  margin-bottom: 12px;
+}
+
+.tr-nextcard-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tr-nextcard h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.tr-plain {
+  color: var(--muted);
+  margin: 4px 0 8px;
+}
+
+.tr-nextcard p {
+  margin: 4px 0;
+}
+
+.tr-conditions,
+.tr-flags {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.tr-cond {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.tr-icon {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  background: var(--chip-bg);
+}
+
+.tr-ok .tr-icon {
+  background: #dcf3e6;
+  color: #1a7f4b;
+}
+
+.tr-watch .tr-icon {
+  background: var(--warn-bg);
+}
+
+.tr-concern .tr-icon {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* Lease-up view */
+.tr-leaseup {
+  margin-bottom: 12px;
+}
+
+.tr-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.tr-fact {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  min-width: 0;
+}
+
+.tr-fact-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.tr-fact-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tr-fact-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.tr-estimate {
+  margin: 10px 0 6px;
+}
+
+.tr-months {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  height: 90px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.tr-bar {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.tr-bar-fill {
+  display: block;
+  background: var(--accent-bg);
+  border-radius: 4px 4px 0 0;
+}
+
+.tr-pass .tr-bar-fill {
+  background: var(--accent);
+}
+
+.tr-bar-label {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: center;
+  overflow: hidden;
+}
+
+.tr-legend {
+  font-size: 0.85rem;
+  margin: 4px 0 0;
+}
+
+/* Flags */
+.tr-flag {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+}
+
+.tr-flag-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.tr-flag p {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.tr-cells {
+  font-size: 0.85rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .tr-ok .tr-icon {
+    background: #173826;
+    color: #7fd6a4;
+  }
+}
+
+.transitions .muted {
+  color: var(--muted);
+}
