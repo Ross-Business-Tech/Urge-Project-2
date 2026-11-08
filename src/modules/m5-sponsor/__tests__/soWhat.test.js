@@ -83,3 +83,17 @@ test('a project with no stage asks for one instead of guessing', () => {
   const staged1 = staged(ps, ps.build().projects[0].record)
   assert.equal(soWhat(firmHealth(f.firm, [staged1]), [staged1]).projects[0].needsStage, false)
 })
+
+test('the track record gets its own line, and a weak one stops the card from showing all clear', () => {
+  const { health, projects } = setup('s01', 's01')
+  const clear = soWhat(health, projects)
+  assert.equal(clear.tone, 'good')
+  assert.equal(clear.trackLine, null)
+  assert.equal(soWhat(health, projects, undefined, { ok: true, label: 'Strong', score: 96 }).trackLine, 'Track record: Strong (96/100).')
+  assert.equal(soWhat(health, projects, undefined, { ok: true, label: 'Strong', score: 96 }).tone, 'good')
+  const weak = soWhat(health, projects, undefined, { ok: true, label: 'Weak', score: 54 })
+  assert.equal(weak.trackLine, 'Track record: Weak (54/100).')
+  assert.equal(weak.tone, 'amber')
+  assert.equal(soWhat(health, projects, undefined, { ok: false, noTrackRecord: true }).trackLine, 'Track record: none to judge.')
+  assert.match(soWhat(health, projects, undefined, { ok: false, noDeliveryEvidence: true }).trackLine, /not scored/)
+})

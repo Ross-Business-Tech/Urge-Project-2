@@ -3,6 +3,9 @@ import { applyStageAndDate, DEFAULT_SETTINGS, STAGES } from '../shared/index.js'
 import { scenarios as samples } from '../shared/samples/scenarios.js'
 import { rescueStore } from '../../download.js'
 import SponsorPanel from './SponsorPanel.jsx'
+import { trackRecordDemos } from './demoSponsors.js'
+
+const ALL = [...samples, ...trackRecordDemos]
 
 // The Sponsor tab. If a workbook (or saved review) is loaded, it shows that sponsor first. The made-up sample sponsors
 // (the same ones used to test every module) are always available too. Nothing here is real data.
@@ -10,13 +13,13 @@ export default function SponsorView({ onChooseStage }) {
   const loaded = rescueStore.current // the review on screen in "Load workbook", if any
   const [source, setSource] = useState(loaded ? 'loaded' : 'sample')
   const [id, setId] = useState(samples[0].id)
-  const sample = samples.find((s) => s.id === id)
+  const sample = ALL.find((s) => s.id === id)
 
   const demo = useMemo(() => {
     const built = sample.build()
     return {
       firm: built.firm,
-      projects: built.projects.map((p) => applyStageAndDate(p.record, { stage: sample.stage, asOfDate: sample.asOf })),
+      projects: built.projects.map((p) => applyStageAndDate(p.record, { stage: p.stage ?? sample.stage, asOfDate: sample.asOf })),
     }
   }, [sample])
 
@@ -46,11 +49,20 @@ export default function SponsorView({ onChooseStage }) {
           <label className="field">
             <span>Made-up sample sponsor</span>
             <select value={id} onChange={(e) => setId(e.target.value)}>
-              {samples.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.title}
-                </option>
-              ))}
+              <optgroup label="Track record examples">
+                {trackRecordDemos.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Test samples (one project each)">
+                {samples.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title}
+                  </option>
+                ))}
+              </optgroup>
             </select>
             <span className="help">
               {stageLabel} stage project. {sample.what}
