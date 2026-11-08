@@ -112,12 +112,12 @@ export const runSponsorChecks = (project, context = {}) => {
     )
   }
 
-  // The headline
+  // The headline goes first, so the reviewer sees it before the detail
   const severity = severityFor(health.score)
   if (severity) {
     const failing = severity === 'high'
     const scored = health.parts.filter((p) => p.ok)
-    flags.push(
+    flags.unshift(
       maker.flag({
         id: failing ? 'M5-firm-health-failing' : 'M5-firm-health-weak',
         severity,

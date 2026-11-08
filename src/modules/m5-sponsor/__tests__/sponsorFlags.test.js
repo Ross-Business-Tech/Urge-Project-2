@@ -134,3 +134,8 @@ test('flags are frozen and the project is never changed', async () => {
   assert.equal(JSON.stringify([record, context.firm]), before)
   assert.ok(Object.isFrozen(flags[0]))
 })
+
+test('the headline flag comes first, before the individual measures', async () => {
+  const { record, context } = await load(sample('s10'))
+  assert.equal(run(record, context).flags[0].id, 'M5-firm-health-failing')
+})
