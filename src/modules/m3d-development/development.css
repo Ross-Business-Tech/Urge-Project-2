@@ -1,0 +1,152 @@
+/* M3D development risk panel */
+
+.m3d {
+  margin: 4px 0 16px;
+}
+
+.m3d-checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.m3d-check {
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.m3d-check.fail {
+  border-color: var(--danger);
+}
+
+.m3d-check.unchecked,
+.m3d-check.na {
+  border-style: dashed;
+}
+
+.m3d-check-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.m3d-icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+  background: var(--chip-bg);
+}
+
+.m3d-check.pass .m3d-icon {
+  color: #0d6b3a;
+  background: #e1f5e9;
+}
+
+.m3d-check.fail .m3d-icon {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .m3d-check.pass .m3d-icon {
+    color: #8fe0b2;
+    background: #17301f;
+  }
+}
+
+.m3d-check-heading {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.m3d-title {
+  font-weight: 600;
+}
+
+.m3d-question,
+.m3d-detail {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.m3d-detail {
+  margin: 6px 0 0;
+}
+
+.m3d-chip {
+  flex: none;
+  white-space: nowrap;
+}
+
+.m3d-items,
+.m3d-asks {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.m3d-item {
+  display: grid;
+  grid-template-columns: minmax(110px, 30%) 1fr;
+  gap: 8px;
+  padding-left: 10px;
+  border-left: 3px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+.m3d-item.pass {
+  border-left-color: #2e9e5e;
+}
+
+.m3d-item.fail {
+  border-left-color: var(--danger);
+}
+
+.m3d-item-label {
+  font-weight: 600;
+}
+
+.m3d-item-text {
+  color: var(--muted);
+}
+
+.m3d-asks li {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--chip-bg);
+  overflow-wrap: anywhere;
+}
+
+.m3d-sev.high {
+  color: var(--danger);
+}
+
+.m3d-cells {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 520px) {
+  .m3d-item {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

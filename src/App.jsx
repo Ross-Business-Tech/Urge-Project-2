@@ -4,6 +4,7 @@ import ImportPreview from './ImportPreview.jsx'
 import { RescueBoundary } from './RescueBoundary.jsx'
 import FlagFormat from './FlagFormat.jsx'
 import ScenarioDemo from './modules/m4-scenarios/ScenarioDemo.jsx'
+import ReviewDemo from './ReviewDemo.jsx'
 import SponsorView from './modules/m5-sponsor/SponsorView.jsx'
 import { rescueStore } from './download.js'
 import {
@@ -171,6 +172,12 @@ const VIEWS = [
     lede: 'The record structure, grouped the way the applicant workbook groups it. Tap a group to see its fields. Blue "new" tags mark things the workbook does not have.',
   },
   {
+    id: 'review',
+    label: 'Review',
+    heading: 'Review a project',
+    lede: 'Every module run on one made-up sample project: ranked findings first, then the detail behind each check. Pick a sample to try another.',
+  },
+  {
     id: 'scenarios',
     label: 'Scenarios',
     heading: 'Stress-test a project',
@@ -227,6 +234,7 @@ export default function App() {
           <ImportPreview />
         </RescueBoundary>
       </div>
+      {current.id === 'review' && <ReviewDemo />}
       {current.id === 'scenarios' && <ScenarioDemo />}
       {current.id === 'sponsor' && <SponsorView onChooseStage={() => setView('import')} />}
       {current.id === 'flags' && <FlagFormat />}
