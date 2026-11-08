@@ -17,6 +17,7 @@ import {
 import { GroupEditor } from './RecordEditor.jsx'
 import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
 import { T12Tools } from './T12Tools.jsx'
+import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
 import { ScenarioPanel } from './modules/m4-scenarios/ScenarioPanel.jsx'
 import { downloadReview, rescueStore } from './download.js'
 
@@ -115,7 +116,7 @@ function StageControls({ project, record, onChange }) {
 
 const PROJECT_GROUPS = projectSchema.filter((g) => g.id !== 'stage')
 
-const ProjectCard = memo(function ProjectCard({ project, record, settings, onChange, onEdit }) {
+const ProjectCard = memo(function ProjectCard({ project, record, settings, onChange, onEdit, firm, facts, report }) {
   const [open, setOpen] = useState(false)
   const visibility = project.state === 'veryHidden' ? 'very hidden tab' : project.state === 'hidden' ? 'hidden tab' : null
   const { ready } = projectReadiness(record)
@@ -134,6 +135,7 @@ const ProjectCard = memo(function ProjectCard({ project, record, settings, onCha
         <div className="body">
           <StageControls project={project} record={record} onChange={onChange} />
           <KeyRatios record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
+          <IntegrityChecklist record={record} firm={firm} facts={facts} report={report} />
           <ScenarioPanel record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
           <p className="section-label">Values (tap a group to view or edit)</p>
           <ul className="groups">
@@ -216,7 +218,7 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
       )}
       {withData.map((p) => {
         const record = recordFor(p.id)
-        return record ? <ProjectCard key={p.id} project={p} record={record} settings={result.settings} onChange={onProjectChange} onEdit={onEdit} /> : null
+        return record ? <ProjectCard key={p.id} project={p} record={record} settings={result.settings} onChange={onProjectChange} onEdit={onEdit} firm={result.firm} facts={result.facts} report={report} /> : null
       })}
       {emptyReadable.length > 0 && (
         <p className="note">
