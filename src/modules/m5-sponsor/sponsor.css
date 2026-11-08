@@ -1,0 +1,152 @@
+/* M5 sponsor page */
+
+.sponsor {
+  margin: 4px 0 16px;
+}
+
+.sponsor-name {
+  margin: 4px 0;
+  font-size: 1.25rem;
+}
+
+.sponsor-sub {
+  margin: 18px 0 8px;
+  font-weight: 600;
+}
+
+.sponsor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.sponsor-card {
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sponsor-card.concern {
+  border-color: var(--danger);
+}
+
+.sponsor-card.na {
+  border-style: dashed;
+}
+
+.sponsor-card-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.sponsor-card-value {
+  margin: 4px 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.sponsor-card-value.na {
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+.sponsor-flags ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.sponsor-flag {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  overflow-wrap: anywhere;
+}
+
+.sponsor-flag.high {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.sponsor-flag.medium {
+  background: var(--warn-bg);
+}
+
+.sponsor-flag p {
+  margin: 4px 0 0;
+}
+
+.sponsor-sev {
+  flex: none;
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.sponsor-flag.high .sponsor-sev {
+  color: var(--danger);
+}
+
+.sponsor .mono {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+.sponsor-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.sponsor-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.sponsor-table th,
+.sponsor-table td {
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.sponsor-table th {
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.sponsor-table tr:last-child td {
+  border-bottom: none;
+}
+
+.sponsor-table .result.missed {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.sponsor-table .result.delivered {
+  font-weight: 600;
+}
+
+.sponsor-table .result.na {
+  color: var(--muted);
+  min-width: 160px;
+}
