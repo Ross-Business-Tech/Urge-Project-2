@@ -8,6 +8,7 @@ const signedUsd = (n) => `${n > 0 ? '+' : ''}${fmt.usd(n)}`
 const signedTimes = (n) => `${n > 0 ? '+' : ''}${n.toFixed(2)}×`
 
 // How far a lever can move, in the words a reviewer would use.
+const months = (h) => `${Number.isInteger(h) ? h : h.toFixed(1)} months`
 const AMOUNT = {
   rentChange: (h) => `down ${pct(h)}`,
   vacancyChange: (h) => `up ${(h * 100).toFixed(1)} points`,
@@ -17,7 +18,6 @@ const AMOUNT = {
   delayMonths: months,
   absorptionMonths: months,
 }
-const months = (h) => `${Number.isInteger(h) ? h : h.toFixed(1)} months`
 const NAME = { rentChange: 'Rents', vacancyChange: 'Vacancy', expenseGrowth: 'Operating expenses', takeoutRate: 'Loan rate' }
 
 function room(id, r) {

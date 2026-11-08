@@ -6,6 +6,7 @@ import { runScenarios } from './engine.js'
 import { runScenarioChecks, basisSentence } from './index.js'
 import { leverText } from './format.js'
 import { Sensitivity } from './Sensitivity.jsx'
+import { ScenarioBoundary } from './ScenarioBoundary.jsx'
 
 const SEVERITY_CHIP = { high: 'warn', medium: 'amber', low: '' }
 
@@ -124,7 +125,7 @@ function Basis({ basis, stage, choice, onChoose }) {
 
 // The scenario screen for one project: three cases side by side (stacked on a phone), a slider for each lever in each
 // case, and what the downside means for the review. The sliders only change this screen; they are not saved with the record.
-export function ScenarioPanel({ record, settings = DEFAULT_SETTINGS, onOpenGroup }) {
+function ScenarioPanelInner({ record, settings = DEFAULT_SETTINGS, onOpenGroup }) {
   const stage = record.data.stage.stage
   const [levers, setLevers] = useState(null) // null until a slider is moved: the starting values are used
   const [basisChoice, setBasisChoice] = useState('auto') // 'projection' = compare with the applicant's numbers (completed projects)
@@ -247,5 +248,13 @@ export function ScenarioPanel({ record, settings = DEFAULT_SETTINGS, onOpenGroup
         ))}
       </details>
     </section>
+  )
+}
+
+export function ScenarioPanel(props) {
+  return (
+    <ScenarioBoundary>
+      <ScenarioPanelInner {...props} />
+    </ScenarioBoundary>
   )
 }
