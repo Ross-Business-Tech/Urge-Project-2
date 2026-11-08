@@ -34,3 +34,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Agent working copies (created by the build tool, not part of the app)
+.claude/worktrees/
