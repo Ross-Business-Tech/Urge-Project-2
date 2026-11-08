@@ -5,6 +5,7 @@ import { RescueBoundary } from './RescueBoundary.jsx'
 import FlagFormat from './FlagFormat.jsx'
 import ScenarioDemo from './modules/m4-scenarios/ScenarioDemo.jsx'
 import ReviewDemo from './ReviewDemo.jsx'
+import SponsorView from './modules/m5-sponsor/SponsorView.jsx'
 import { rescueStore } from './download.js'
 import {
   firmSchema,
@@ -183,6 +184,12 @@ const VIEWS = [
     lede: 'What happens to the loan in the downside, base and upside cases? Pick a made-up sample project, or open a project in "Load workbook" to stress your own. Move the sliders to try your own numbers.',
   },
   {
+    id: 'sponsor',
+    label: 'Sponsor',
+    heading: 'Can this sponsor deliver?',
+    lede: 'How healthy is the sponsor firm? A score from 0 to 100 built from its cash, earnings and debt, and what it means for the projects. If you have loaded a workbook, this shows that sponsor. Otherwise pick a made-up sample.',
+  },
+  {
     id: 'flags',
     label: 'Flag format',
     heading: 'What a flag looks like',
@@ -229,6 +236,7 @@ export default function App() {
       </div>
       {current.id === 'review' && <ReviewDemo />}
       {current.id === 'scenarios' && <ScenarioDemo />}
+      {current.id === 'sponsor' && <SponsorView onChooseStage={() => setView('import')} />}
       {current.id === 'flags' && <FlagFormat />}
       {current.schema && (
         <>

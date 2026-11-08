@@ -1,288 +1,310 @@
-// M2 engine: works out each comparison row (rents, expenses per unit, cost per square foot) for one project against one
-// benchmark set. The same engine runs for every stage; only the set and where the project's numbers come from change.
+// M2: the benchmarking engine (layer 2). "Are these rents, expenses and costs reasonable?"
 //
-// A row is:
-//   { id, metric, label, basis, stage, setName, madeUp, unit, value, range, status, percentOutside, cellPaths, note,
-//     direction, unitType?, amiLevel? }
-// status: 'within' | 'above' | 'below' | 'no-benchmark' | 'missing' | 'not-applicable'
-// Nothing here guesses: a blank or unbelievable input gives status 'missing' with the reason, never zero.
+// One engine for every stage. Only the benchmark set changes (M0's loader picks it by stage), and what "the project's
+// number" means:
+//
+//   metric          development                lease_up                               completed
+//   rents           projected rents (rent roll)  achieved rents from the T-12, net of     in-place rents (rent roll)
+//                                                concessions (projected if no T-12)
+//   expenses/unit   underwritten expenses        run-rate: last 3 T-12 months x 12        T-12 expenses, annualized
+//                                                (underwritten if no T-12)               (underwritten if no T-12)
+//   cost per sq ft  hard, soft, total            remaining cost: not in the workbook      not compared
+//
+// compareProject(project, context) returns { ok, stage, set, rows } where each row is one line of the table on screen:
+//   { id, metric, label, basis, unit, value, range, position, percentFromMedian, status, detail, cells, flags }
+// status: 'within' | 'above' | 'below' | 'no_benchmark' | 'not_available' | 'not_applicable'
 
-import { projectSchema, normalizeAmi, normalizeUnitType, rentBenchmark, expenseBenchmark, costBenchmark, compareToRange, noi, totalDevelopmentCost } from '../shared/index.js'
+import {
+  projectSchema,
+  loadBenchmarks,
+  rentBenchmark,
+  expenseBenchmark,
+  costBenchmark,
+  compareToRange,
+  normalizeUnitType,
+  normalizeAmi,
+  createFlagMaker,
+  missingDataFlag,
+  citeCells,
+  fmt,
+} from '../shared/index.js'
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
-const believable = (v, max = 1e12) => isNum(v) && v >= 0 && v <= max
-const sum = (list) => list.reduce((t, v) => t + v, 0)
+const pos = (v) => isNum(v) && v > 0
+const sum = (list) => list.reduce((t, v) => t + (isNum(v) ? v : 0), 0)
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
+const T12_REF = 'T-12 template'
+
+export const UNITS = {
+  rent: { short: '/unit/month', format: (n) => fmt.usd(n) },
+  expense: { short: '/unit/year', format: (n) => fmt.usd(n) },
+  cost: { short: '/sq ft', format: (n) => fmt.usd(n) },
+}
 
 const BUDGET_ROWS = projectSchema.find((g) => g.id === 'budget').rows
 const HARD_KEYS = BUDGET_ROWS.filter((r) => r.section.startsWith('Hard costs')).map((r) => r.key)
 const SOFT_KEYS = BUDGET_ROWS.filter((r) => r.section.startsWith('Soft costs')).map((r) => r.key)
 const OPEX_KEYS = projectSchema.find((g) => g.id === 'operatingExpenses').rows.map((r) => r.key)
 
-export const UNITS = {
-  rent: 'per unit per month',
-  expense: 'per unit per year',
-  sqft: 'per square foot',
+const monthIdx = (text) => {
+  const m = /^(\d{4})-(0[1-9]|1[0-2])(?:-\d{2})?$/.exec(typeof text === 'string' ? text : '')
+  return m ? Number(m[1]) * 12 + Number(m[2]) - 1 : null
 }
 
-// Which project numbers are compared at each stage, in plain words.
-const RENT_BASIS = {
-  development: 'Projected rent from the application',
-  lease_up: 'Rent on the application rent roll',
-  completed: 'In-place rent on the rent roll',
-}
-
-// Is the record shaped like a project record, enough for M2 to read? Returns the list of what is missing.
-export function recordProblems(project) {
-  const d = project?.data
-  if (!d || typeof d !== 'object') return ['the project record']
-  const problems = []
-  const table = (g) => d[g] && Array.isArray(d[g].rows)
-  const grid = (g) => d[g] && d[g].lines && typeof d[g].lines === 'object'
-  if (!table('residentialIncome')) problems.push('the residential income table')
-  if (!table('commercialIncome')) problems.push('the commercial income table')
-  if (!table('otherIncome')) problems.push('the other income table')
-  if (!grid('operatingExpenses')) problems.push('the operating expenses')
-  if (!table('otherExpenses')) problems.push('the other operating expenses')
-  if (!grid('budget')) problems.push('the development budget')
-  if (!table('t12')) problems.push('the T-12 table')
-  if (!table('sources')) problems.push('the sources of money')
-  return problems
-}
-
-const rowLabel = (row, i) => {
-  const type = typeof row.unitType === 'string' && row.unitType.trim() ? row.unitType.trim() : `row ${i + 1}`
-  const ami = normalizeAmi(row.amiLevel)
-  const level = ami === null ? 'market rate' : ami === undefined ? `"${row.amiLevel}" AMI` : `${ami}% AMI`
-  return `${type} (${level})`
-}
-
-function compared(base, value, range) {
-  const c = compareToRange(value, range)
-  if (!c.ok) return { ...base, value, range: null, status: 'missing', note: c.reason }
-  const percentOutside = c.position === 'above' ? (range.high > 0 ? value / range.high - 1 : null) : c.position === 'below' ? (range.low > 0 ? 1 - value / range.low : null) : 0
-  return { ...base, value, range, status: c.position, percentOutside }
-}
-
-// ---------------------------------------------------------------------------------------------
-// Rents
-// ---------------------------------------------------------------------------------------------
-
-function residentialRows(project) {
-  return project.data.residentialIncome.rows.map((row, i) => ({ row: row ?? {}, i }))
-}
-
-function rentRows(project, set, ctx) {
-  const out = []
-  const rows = residentialRows(project)
-  if (rows.length === 0) {
-    out.push({ ...ctx, id: 'rent', metric: 'rent', label: 'Rents', basis: RENT_BASIS[ctx.stage], unit: UNITS.rent, value: null, range: null, status: 'missing', note: 'No unit types are entered in the residential income table.', cellPaths: [] })
-    return out
-  }
-  for (const { row, i } of rows) {
-    const p = (k) => `residentialIncome.rows.${i}.${k}`
-    const base = {
-      ...ctx,
-      id: `rent-${i}`,
-      metric: 'rent',
-      label: `Rent: ${rowLabel(row, i)}`,
-      basis: RENT_BASIS[ctx.stage],
-      unit: UNITS.rent,
-      unitType: row.unitType ?? null,
-      amiLevel: row.amiLevel ?? null,
-      cellPaths: [p('unitType'), p('amiLevel'), p('monthlyRent')],
-    }
-    const hasType = normalizeUnitType(row.unitType) !== ''
-    if (!hasType) {
-      out.push({ ...base, value: null, range: null, status: 'missing', note: `The unit type in residential row ${i + 1} is blank.` })
-      continue
-    }
-    if (!believable(row.monthlyRent, 1e7)) {
-      const what = row.monthlyRent === null || row.monthlyRent === undefined || row.monthlyRent === '' ? 'blank' : `${row.monthlyRent}, which is not a believable rent`
-      out.push({ ...base, value: null, range: null, status: 'missing', note: `The monthly rent for ${rowLabel(row, i)} is ${what}.` })
-      continue
-    }
-    const b = rentBenchmark(set, row.unitType, row.amiLevel)
-    if (!b.ok) {
-      out.push({ ...base, value: row.monthlyRent, range: null, status: 'no-benchmark', note: b.reason })
-      continue
-    }
-    out.push({ ...compared(base, row.monthlyRent, b.range), comparedTo: b.basis })
-  }
-  return out
-}
-
-// T-12 months, one per calendar month (a later row for the same month replaces an earlier one), oldest first.
-function t12Months(project) {
+// T-12 months in date order, one per calendar month (a later row for the same month wins, as in the calculators).
+function t12Months(record) {
   const byMonth = new Map()
-  project.data.t12.rows.forEach((row, i) => {
-    const m = /^(\d{4})-(0[1-9]|1[0-2])(?:-\d{2})?$/.exec(typeof row?.month === 'string' ? row.month : '')
-    if (m) byMonth.set(`${m[1]}-${m[2]}`, { row, i, month: `${m[1]}-${m[2]}` })
-  })
-  return [...byMonth.values()].sort((a, b) => (a.month < b.month ? -1 : 1))
+  for (const row of record.data.t12.rows) {
+    const idx = monthIdx(row.month)
+    if (idx !== null) byMonth.set(idx, row)
+  }
+  return [...byMonth.entries()].sort((a, b) => a[0] - b[0]).map(([, row]) => row)
 }
 
-// Lease-up looks at the latest 3 months (the run rate); completed looks at the whole T-12.
-const recentMonths = (months, stage) => (stage === 'lease_up' ? months.slice(-3) : months)
+const residentialUnits = (record) => sum(record.data.residentialIncome.rows.map((r) => (pos(r.units) ? r.units : 0)))
 
-// Achieved rent from the T-12: residential revenue net of concessions, per unit per month, against the unit-weighted
-// benchmark for the project's unit mix. Lease-up and completed only, and only when a T-12 is loaded.
-function achievedRentRow(project, set, ctx) {
-  if (ctx.stage === 'development') return null
-  const months = recentMonths(t12Months(project), ctx.stage).filter(({ row }) => isNum(row.residentialRevenue))
-  if (months.length === 0) return null
-  const base = {
-    ...ctx,
-    id: 'rent-achieved',
-    metric: 'rent',
-    label: 'Achieved rent from the T-12 (all units, after free rent)',
-    basis: `Average of ${months.length} month${months.length === 1 ? '' : 's'} of the T-12 (${months[0].month} to ${months.at(-1).month})`,
-    unit: UNITS.rent,
-    cellPaths: months.flatMap(({ i }) => [`t12.rows.${i}.residentialRevenue`, `t12.rows.${i}.concessions`]),
-  }
-  const bad = months.find(({ row }) => !believable(row.residentialRevenue) || (row.concessions !== null && row.concessions !== undefined && !(isNum(row.concessions) && Math.abs(row.concessions) <= 1e12)))
-  if (bad) return { ...base, value: null, range: null, status: 'missing', note: `The T-12 for ${bad.month} has a revenue or concessions figure that is not believable.` }
+// ---------------------------------------------------------------------------------------------
+// Severity: which direction is the risk, and how far outside the range is the value?
+// ---------------------------------------------------------------------------------------------
 
-  const rows = residentialRows(project).filter(({ row }) => believable(row.units, 1e7) && row.units > 0)
-  const units = sum(rows.map(({ row }) => row.units))
-  if (units <= 0) return { ...base, value: null, range: null, status: 'missing', note: 'The number of units is not entered, so rent per unit cannot be worked out.' }
-  base.cellPaths = [...base.cellPaths, ...rows.map(({ i }) => `residentialIncome.rows.${i}.units`)]
+// How far past the nearer edge of the range, as a share of that edge (0.1 = 10% past it).
+const beyondEdge = (value, range) => (value > range.high ? value / range.high - 1 : value < range.low ? 1 - value / range.low : 0)
 
-  const monthly = sum(months.map(({ row }) => row.residentialRevenue - Math.abs(isNum(row.concessions) ? row.concessions : 0))) / months.length
-  const value = monthly / units
+// Rents above the market overstate income; expenses below the market understate costs. Those are the risky directions.
+// The other direction is worth a mention but rarely a concern. Cost per square foot below the range is a question about
+// scope (missing lines, a thin budget), which M3D's budget checks own in detail, so M2 only notes it.
+const RISKY = { rent: 'above', expense: 'below', cost: 'above' }
 
-  // Weighted benchmark for the unit mix. Every unit type must have a comparable benchmark.
-  const weighted = { low: 0, median: 0, high: 0 }
-  for (const { row, i } of rows) {
-    const b = rentBenchmark(set, row.unitType, row.amiLevel)
-    if (!b.ok) return { ...base, value, range: null, status: 'no-benchmark', note: `${rowLabel(row, i)}: ${b.reason}` }
-    for (const k of ['low', 'median', 'high']) weighted[k] += (b.range[k] * row.units) / units
-  }
-  const range = { low: Math.round(weighted.low), median: Math.round(weighted.median), high: Math.round(weighted.high) }
-  return { ...compared(base, value, range), comparedTo: rows.length === 1 ? rentBenchmark(set, rows[0].row.unitType, rows[0].row.amiLevel).basis : 'the unit mix' }
+function severityFor(metric, position, past) {
+  // A value just past the edge (under 5%) is within the noise of any benchmark: worth a note, not a warning.
+  if (position === RISKY[metric]) return past >= 0.2 ? 'high' : past >= 0.05 ? 'medium' : 'low'
+  if (metric === 'cost') return 'low'
+  return past >= 0.25 ? 'medium' : 'low'
 }
 
 // ---------------------------------------------------------------------------------------------
-// Expenses per unit per year
+// Rows
 // ---------------------------------------------------------------------------------------------
 
-function unitCount(project) {
-  const rows = residentialRows(project).filter(({ row }) => isNum(row.units))
-  if (rows.some(({ row }) => !believable(row.units, 1e7))) return { ok: false, reason: 'A number of units is not believable (negative or too large).' }
-  const units = sum(rows.map(({ row }) => row.units))
-  if (units <= 0) return { ok: false, reason: 'The number of residential units is not entered.' }
-  return { ok: true, value: units, paths: rows.map(({ i }) => `residentialIncome.rows.${i}.units`) }
-}
-
-const expensePaths = (project) => [
-  ...OPEX_KEYS.filter((k) => isNum(project.data.operatingExpenses.lines[k]?.amount)).map((k) => `operatingExpenses.lines.${k}.amount`),
-  ...project.data.otherExpenses.rows.map((r, i) => (isNum(r?.amount) ? `otherExpenses.rows.${i}.amount` : null)).filter(Boolean),
-]
-
-// Yearly expenses from the T-12 (lease-up: the latest 3 months; completed: every month), or null if there is no T-12.
-function t12Expenses(project, stage) {
-  const months = recentMonths(t12Months(project), stage).filter(({ row }) => [...OPEX_KEYS, 'otherExpenses'].some((k) => isNum(row[k])))
-  if (months.length === 0) return null
-  let total = 0
-  const paths = []
-  for (const { row, i, month } of months) {
-    for (const k of [...OPEX_KEYS, 'otherExpenses']) {
-      if (row[k] === null || row[k] === undefined) continue
-      if (!believable(row[k])) return { ok: false, reason: `The T-12 for ${month} has an expense that is not believable (${row[k]}).` }
-      total += row[k]
-      paths.push(`t12.rows.${i}.${k}`)
-    }
-  }
-  return { ok: true, value: (total / months.length) * 12, paths, basis: `${stage === 'lease_up' ? 'Run rate from the latest' : 'T-12 expenses over'} ${months.length} month${months.length === 1 ? '' : 's'} (${months[0].month} to ${months.at(-1).month}), times 12 ÷ ${months.length}` }
-}
-
-function expenseRow(project, set, ctx) {
-  const base = { ...ctx, id: 'expenses', metric: 'expenses', label: 'Operating expenses per unit', unit: UNITS.expense, cellPaths: [] }
-  const units = unitCount(project)
-
-  let total
-  if (ctx.stage !== 'development') {
-    total = t12Expenses(project, ctx.stage)
-    if (total === null && ctx.stage === 'completed') {
-      return { ...base, basis: 'T-12 expenses', value: null, range: null, status: 'missing', note: 'No T-12 with expenses is loaded, so actual expenses cannot be compared.', missingFill: ['the T-12 (monthly expenses)'] }
-    }
-  }
-  if (!total) {
-    const n = noi(project) // the shared calculator adds up the expense lines
-    total = n.ok
-      ? { ok: true, value: n.expenses, paths: expensePaths(project), basis: ctx.stage === 'lease_up' ? 'Underwritten expenses (no T-12 expenses yet)' : 'Underwritten expenses from the application' }
-      : { ok: false, reason: n.reason, needs: n.needs }
-  }
-  base.basis = total.basis ?? 'Operating expenses'
-  if (!total.ok) return { ...base, value: null, range: null, status: 'missing', note: total.reason, missingFill: (total.needs ?? []).map((x) => x.label) }
-  if (!units.ok) return { ...base, value: null, range: null, status: 'missing', note: units.reason, missingFill: ['Residential income (number of units)'] }
-  base.cellPaths = [...total.paths, ...units.paths]
-  base.basis = `${base.basis}, across ${units.value} unit${units.value === 1 ? '' : 's'}`
-  return compared(base, total.value / units.value, expenseBenchmark(set).range)
-}
-
-// ---------------------------------------------------------------------------------------------
-// Cost per square foot (development and lease-up only)
-// ---------------------------------------------------------------------------------------------
-
-function squareFeet(project) {
-  const res = residentialRows(project).filter(({ row }) => isNum(row.units) && row.units > 0)
-  const com = project.data.commercialIncome.rows.map((row, i) => ({ row: row ?? {}, i })).filter(({ row }) => isNum(row.sqft))
-  const noSqft = res.filter(({ row }) => !believable(row.sqft, 1e7))
-  if (noSqft.length) return { ok: false, reason: `Square feet per unit is missing or not believable for ${noSqft.map(({ row, i }) => rowLabel(row, i)).join(', ')}.` }
-  if (com.some(({ row }) => !believable(row.sqft, 1e9))) return { ok: false, reason: 'A commercial square footage is not believable.' }
-  const total = sum(res.map(({ row }) => row.units * row.sqft)) + sum(com.map(({ row }) => row.sqft))
-  if (!(total > 0)) return { ok: false, reason: 'No square feet are entered (residential square feet per unit or commercial square feet).' }
+function compared({ id, metric, label, basis, value, range, cells, rangeBasis }) {
+  const c = compareToRange(value, range)
+  const unit = UNITS[metric]
+  const where = c.position === 'within' ? 'within' : `${c.position}`
   return {
-    ok: true,
-    value: total,
-    paths: [...res.flatMap(({ i }) => [`residentialIncome.rows.${i}.units`, `residentialIncome.rows.${i}.sqft`]), ...com.map(({ i }) => `commercialIncome.rows.${i}.sqft`)],
+    id,
+    metric,
+    label,
+    basis,
+    unit: unit.short,
+    value,
+    range,
+    rangeBasis,
+    position: c.position,
+    percentFromMedian: c.percentFromMedian,
+    status: c.position,
+    past: beyondEdge(value, range),
+    detail: `${unit.format(value)}${unit.short} vs. ${unit.format(range.low)} to ${unit.format(range.high)} (median ${unit.format(range.median)})${rangeBasis ? `, ${rangeBasis}` : ''}: ${where} the range.`,
+    cells,
   }
 }
 
-function budgetPart(project, keys) {
-  const lines = project.data.budget.lines
-  const entered = keys.filter((k) => lines[k]?.amount !== null && lines[k]?.amount !== undefined)
-  const bad = entered.find((k) => !believable(lines[k].amount))
-  if (bad) return { ok: false, reason: `Budget line "${BUDGET_ROWS.find((r) => r.key === bad).label}" is ${lines[bad].amount}, which is not believable.` }
-  const total = sum(entered.map((k) => lines[k].amount))
-  if (!(total > 0)) return { ok: false, reason: 'No amounts are entered for these budget lines.' }
-  return { ok: true, value: total, paths: entered.map((k) => `budget.lines.${k}.amount`) }
+const unavailable = (id, metric, label, status, detail, cells = []) => ({ id, metric, label, status, detail, cells, unit: UNITS[metric].short })
+
+// Rents row by row (rent roll), against the stage's set. AMI units only against their own AMI level.
+function rentRollRows(record, set, basis) {
+  const rows = record.data.residentialIncome.rows
+  return rows
+    .map((r, i) => ({ r, i }))
+    .filter(({ r }) => pos(r.monthlyRent))
+    .map(({ r, i }) => {
+      const ami = normalizeAmi(r.amiLevel)
+      const label = `Rent: ${r.unitType || `row ${i + 1}`}${ami ? ` at ${ami}% AMI` : ami === null ? ' (market)' : ` (AMI "${r.amiLevel}")`}`
+      const cells = citeCells(record, [`residentialIncome.rows.${i}.monthlyRent`, `residentialIncome.rows.${i}.unitType`, ...(r.amiLevel !== null && r.amiLevel !== undefined ? [`residentialIncome.rows.${i}.amiLevel`] : [])])
+      const b = rentBenchmark(set, r.unitType, r.amiLevel)
+      if (!b.ok) return { ...unavailable(`rent-${i}`, 'rent', label, 'no_benchmark', `${fmt.usd(r.monthlyRent)}/unit/month. ${b.reason}`, cells), value: r.monthlyRent }
+      return compared({ id: `rent-${i}`, metric: 'rent', label, basis, value: r.monthlyRent, range: b.range, rangeBasis: b.basis === 'market' ? 'market comps' : `${b.basis} comps`, cells })
+    })
 }
 
-const COST_PARTS = [
-  { part: 'hard', label: 'Hard cost per square foot', what: 'hard cost lines' },
-  { part: 'soft', label: 'Soft cost per square foot', what: 'soft cost lines' },
-  { part: 'total', label: 'Total development cost per square foot', what: 'the development budget' },
-]
+// Lease-up: achieved rent per unit from the latest T-12 months (residential revenue less concessions, per unit), against
+// the unit-mix-weighted range of the stage's set.
+function achievedRentRow(record, set) {
+  const label = 'Rent: achieved, all units'
+  const basis = 'Achieved rent from the T-12, net of concessions'
+  const months = t12Months(record).filter((m) => isNum(m.residentialRevenue)).slice(-3)
+  const units = residentialUnits(record)
+  if (!months.length || !units) return null
+  const mix = record.data.residentialIncome.rows.filter((r) => pos(r.units))
+  const benches = mix.map((r) => ({ units: r.units, b: rentBenchmark(set, r.unitType, r.amiLevel), r }))
+  const missing = benches.filter((x) => !x.b.ok)
+  const perMonth = months.map((m) => (m.residentialRevenue - Math.abs(isNum(m.concessions) ? m.concessions : 0)) / units)
+  const value = sum(perMonth) / perMonth.length
+  const cells = [T12_REF, ...citeCells(record, mix.map((_, i) => `residentialIncome.rows.${i}.units`))]
+  if (missing.length) {
+    return { ...unavailable('rent-achieved', 'rent', label, 'no_benchmark', `${fmt.usd(value)}/unit/month achieved. ${missing[0].b.reason}`, cells), value, basis }
+  }
+  const weight = (k) => sum(benches.map((x) => x.units * x.b.range[k])) / units
+  const range = { low: weight('low'), median: weight('median'), high: weight('high') }
+  const types = [...new Set(mix.map((r) => normalizeUnitType(r.unitType)))].join(', ')
+  return compared({ id: 'rent-achieved', metric: 'rent', label, basis: `${basis} (last ${plural(months.length, 'month')})`, value, range, rangeBasis: `weighted by the unit mix (${types})`, cells })
+}
 
-function costRows(project, set, ctx) {
-  const area = squareFeet(project)
-  const basis =
-    ctx.stage === 'lease_up'
-      ? 'The development budget (the tool does not track remaining cost separately, so the whole budget is used), over rentable square feet'
-      : 'The development budget, over rentable square feet (residential units × square feet per unit, plus commercial)'
-  return COST_PARTS.map(({ part, label, what }) => {
-    const base = { ...ctx, id: `cost-${part}`, metric: 'cost', part, label, basis, unit: UNITS.sqft, cellPaths: [] }
-    const b = costBenchmark(set, part)
-    if (!b.ok) return { ...base, value: null, range: null, status: 'not-applicable', note: b.reason }
-    let amount
-    if (part === 'total') {
-      const t = totalDevelopmentCost(project) // the shared calculator
-      amount = t.ok ? { ok: true, value: t.value, paths: budgetPart(project, BUDGET_ROWS.map((r) => r.key)).paths ?? [] } : { ok: false, reason: t.reason }
-    } else amount = budgetPart(project, part === 'hard' ? HARD_KEYS : SOFT_KEYS)
-    if (!amount.ok) return { ...base, value: null, range: null, status: 'missing', note: `${label}: ${amount.reason}`, missingFill: [`Development budget (${what})`] }
-    if (!area.ok) return { ...base, value: null, range: null, status: 'missing', note: area.reason, missingFill: ['Residential income (square feet per unit)'] }
-    return { ...compared({ ...base, cellPaths: [...amount.paths, ...area.paths] }, amount.value / area.value, b.range), dollars: amount.value, squareFeet: area.value }
+function rentRows(record, set, stage) {
+  if (!record.data.residentialIncome.rows.some((r) => pos(r.monthlyRent))) {
+    return [unavailable('rent', 'rent', 'Rents', 'not_available', 'No residential rents entered, so there is nothing to compare.', citeCells(record, ['residentialIncome.rows']))]
+  }
+  if (stage === 'lease_up') {
+    const achieved = achievedRentRow(record, set)
+    if (achieved) return [achieved]
+    return rentRollRows(record, set, 'Projected rents (no T-12 loaded, so achieved rents are not known yet)')
+  }
+  return rentRollRows(record, set, stage === 'completed' ? 'In-place rents from the rent roll' : 'Projected rents')
+}
+
+// Expenses per residential unit per year.
+function expenseRow(record, set, stage) {
+  const label = 'Operating expenses per unit'
+  const units = residentialUnits(record)
+  const range = expenseBenchmark(set).range
+  if (!units) return unavailable('expenses', 'expense', label, 'not_available', 'No residential units entered, so expenses per unit cannot be worked out.', citeCells(record, ['residentialIncome.rows']))
+
+  const monthExpense = (m) => {
+    const vals = [...OPEX_KEYS.map((k) => m[k]), m.otherExpenses]
+    return vals.some(isNum) ? sum(vals) : null
+  }
+  if (stage !== 'development') {
+    const all = t12Months(record).map(monthExpense).filter(isNum)
+    const used = stage === 'lease_up' ? all.slice(-3) : all
+    if (used.length) {
+      const yearly = (sum(used) / used.length) * 12
+      return compared({
+        id: 'expenses',
+        metric: 'expense',
+        label,
+        basis: stage === 'lease_up' ? `Run-rate from the last ${plural(used.length, 'T-12 month')}, times 12` : `T-12 expenses${used.length < 12 ? ` (${plural(used.length, 'month')}, annualized)` : ''}`,
+        value: yearly / units,
+        range,
+        rangeBasis: `${fmt.usd(yearly)} a year over ${plural(units, 'unit')}`,
+        cells: [T12_REF, ...citeCells(record, record.data.residentialIncome.rows.map((_, i) => `residentialIncome.rows.${i}.units`))],
+      })
+    }
+  }
+  const lines = OPEX_KEYS.filter((k) => isNum(record.data.operatingExpenses.lines[k]?.amount))
+  const other = record.data.otherExpenses.rows.map((r, i) => ({ r, i })).filter(({ r }) => isNum(r.amount))
+  if (!lines.length && !other.length) return unavailable('expenses', 'expense', label, 'not_available', 'No operating expenses entered.', citeCells(record, ['operatingExpenses.lines']))
+  const yearly = sum(lines.map((k) => record.data.operatingExpenses.lines[k].amount)) + sum(other.map(({ r }) => r.amount))
+  const KEY_LINES = { propertyTaxes: 'property taxes', propertyLiabilityInsurance: 'insurance', propertyManagement: 'property management' }
+  const blank = Object.entries(KEY_LINES).filter(([k]) => !isNum(record.data.operatingExpenses.lines[k]?.amount)).map(([, t]) => t)
+  const row = compared({
+    id: 'expenses',
+    metric: 'expense',
+    label,
+    basis: stage === 'development' ? 'Underwritten expenses at stabilization' : 'Underwritten expenses (no T-12 loaded, so actuals are not known)',
+    value: yearly / units,
+    range,
+    rangeBasis: `${fmt.usd(yearly)} a year over ${plural(units, 'unit')}`,
+    cells: citeCells(record, [...lines.map((k) => `operatingExpenses.lines.${k}.amount`), ...other.map(({ i }) => `otherExpenses.rows.${i}.amount`)]),
+  })
+  if (blank.length) row.detail += ` Note: no amount for ${blank.join(', ')}, so the total may be understated.`
+  return row
+}
+
+// Cost per square foot: hard, soft and total, over residential plus commercial square feet.
+function costRows(record, set, stage, budgetTab) {
+  const titles = { hard: 'Hard cost per sq ft', soft: 'Soft cost per sq ft', total: 'Total cost per sq ft' }
+  if (stage === 'completed' || !set.costPerSqft) return [unavailable('cost', 'cost', 'Cost per sq ft', 'not_applicable', 'Not compared for completed projects: the cost is already spent.')]
+  if (stage === 'lease_up') {
+    return [unavailable('cost', 'cost', 'Remaining cost per sq ft', 'not_available', 'The workbook does not record how much of the budget is already spent, so the remaining cost cannot be compared. Ask the sponsor for the latest draw report.')]
+  }
+  const resSqft = sum(record.data.residentialIncome.rows.map((r) => (pos(r.units) && pos(r.sqft) ? r.units * r.sqft : 0)))
+  const comSqft = sum(record.data.commercialIncome.rows.map((r) => (pos(r.sqft) ? r.sqft : 0)))
+  const sqft = resSqft + comSqft
+  const amount = (k) => record.data.budget.lines[k]?.amount
+  const hard = sum(HARD_KEYS.map(amount).filter((v) => isNum(v) && v >= 0))
+  const soft = sum(SOFT_KEYS.map(amount).filter((v) => isNum(v) && v >= 0))
+  const total = sum(BUDGET_ROWS.map((r) => amount(r.key)).filter((v) => isNum(v) && v >= 0))
+  if (!sqft) return [unavailable('cost', 'cost', 'Cost per sq ft', 'not_available', 'No square footage entered (residential sq ft per unit or commercial sq ft).', citeCells(record, ['residentialIncome.rows']))]
+  if (!total) return [unavailable('cost', 'cost', 'Cost per sq ft', 'not_available', 'No development budget entered.', citeCells(record, ['budget.lines']))]
+  const sqftText = `${Math.round(sqft).toLocaleString('en-US')} sq ft${comSqft ? ` (${Math.round(resSqft).toLocaleString('en-US')} residential, ${Math.round(comSqft).toLocaleString('en-US')} commercial)` : ''}`
+  const totals = { hard, soft, total }
+  const cellsFor = { hard: budgetTab ? [`${budgetTab}!G44`] : [], soft: budgetTab ? [`${budgetTab}!G99`] : [], total: budgetTab ? [`${budgetTab}!G102`] : [] }
+  return ['hard', 'soft', 'total'].map((k) => {
+    const b = costBenchmark(set, k)
+    if (!b.ok) return unavailable(`cost-${k}`, 'cost', titles[k], 'no_benchmark', b.reason)
+    if (!totals[k]) return unavailable(`cost-${k}`, 'cost', titles[k], 'not_available', `No ${k} costs entered in the budget.`, cellsFor[k])
+    return compared({ id: `cost-${k}`, metric: 'cost', label: titles[k], basis: 'Development budget', value: totals[k] / sqft, range: b.range, rangeBasis: `${fmt.usd(totals[k])} over ${sqftText}`, cells: cellsFor[k] })
   })
 }
 
-// Every comparison row for a project against a set. `stage` is the project's stage.
-export function compareProject(project, set, stage) {
-  const ctx = { stage, setName: set.name, madeUp: set.madeUp }
-  const rows = rentRows(project, set, ctx)
-  const achieved = achievedRentRow(project, set, ctx)
-  if (achieved) rows.push(achieved)
-  rows.push(expenseRow(project, set, ctx))
-  rows.push(...costRows(project, set, ctx))
-  return rows
+// ---------------------------------------------------------------------------------------------
+// Flags: one per finding, combining the table rows behind it.
+// ---------------------------------------------------------------------------------------------
+
+const NOUN = { rent: 'rents', expense: 'operating expenses', cost: 'costs per square foot' }
+const QUESTIONS = {
+  'rent-above': 'What supports rents above the comparable properties (signed leases, amenities, a recent rent survey)? Please send the evidence.',
+  'rent-below': 'Why are rents below comparable properties? Is there room to raise them, or something holding them down?',
+  'expense-below': 'Operating expenses look low against comparable properties. Please send the expense budget line by line and explain any savings.',
+  'expense-above': 'Why are operating expenses higher than at comparable properties?',
+  'cost-above': 'Why does the budget cost more per square foot than comparable projects? Please send the contractor bid or cost estimate.',
+  'cost-below': 'The budget costs less per square foot than comparable projects. Is the scope complete? Please send the contractor bid or cost estimate.',
+}
+
+function flagsFor(rows, flag, ctx) {
+  const flags = []
+  for (const metric of ['rent', 'expense', 'cost']) {
+    for (const position of ['above', 'below']) {
+      const all = rows.filter((r) => r.metric === metric && r.status === position)
+      // One flag per metric and direction; it lists every table row behind it.
+      const groups = all.length ? [all] : []
+      for (const hits of groups) {
+      const worst = hits.reduce((a, b) => (b.past > a.past ? b : a))
+      const severity = severityFor(metric, position, worst.past)
+      const id = `M2-${{ rent: 'rent', expense: 'expenses', cost: 'cost' }[metric]}-${position}-comps`
+      flags.push(
+        flag({
+          id,
+          severity,
+          title: `The project's ${NOUN[metric]} are ${position} the comparable range${worst.past >= 0.2 ? ' by a wide margin' : ''}.`,
+          evidence: hits.map((h) => `${h.label}: ${h.detail}`).join(' ') + ` Benchmark: ${ctx.set.name}.`,
+          cell_refs: [...new Set(hits.flatMap((h) => h.cells))].slice(0, 50),
+          follow_up: QUESTIONS[`${metric}-${position}`],
+        }),
+      )
+      }
+    }
+  }
+  const noBench = rows.filter((r) => r.status === 'no_benchmark')
+  if (noBench.length) {
+    flags.push(
+      flag({
+        id: 'M2-no-comparable-benchmark',
+        severity: 'low',
+        title: 'Some figures have no comparable benchmark, so they were not compared.',
+        evidence: noBench.map((r) => `${r.label}: ${r.detail}`).join(' '),
+        cell_refs: [...new Set(noBench.flatMap((r) => r.cells))].slice(0, 50),
+        follow_up: 'Please send rent comparables for these unit types and affordability levels.',
+      }),
+    )
+  }
+  for (const r of rows.filter((x) => x.status === 'not_available')) {
+    flags.push(missingDataFlag({ module: 'M2', stage_used: ctx.stage, check: r.metric === 'expense' ? 'expenses' : r.metric, checkTitle: `${r.label} against the market`, missing: r.detail, cell_refs: r.cells }))
+  }
+  return flags
+}
+
+// ---------------------------------------------------------------------------------------------
+
+export function compareProject(project, context = {}) {
+  const maker = createFlagMaker('M2', project)
+  const stage = maker.stage
+  const loaded = loadBenchmarks(stage, context.benchmarkSets)
+  if (!loaded.ok) {
+    return { ok: false, stage, reason: loaded.reason, rows: [], flags: [missingDataFlag({ module: 'M2', stage_used: stage, check: 'benchmarks', checkTitle: 'Benchmarking', missing: loaded.reason })] }
+  }
+  const set = loaded.set
+  const details = project.meta?.sourceTab
+  const budgetTab = details && /^Development /.test(details) ? details.replace(/ Details$/, ' Budget') : null
+  const rows = [...rentRows(project, set, stage), expenseRow(project, set, stage), ...costRows(project, set, stage, budgetTab)]
+  return { ok: true, stage, set, rows, flags: flagsFor(rows, maker.flag, { set, stage }) }
 }

@@ -7,9 +7,8 @@ import { run as runM3D } from './modules/m3d-development/index.js'
 import { run as runM3C } from './modules/m3c-completed/index.js'
 import { run as runM3T } from './modules/m3t-transitions/index.js'
 import { run as runM4 } from './modules/m4-scenarios/index.js'
-import { run as runM5 } from './modules/m5-sponsor/index.js'
 import { synthesize } from './modules/m6-synthesis/index.js'
-import BenchmarkPanel from './modules/m2-benchmarks/BenchmarkPanel.jsx'
+import BenchmarkTable from './modules/m2-benchmarks/BenchmarkTable.jsx'
 import DevelopmentRiskPanel from './modules/m3d-development/DevelopmentRiskPanel.jsx'
 import CompletedRiskPanel from './modules/m3c-completed/CompletedRiskPanel.jsx'
 import TransitionPanel from './modules/m3t-transitions/TransitionPanel.jsx'
@@ -36,7 +35,6 @@ export default function ReviewDemo() {
       { module: 'M3C', ...runM3C(record, context) },
       { module: 'M3T', ...runM3T(record, context) },
       { module: 'M4', ...runM4(record, context) },
-      { module: 'M5', ...runM5(record, context) },
     ]
     const synthesis = synthesize(record, moduleResults, context)
     return { record, firm, context, moduleResults, synthesis }
@@ -64,8 +62,8 @@ export default function ReviewDemo() {
 
       <h2>Module detail</h2>
       <details className="card">
-        <summary><span className="title">Benchmarks (M2)</span></summary>
-        <div className="body"><BenchmarkPanel project={review.record} context={review.context} /></div>
+        <summary><span className="title">Market comparison (M2)</span></summary>
+        <div className="body"><BenchmarkTable record={review.record} /></div>
       </details>
       <details className="card">
         <summary><span className="title">Development risk (M3D)</span></summary>
@@ -80,9 +78,9 @@ export default function ReviewDemo() {
         <div className="body"><TransitionPanel project={review.record} context={review.context} /></div>
       </details>
       <details className="card">
-        <summary><span className="title">Sponsor (M5)</span></summary>
+        <summary><span className="title">Sponsor (M5-a)</span></summary>
         <div className="body">
-          <SponsorPanel firm={review.firm} projects={review.context.projects} context={{ ...review.context, project: review.record }} />
+          <SponsorPanel firm={review.firm} projects={review.context.projects} settings={DEFAULT_SETTINGS} sourceLabel="Made-up sample" />
         </div>
       </details>
     </>

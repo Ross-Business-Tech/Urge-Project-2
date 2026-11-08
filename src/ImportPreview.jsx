@@ -18,7 +18,9 @@ import { GroupEditor } from './RecordEditor.jsx'
 import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
 import { T12Tools } from './T12Tools.jsx'
 import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
+import BenchmarkTable from './modules/m2-benchmarks/BenchmarkTable.jsx'
 import { ScenarioPanel } from './modules/m4-scenarios/ScenarioPanel.jsx'
+import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
 import { downloadReview, rescueStore } from './download.js'
 
 // Today's date on this device, as YYYY-MM-DD.
@@ -136,6 +138,7 @@ const ProjectCard = memo(function ProjectCard({ project, record, settings, onCha
           <StageControls project={project} record={record} onChange={onChange} />
           <KeyRatios record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
           <IntegrityChecklist record={record} firm={firm} facts={facts} report={report} />
+          <BenchmarkTable record={record} />
           <ScenarioPanel record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
           <p className="section-label">Values (tap a group to view or edit)</p>
           <ul className="groups">
@@ -192,6 +195,7 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
       )}
 
       <h2>The firm</h2>
+      <SponsorPanel firm={result.firm} projects={result.projects} settings={result.settings} />
       <p className="note">Tap a group to see and edit its values. A small tag under each value says where it came from.</p>
       <ul className="groups">
         {firmSchema.map((g) => (
