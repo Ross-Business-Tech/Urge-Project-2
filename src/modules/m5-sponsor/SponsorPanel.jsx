@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { fmt } from '../shared/index.js'
 import { firmHealth, WEIGHTS, LABELS } from './index.js'
+import { soWhat } from './soWhat.js'
 import './sponsor.css'
 
 // What each measure asks, in plain words.
@@ -65,17 +66,15 @@ function Measure({ part }) {
   )
 }
 
-function projectLine(p) {
-  return p.data?.identity?.name || p.meta?.sourceTab || 'Unnamed project'
-}
-
-// M5-a: the sponsor page for one firm and its projects. Shows the firm health score and the four measures behind it.
-export default function SponsorPanel({ firm, projects = [], settings }) {
-  const result = useMemo(() => {
+// M5-a: the sponsor page for one firm and its projects. Shows the firm health score, what it means for the projects
+// ("so what"), and the four measures behind it. `sourceLabel` names where the data came from, such as the file name.
+export default function SponsorPanel({ firm, projects = [], settings, sourceLabel }) {
+  const { result, meaning } = useMemo(() => {
     try {
-      return firmHealth(firm, projects, settings)
+      const health = firmHealth(firm, projects, settings)
+      return { result: health, meaning: soWhat(health, projects, settings) }
     } catch {
-      return 'error'
+      return { result: 'error', meaning: null }
     }
   }, [firm, projects, settings])
 
@@ -91,6 +90,7 @@ export default function SponsorPanel({ firm, projects = [], settings }) {
   return (
     <section className="sponsor">
       <p className="section-label">Sponsor firm health: can {firmName} deliver?</p>
+      {sourceLabel && <p className="note source">Showing: {sourceLabel}</p>}
 
       {result.ok ? (
         <div className="score-card">
@@ -112,6 +112,11 @@ export default function SponsorPanel({ firm, projects = [], settings }) {
           {result.reason} Fill in the firm balance sheet and earnings to get a score.
         </p>
       )}
+
+      <div className={`so-what ${meaning.tone || 'plain'}`} role="status">
+        <p className="so-what-title">So what?</p>
+        <p className="so-what-text">{meaning.headline}</p>
+      </div>
 
       <ul className="measures">
         {result.parts.map((p) => (
@@ -141,12 +146,15 @@ export default function SponsorPanel({ firm, projects = [], settings }) {
         <p className="note">No projects are loaded for this sponsor.</p>
       ) : (
         <ul className="project-list">
-          {projects.map((p, i) => (
-            <li key={p.meta?.projectId ?? i}>
-              <span>{projectLine(p)}</span>
-              <span className="chips">
-                <span className="chip">{p.data?.stage?.stage ? p.data.stage.stage.replace('_', '-') : 'stage not chosen'}</span>
-              </span>
+          {meaning.projects.map((p) => (
+            <li key={p.key} className={`project ${p.tone}`}>
+              <div className="project-top">
+                <span className="project-name">{p.name}</span>
+                <span className="chips">
+                  <span className="chip">{p.stage ? p.stage.replace('_', '-') : 'stage not chosen'}</span>
+                </span>
+              </div>
+              <p className="project-text">{p.text}</p>
             </li>
           ))}
         </ul>

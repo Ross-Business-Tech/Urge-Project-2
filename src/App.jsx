@@ -4,7 +4,7 @@ import ImportPreview from './ImportPreview.jsx'
 import { RescueBoundary } from './RescueBoundary.jsx'
 import FlagFormat from './FlagFormat.jsx'
 import ScenarioDemo from './modules/m4-scenarios/ScenarioDemo.jsx'
-import SponsorDemo from './modules/m5-sponsor/SponsorDemo.jsx'
+import SponsorView from './modules/m5-sponsor/SponsorView.jsx'
 import { rescueStore } from './download.js'
 import {
   firmSchema,
@@ -180,7 +180,7 @@ const VIEWS = [
     id: 'sponsor',
     label: 'Sponsor',
     heading: 'Can this sponsor deliver?',
-    lede: "How healthy is the sponsor firm? A score from 0 to 100 built from its cash, earnings and debt. Pick a made-up sample sponsor, or open \"Load workbook\" to see your own firm's score under \"The firm\".",
+    lede: 'How healthy is the sponsor firm? A score from 0 to 100 built from its cash, earnings and debt, and what it means for the projects. If you have loaded a workbook, this shows that sponsor. Otherwise pick a made-up sample.',
   },
   {
     id: 'flags',
@@ -228,7 +228,7 @@ export default function App() {
         </RescueBoundary>
       </div>
       {current.id === 'scenarios' && <ScenarioDemo />}
-      {current.id === 'sponsor' && <SponsorDemo />}
+      {current.id === 'sponsor' && <SponsorView />}
       {current.id === 'flags' && <FlagFormat />}
       {current.schema && (
         <>
