@@ -1,0 +1,135 @@
+/* M3D development risk checks */
+
+.devrisk {
+  margin: 4px 0 16px;
+}
+
+.dev-group {
+  margin-top: 12px;
+}
+
+.dev-group-title {
+  margin: 0 0 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.dev-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.dev-check {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.dev-check.fail {
+  border-color: var(--danger);
+}
+
+.dev-check.unchecked,
+.dev-check.na {
+  border-style: dashed;
+}
+
+.dev-icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+  background: var(--chip-bg);
+}
+
+.dev-check.pass .dev-icon {
+  color: #0d6b3a;
+  background: #e1f5e9;
+}
+
+.dev-check.fail .dev-icon {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .dev-check.pass .dev-icon {
+    color: #8fe0b2;
+    background: #17301f;
+  }
+}
+
+.dev-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.dev-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+
+.dev-title {
+  font-weight: 600;
+}
+
+.dev-detail {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.dev-detail.ask {
+  color: var(--text);
+}
+
+.dev-cutoffs {
+  margin-top: 14px;
+  font-size: 0.85rem;
+}
+
+.dev-cutoffs summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.dev-cutoff-scroll {
+  overflow-x: auto;
+}
+
+.dev-cutoffs table {
+  border-collapse: collapse;
+  min-width: 520px;
+  width: 100%;
+}
+
+.dev-cutoffs th,
+.dev-cutoffs td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dev-cutoffs th {
+  color: var(--muted);
+  font-weight: 600;
+}
