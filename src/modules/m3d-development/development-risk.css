@@ -1,0 +1,117 @@
+/* M3D development risk */
+
+.m3d {
+  margin: 4px 0 16px;
+}
+
+.m3d-group-title {
+  margin: 12px 0 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.m3d-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.m3d-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.m3d-item.fail {
+  border-color: var(--danger);
+}
+
+.m3d-item.unchecked,
+.m3d-item.na {
+  border-style: dashed;
+}
+
+.m3d-icon {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--muted);
+  background: var(--chip-bg);
+}
+
+.m3d-item.pass .m3d-icon {
+  color: #0d6b3a;
+  background: #e1f5e9;
+}
+
+.m3d-item.fail .m3d-icon {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .m3d-item.pass .m3d-icon {
+    color: #8fe0b2;
+    background: #17301f;
+  }
+}
+
+.m3d-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.m3d-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+
+.m3d-title {
+  font-weight: 600;
+}
+
+.m3d-detail {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.m3d-detail.strong,
+.m3d-detail.ask {
+  color: var(--text);
+}
+
+.m3d-flag {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+
+.m3d-cells {
+  margin: 6px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.m3d-cells .chip {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

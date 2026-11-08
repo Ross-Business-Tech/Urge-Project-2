@@ -4,6 +4,7 @@ import ImportPreview from './ImportPreview.jsx'
 import { RescueBoundary } from './RescueBoundary.jsx'
 import FlagFormat from './FlagFormat.jsx'
 import ScenarioDemo from './modules/m4-scenarios/ScenarioDemo.jsx'
+import DevelopmentRiskDemo from './modules/m3d-development/DevelopmentRiskDemo.jsx'
 import { rescueStore } from './download.js'
 import {
   firmSchema,
@@ -176,6 +177,12 @@ const VIEWS = [
     lede: 'What happens to the loan in the downside, base and upside cases? Pick a made-up sample project, or open a project in "Load workbook" to stress your own. Move the sliders to try your own numbers.',
   },
   {
+    id: 'devrisk',
+    label: 'Development risk',
+    heading: 'What can go wrong while it is built',
+    lede: 'Budget, schedule, loans and team checks for projects being built or filling. Pick a made-up sample project, or open a project in "Load workbook" to check your own.',
+  },
+  {
     id: 'flags',
     label: 'Flag format',
     heading: 'What a flag looks like',
@@ -221,6 +228,7 @@ export default function App() {
         </RescueBoundary>
       </div>
       {current.id === 'scenarios' && <ScenarioDemo />}
+      {current.id === 'devrisk' && <DevelopmentRiskDemo />}
       {current.id === 'flags' && <FlagFormat />}
       {current.schema && (
         <>
