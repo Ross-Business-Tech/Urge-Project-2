@@ -50,7 +50,7 @@ export function applyLevers(original, lv) {
 
   const vacancyChange = lv.vacancyChange ?? 0
   if (vacancyChange !== 0) {
-    for (const g of [d.residentialIncome, d.commercialIncome]) if (isNum(g.stabilizedVacancy)) g.stabilizedVacancy = clamp(g.stabilizedVacancy + vacancyChange, 0, 1)
+    for (const g of [d.residentialIncome, d.commercialIncome]) if (isNum(g.stabilizedVacancy) && g.stabilizedVacancy >= 0 && g.stabilizedVacancy <= 1) g.stabilizedVacancy = clamp(g.stabilizedVacancy + vacancyChange, 0, 1)
   }
 
   const expenseGrowth = lv.expenseGrowth ?? 0
@@ -63,7 +63,8 @@ export function applyLevers(original, lv) {
   if (rateChange !== 0) {
     const fixed = []
     for (const [i, r] of d.sources.rows.entries()) {
-      if (!DEBT_SOURCE_TYPES.includes(r.type) || !isNum(r.amount) || r.amount <= 0 || !isNum(r.interestRate)) continue
+      // A rate outside 0% to 100% (6.5 typed instead of 6.5%) is left alone, so the calculators still refuse it.
+      if (!DEBT_SOURCE_TYPES.includes(r.type) || !isNum(r.amount) || r.amount <= 0 || !isNum(r.interestRate) || r.interestRate < 0 || r.interestRate > 1) continue
       if (isNum(r.paymentOverride) && r.paymentOverride > 0) fixed.push(r.name || `source ${i + 1}`)
       else r.interestRate = clamp(r.interestRate + rateChange, 0, 1)
     }
@@ -178,5 +179,11 @@ export function runScenarios(project, { settings = DEFAULT_SETTINGS, levers: req
   if (!stage) return { ok: false, reason: 'Choose the project’s stage first. The stage decides which levers apply.', needs: [{ group: 'stage', label: 'Stage and review date' }] }
   const { defs, cases: levers, problems } = resolveLevers(stage, requested)
   const cases = Object.fromEntries(CASES.map((c) => [c.id, evaluateCase(project, stage, settings, levers[c.id])]))
+  // A stress test on a project whose own numbers cannot be worked out would be a guess dressed up as a result. The levers
+  // are applied to the project as entered, so if that is refused, every case says so, whatever its sliders are.
+  const asEntered = evaluateCase(project, stage, settings, Object.fromEntries(defs.map((d) => [d.id, d.neutral])))
+  if (!asEntered.ok) {
+    for (const c of CASES) cases[c.id] = { ok: false, reason: `The project as entered cannot be worked out, so it cannot be stress-tested. ${asEntered.reason}`, needs: asEntered.needs }
+  }
   return { ok: true, stage, defs, levers, cases, notes: problems }
 }

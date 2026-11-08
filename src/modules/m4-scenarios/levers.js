@@ -14,11 +14,13 @@ export const CASES = [
 // lease-up. A made-up round number, shown to the reviewer wherever it matters.
 export const FILL_OCCUPANCY = 0.5
 
-// The exit cap rate has no field in the applicant workbook, so the base case needs a starting point. This one is a
-// made-up placeholder: the reviewer should change it to the market's.
+// The exit cap rate has no field in the applicant workbook, so the base case needs a starting point. 6.5% is a typical
+// multifamily figure to start from. The underwriter is expected to set the market's own (the slider, or context.scenarios).
 export const DEFAULT_EXIT_CAP = 0.065
 
-// Every lever the engine knows. `values` are the starting settings for each case. `stages` says where it is offered.
+// Every lever the engine knows. `values` are the starting settings for each case: reasonable round numbers to begin
+// with, not findings. Every one can be moved on screen, and the underwriter's own settings can be passed in later through
+// context.scenarios (see index.js), so nothing else needs to change when the team decides its house numbers. `stages` says where it is offered.
 // `labels` and `plain` can differ by stage where the same mechanism has a different name.
 const LEVER_LIST = [
   {
@@ -115,7 +117,7 @@ const LEVER_LIST = [
   {
     id: 'exitCapRate',
     label: 'Exit cap rate',
-    plain: 'The cap rate a buyer or lender uses to value the property at takeout. A higher rate means a lower value. The starting point is a made-up placeholder: change it to the market rate.',
+    plain: 'The cap rate a buyer or lender uses to value the property at takeout. A higher rate means a lower value. It starts at 6.5%, a typical figure for apartments; set it to the market rate you are using.',
     unit: 'percent',
     min: 0.04,
     max: 0.1,
@@ -130,7 +132,7 @@ export function leversForStage(stage) {
   return LEVER_LIST.filter((l) => l.stages.includes(stage) || l.stageOverrides?.[stage]).map((l) => {
     const over = l.stageOverrides?.[stage] ?? {}
     const { stages: _stages, stageOverrides: _overrides, ...rest } = l
-    return { ...rest, ...over }
+    return { ...rest, ...over, neutral: l.id === 'exitCapRate' ? l.values.base : 0 }
   })
 }
 

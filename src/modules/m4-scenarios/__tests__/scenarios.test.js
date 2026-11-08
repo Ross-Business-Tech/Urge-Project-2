@@ -191,6 +191,34 @@ test('a case that cannot be worked out says why and what to fill in, and the oth
   }
 })
 
+test('a bad input is never "repaired" by a lever: if the project as entered is refused, every case is refused', () => {
+  // The rate was typed as 6.5 instead of 6.5% (650%). Adding 1.5 points and clamping to 100% used to give a confident 0.17x.
+  for (const stage of ['development', 'lease_up', 'completed']) {
+    const out = runScenarios(staged(stage, scenario('s14-rate-typed-as-whole-number')))
+    for (const c of CASES) {
+      assert.equal(out.cases[c.id].ok, false, `${stage} ${c.id}`)
+      assert.match(out.cases[c.id].reason, /cannot be stress-tested.*650%/)
+      assert.deepEqual(out.cases[c.id].needs.map((n) => n.group), ['sources'])
+    }
+  }
+  const flags = run(scenario('s14-rate-typed-as-whole-number'), {}).flags
+  assert.deepEqual(flags.map((f) => [f.id, f.severity]), [['M4-scenarios-missing', 'low']])
+})
+
+test('the gate looks at the project as entered, not at where the sliders happen to be', () => {
+  const p = staged('completed', scenario('s14-rate-typed-as-whole-number'))
+  const out = runScenarios(p, { levers: { base: { rentChange: 0.1 } } })
+  assert.ok(CASES.every((c) => !out.cases[c.id].ok))
+  assert.equal(applyLevers(p, { takeoutRate: 0.015 }).record.data.sources.rows[0].interestRate, 6.5, 'the lever leaves a refused rate alone')
+})
+
+test('a vacancy typed outside 0% to 100% is left alone by the vacancy lever', () => {
+  const p = staged('completed')
+  p.data.residentialIncome.stabilizedVacancy = 5
+  assert.equal(applyLevers(p, { vacancyChange: -0.02 }).record.data.residentialIncome.stabilizedVacancy, 5)
+  assert.equal(runScenarios(p).cases.downside.ok, false)
+})
+
 test('a project with no stage is not scenario-tested, and is asked for one', () => {
   const out = runScenarios(healthyProject())
   assert.equal(out.ok, false)
