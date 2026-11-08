@@ -19,6 +19,7 @@ import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
 import { T12Tools } from './T12Tools.jsx'
 import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
 import DevelopmentRisk from './modules/m3d-development/DevelopmentRisk.jsx'
+import CompletedRisk from './modules/m3c-completed/CompletedRisk.jsx'
 import BenchmarkTable from './modules/m2-benchmarks/BenchmarkTable.jsx'
 import { ScenarioPanel } from './modules/m4-scenarios/ScenarioPanel.jsx'
 import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
@@ -140,6 +141,7 @@ const ProjectCard = memo(function ProjectCard({ project, record, settings, onCha
           <KeyRatios record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
           <IntegrityChecklist record={record} firm={firm} facts={facts} report={report} />
           <DevelopmentRisk record={record} firm={firm} settings={settings} />
+          <CompletedRisk record={record} firm={firm} settings={settings} />
           <BenchmarkTable record={record} />
           <ScenarioPanel record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
           <p className="section-label">Values (tap a group to view or edit)</p>

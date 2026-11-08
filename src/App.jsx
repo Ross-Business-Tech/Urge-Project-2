@@ -5,6 +5,7 @@ import { RescueBoundary } from './RescueBoundary.jsx'
 import FlagFormat from './FlagFormat.jsx'
 import ScenarioDemo from './modules/m4-scenarios/ScenarioDemo.jsx'
 import DevelopmentRiskDemo from './modules/m3d-development/DevelopmentRiskDemo.jsx'
+import CompletedRiskDemo from './modules/m3c-completed/CompletedRiskDemo.jsx'
 import SponsorView from './modules/m5-sponsor/SponsorView.jsx'
 import { rescueStore } from './download.js'
 import {
@@ -184,6 +185,12 @@ const VIEWS = [
     lede: 'Budget, schedule, loans and team checks for projects being built or filling. Pick a made-up sample project, or open a project in "Load workbook" to check your own.',
   },
   {
+    id: 'completedrisk',
+    label: 'Completed risk',
+    heading: 'Is it performing as promised?',
+    lede: 'Actual results against the underwriting, expenses, vacancy and loan maturity for properties that are open. Pick a made-up sample project, or open a project in "Load workbook" to check your own.',
+  },
+  {
     id: 'sponsor',
     label: 'Sponsor',
     heading: 'Can this sponsor deliver?',
@@ -236,6 +243,7 @@ export default function App() {
       </div>
       {current.id === 'scenarios' && <ScenarioDemo />}
       {current.id === 'devrisk' && <DevelopmentRiskDemo />}
+      {current.id === 'completedrisk' && <CompletedRiskDemo />}
       {current.id === 'sponsor' && <SponsorView onChooseStage={() => setView('import')} />}
       {current.id === 'flags' && <FlagFormat />}
       {current.schema && (
