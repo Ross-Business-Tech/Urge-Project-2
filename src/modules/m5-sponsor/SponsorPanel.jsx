@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { fmt } from '../shared/index.js'
-import { firmHealth, WEIGHTS, LABELS } from './index.js'
+import { firmHealth, run, WEIGHTS, LABELS } from './index.js'
 import { soWhat } from './soWhat.js'
 import './sponsor.css'
 
@@ -13,6 +13,7 @@ const QUESTIONS = {
 }
 
 const BAND = { Strong: 'good', Adequate: '', Weak: 'amber', Failing: 'warn' }
+const SEVERITY = { high: 'warn', medium: 'amber', low: '' }
 
 const headline = (p) => {
   if (!p.ok) return 'Not available'
@@ -78,6 +79,17 @@ export default function SponsorPanel({ firm, projects = [], settings, sourceLabe
     }
   }, [firm, projects, settings])
 
+  // Flags always say which stage they ran under, so they come from the first project that has one.
+  const flagRun = useMemo(() => {
+    const staged = projects.find((p) => p.data?.stage?.stage)
+    if (!staged || !firm) return null
+    try {
+      return run(staged, { firm, projects, settings })
+    } catch {
+      return null
+    }
+  }, [firm, projects, settings])
+
   if (result === 'error') {
     return (
       <section className="sponsor">
@@ -123,6 +135,38 @@ export default function SponsorPanel({ firm, projects = [], settings, sourceLabe
           <Measure key={p.id} part={p} />
         ))}
       </ul>
+
+      <p className="section-label">Review flags</p>
+      {flagRun === null ? (
+        <p className="note">Choose a stage for a project to produce the review flags.</p>
+      ) : flagRun.flags.length === 0 ? (
+        <p className="ok">No review flags: the firm&apos;s finances look sound.</p>
+      ) : (
+        <ul className="flags">
+          {flagRun.flags.map((f) => (
+            <li key={f.id} className={`flag ${f.severity}`}>
+              <div className="flag-top">
+                <span className="flag-title">{f.title}</span>
+                <span className="chips">
+                  <span className={`chip ${SEVERITY[f.severity]}`}>{f.severity}</span>
+                </span>
+              </div>
+              <p className="flag-text">{f.evidence}</p>
+              <p className="flag-text ask">Ask the sponsor: {f.follow_up}</p>
+              {f.cell_refs.length > 0 && (
+                <p className="flag-cells">
+                  {f.cell_refs.slice(0, 8).map((c) => (
+                    <span className="chip cell" key={c}>
+                      {c}
+                    </span>
+                  ))}
+                  {f.cell_refs.length > 8 && <span className="chip">+{f.cell_refs.length - 8} more</span>}
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
 
       <details className="how">
         <summary>How the score is built</summary>
