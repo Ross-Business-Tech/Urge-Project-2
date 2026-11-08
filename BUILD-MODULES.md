@@ -17,12 +17,12 @@ Claude: if the student hasn't named a module, show them the `OPEN` rows in plain
 | ID | Module | Layer | Stage behaviour | Needs first | Status | Owner |
 |----|--------|-------|-----------------|-------------|--------|-------|
 | M0 | Shared foundation (project record, stage flag, flag format, sample projects) | Base | Shared | none | CLAIMED | NS |
-| M1 | Integrity checks | 1 | Shared | M0 | CLAIMED | Zain |
+| M1 | Integrity checks | 1 | Shared | M0 | DONE | Zain |
 | M2 | Benchmarking engine | 2 | Shared engine, stage-specific benchmark sets | M0 | OPEN | |
 | M3D | Development risk module | 3 | Development stage | M0 | OPEN | |
 | M3C | Completed risk module | 3 | Completed stage | M0 | OPEN | |
 | M3T | Transition checks (lease-up and the hand-offs between stages) | 3 | Lease-up stage and every transition | M0 | OPEN | |
-| M4 | Scenario engine (downside / base / upside) | 4 | Shared mechanics, stage-specific levers | M0 | OPEN | |
+| M4 | Scenario engine (downside / base / upside) | 4 | Shared mechanics, stage-specific levers | M0 | DONE | NS |
 | M5 | Sponsor and portfolio view (global DSCR, liquidity, track record, credibility score) | 5 | Cross-project | M0 | OPEN | |
 | M6 | Synthesis (ranked flags, cell references, sponsor follow-up questions) | 6 | Shared | M0, plus any flags the other modules produce | OPEN | |
 
