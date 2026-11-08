@@ -20,7 +20,7 @@ export function projectSoWhat(project, health, settings) {
   const stage = project.data?.stage?.stage ?? null
   const name = project.data?.identity?.name || project.meta?.sourceTab || 'Unnamed project'
   const weak = isWeak(health)
-  const base = { name, stage, key: project.meta?.projectId ?? name, coverage: cov.ok ? cov.value : null }
+  const base = { name, stage, needsStage: !stage, key: project.meta?.projectId ?? name, coverage: cov.ok ? cov.value : null }
 
   if (!cov.ok) {
     return { ...base, state: 'unknown', tone: '', text: `Coverage not available: ${cov.reason}${health?.ok ? ` Sponsor: ${rated(health)}.` : ''}` }
@@ -32,6 +32,7 @@ export function projectSoWhat(project, health, settings) {
   }
   if (sound && !weak) return { ...base, state: 'sound', tone: 'good', text: `Sound: ${own}. Sponsor ${rated(health)}.` }
   if (sound && weak) {
+    if (!stage) return { ...base, state: 'sound', tone: 'amber', text: `Sound alone (${own}), but the ${health.label} sponsor is a risk. Choose a stage to see why it matters.` }
     const cost = stage === 'development' ? 'must fund any overrun or delay' : 'has little room to absorb a miss'
     return { ...base, state: 'sound', tone: 'amber', text: `Sound alone (${own}), but the ${health.label} sponsor ${cost}.` }
   }

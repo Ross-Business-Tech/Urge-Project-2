@@ -6,7 +6,7 @@ import SponsorPanel from './SponsorPanel.jsx'
 
 // The Sponsor tab. If a workbook (or saved review) is loaded, it shows that sponsor first. The made-up sample sponsors
 // (the same ones used to test every module) are always available too. Nothing here is real data.
-export default function SponsorView() {
+export default function SponsorView({ onChooseStage }) {
   const loaded = rescueStore.current // the review on screen in "Load workbook", if any
   const [source, setSource] = useState(loaded ? 'loaded' : 'sample')
   const [id, setId] = useState(samples[0].id)
@@ -16,7 +16,7 @@ export default function SponsorView() {
     const built = sample.build()
     return {
       firm: built.firm,
-      projects: built.projects.map((p, i) => (i === 0 ? applyStageAndDate(p.record, { stage: sample.stage, asOfDate: sample.asOf }) : p.record)),
+      projects: built.projects.map((p) => applyStageAndDate(p.record, { stage: sample.stage, asOfDate: sample.asOf })),
     }
   }, [sample])
 
@@ -40,7 +40,7 @@ export default function SponsorView() {
       )}
 
       {showLoaded ? (
-        <SponsorPanel firm={loaded.firm} projects={loaded.projects} settings={loaded.settings ?? DEFAULT_SETTINGS} sourceLabel={fileName} />
+        <SponsorPanel firm={loaded.firm} projects={loaded.projects} settings={loaded.settings ?? DEFAULT_SETTINGS} sourceLabel={fileName} onChooseStage={onChooseStage} />
       ) : (
         <>
           <label className="field">

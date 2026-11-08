@@ -68,7 +68,7 @@ function Measure({ part }) {
 
 // M5-a: the sponsor page for one firm and its projects. Shows the firm health score, what it means for the projects
 // ("so what"), and the four measures behind it. `sourceLabel` names where the data came from, such as the file name.
-export default function SponsorPanel({ firm, projects = [], settings, sourceLabel }) {
+export default function SponsorPanel({ firm, projects = [], settings, sourceLabel, onChooseStage }) {
   const { result, meaning } = useMemo(() => {
     try {
       const health = firmHealth(firm, projects, settings)
@@ -142,6 +142,19 @@ export default function SponsorPanel({ firm, projects = [], settings, sourceLabe
       </details>
 
       <p className="section-label">The sponsor&apos;s projects</p>
+      {meaning.projects.some((p) => p.needsStage) && (
+        <div className="banner warn stage-prompt" role="status">
+          <span>
+            {meaning.projects.filter((p) => p.needsStage).length === 1 ? 'One project has' : `${meaning.projects.filter((p) => p.needsStage).length} projects have`} no stage yet.
+            Choose a stage ({onChooseStage ? 'open the project on the first tab' : 'in The projects below'}) so the notes here fit its life stage.
+          </span>
+          {onChooseStage && (
+            <button type="button" className="button small" onClick={onChooseStage}>
+              Choose a stage
+            </button>
+          )}
+        </div>
+      )}
       {projects.length === 0 ? (
         <p className="note">No projects are loaded for this sponsor.</p>
       ) : (

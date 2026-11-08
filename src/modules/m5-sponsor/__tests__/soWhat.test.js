@@ -71,3 +71,15 @@ test('no sponsor score and no projects both give a sensible sentence, never a cr
   assert.match(soWhat({ ok: false }, [blankProject()]).headline, /Sponsor not scored/)
   assert.match(soWhat(setup('s01', 's01').health, []).headline, /No projects/)
 })
+
+test('a project with no stage asks for one instead of guessing', () => {
+  const f = sample('s10').build()
+  const ps = sample('s01')
+  const unstaged = ps.build().projects[0].record // no stage chosen yet
+  const r = soWhat(firmHealth(f.firm, [unstaged]), [unstaged])
+  assert.equal(r.projects[0].needsStage, true)
+  assert.match(r.projects[0].text, /Choose a stage/)
+  assert.doesNotMatch(r.projects[0].text, /overrun|absorb a miss/)
+  const staged1 = staged(ps, ps.build().projects[0].record)
+  assert.equal(soWhat(firmHealth(f.firm, [staged1]), [staged1]).projects[0].needsStage, false)
+})

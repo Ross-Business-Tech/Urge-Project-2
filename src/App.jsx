@@ -228,7 +228,7 @@ export default function App() {
         </RescueBoundary>
       </div>
       {current.id === 'scenarios' && <ScenarioDemo />}
-      {current.id === 'sponsor' && <SponsorView />}
+      {current.id === 'sponsor' && <SponsorView onChooseStage={() => setView('import')} />}
       {current.id === 'flags' && <FlagFormat />}
       {current.schema && (
         <>
