@@ -164,3 +164,26 @@ test('the records are never changed', () => {
   trackRecord(firm(), [a, dev], undefined, dev)
   assert.equal(JSON.stringify([a, dev, firm()]), before)
 })
+
+test('each completed project gets its own delivery score, and a weak one does not hide behind a strong one', () => {
+  const dev = building()
+  const r = trackRecord(firm(), [done('Alder Court', t12Rows({})), done('Birch Row', t12Rows({ rentFactor: 0.85, occupancy: 0.85 })), dev], undefined, dev)
+  const [good, poor] = r.projects.map((p) => p.score)
+  assert.ok(good >= 95, `good ${good}`)
+  assert.ok(poor < 35, `poor ${poor}`)
+  assert.equal(done('Cedar Flats', []) && trackRecord(firm(), [done('Cedar Flats', [])], undefined, dev).projects[0].score, null, 'no T-12, no project score')
+})
+
+test('the breakdown adds up to the score, and missing parts are left out and the rest scaled to 100%', () => {
+  const dev = building()
+  const r = trackRecord(firm(), [done('Alder Court', t12Rows({})), done('Birch Row', t12Rows({ rentFactor: 0.85, occupancy: 0.85 })), dev], undefined, dev)
+  assert.equal(r.breakdown.length, r.used)
+  assert.ok(Math.abs(r.breakdown.reduce((t, b) => t + b.share, 0) - 1) < 1e-9, 'shares add up to 100%')
+  assert.equal(Math.round(r.breakdown.reduce((t, b) => t + b.points, 0)), r.score)
+  // With the scale fit left out (the project under review is itself completed), the other three are scaled up.
+  const a = done('Alder Court', t12Rows({}))
+  const noScale = trackRecord(firm(), [a], undefined, a)
+  assert.ok(!noScale.breakdown.some((b) => b.id === 'scale'))
+  assert.ok(Math.abs(noScale.breakdown.reduce((t, b) => t + b.share, 0) - 1) < 1e-9)
+  assert.ok(noScale.breakdown.every((b) => b.share > b.weight), 'each remaining part counts for more')
+})

@@ -68,7 +68,7 @@ export default function SponsorView({ onChooseStage }) {
               {stageLabel} stage project. {sample.what}
             </span>
           </label>
-          <SponsorPanel key={sample.id} firm={demo.firm} projects={demo.projects} settings={DEFAULT_SETTINGS} sourceLabel={`made-up sample: ${sample.title}`} />
+          <SponsorPanel key={sample.id} firm={demo.firm} projects={demo.projects} settings={DEFAULT_SETTINGS} sourceLabel={`made-up sample: ${sample.title}`} onChooseStage={onChooseStage} />
         </>
       )}
     </>

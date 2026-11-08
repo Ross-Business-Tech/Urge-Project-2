@@ -150,6 +150,16 @@ function stabilizationMeasure(project, trailing, months, settings) {
 const NO_BUDGET = na('budget', 'Budget (promised vs. spent)', 'Completed projects carry no delivered budget in the records.')
 const NO_COMPLETION = na('completion', 'Construction completion (promised vs. actual)', 'The records hold only one set of dates, so a promised and an actual date cannot be compared.')
 
+// One completed project's own delivery score: the same three delivery parts and weights as the sponsor score (scale fit
+// is about the new project, not this one), using whichever parts could be worked out. Null when none could.
+function deliveryScore(measures) {
+  const pick = (ids) => average(measures.filter((m) => ids.includes(m.id) && isNum(m.score)).map((m) => m.score))
+  const parts = [['income', pick(['income'])], ['rentOccupancy', pick(['rent', 'occupancy'])], ['stabilization', pick(['stabilization'])]].filter(([, v]) => isNum(v))
+  if (parts.length === 0) return null
+  const weight = sum(parts.map(([id]) => TRACK_WEIGHTS[id]))
+  return Math.round(sum(parts.map(([id, v]) => v * TRACK_WEIGHTS[id])) / weight)
+}
+
 // How one completed project delivered against what was promised.
 export function projectDelivery(project, settings) {
   const trailing = keyRatios(project, settings).find((r) => r.id === 'trailing')
@@ -159,7 +169,7 @@ export function projectDelivery(project, settings) {
     : [na('income', 'Income (NOI, a year)', 'No T-12 was loaded for this project.'), na('rent', 'Residential rent (a month)', 'No T-12 was loaded for this project.'), na('occupancy', 'Occupancy', 'No T-12 was loaded for this project.'), na('stabilization', 'Stabilization', 'No T-12 was loaded for this project.')]
   const size = totalSources(project)
   const units = sum(project.data.residentialIncome.rows.map((r) => r.units))
-  return { name: nameOf(project), stage: project.data.stage.stage, size: size.ok ? size.value : null, units: units > 0 ? units : null, measures: [...measures, NO_BUDGET, NO_COMPLETION], months: months.length }
+  return { name: nameOf(project), stage: project.data.stage.stage, size: size.ok ? size.value : null, units: units > 0 ? units : null, measures: [...measures, NO_BUDGET, NO_COMPLETION], months: months.length, score: deliveryScore(measures) }
 }
 
 // ---- The sponsor ------------------------------------------------------------------------------
@@ -238,5 +248,8 @@ export function trackRecord(firm, projects = [], settings, reviewed = null) {
   const weight = sum(scored.map((p) => p.weight))
   const score = Math.round(sum(scored.map((p) => p.score * p.weight)) / weight)
   const band = labelFor(score)
-  return { ok: true, score, label: band.label, plain: band.plain, ...base, notes }
+  // How the number was reached: each part's score times its share of the weight (parts that could not be worked out are left
+  // out and the rest are scaled up to add to 100%).
+  const breakdown = scored.map((p) => ({ id: p.id, title: p.title, score: p.score, weight: p.weight, share: p.weight / weight, points: (p.score * p.weight) / weight }))
+  return { ok: true, score, label: band.label, plain: band.plain, breakdown, ...base, notes }
 }

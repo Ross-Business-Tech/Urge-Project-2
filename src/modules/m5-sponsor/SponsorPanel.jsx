@@ -144,7 +144,7 @@ export default function SponsorPanel({ firm, projects = [], settings, sourceLabe
         ))}
       </ul>
 
-      <TrackRecordSection track={track} reviewedStage={reviewed?.data?.stage?.stage} />
+      <TrackRecordSection track={track} reviewedStage={reviewed?.data?.stage?.stage} onAddProjects={onChooseStage} />
 
       <p className="section-label">Review flags</p>
       {flagRun === null ? (

@@ -353,6 +353,7 @@ export default function ImportPreview() {
         />
         <span className="drop-title">{state.status === 'reading' ? `Reading ${state.name}…` : 'Drop the applicant workbook here'}</span>
         <span className="drop-sub">or a saved review. Tap to choose a file (.xlsx, .xlsm or .json)</span>
+        <span className="drop-sub">Several projects? Put them all in the one workbook, one tab each. Past projects help the sponsor&apos;s track record.</span>
       </label>
       {state.status === 'error' && (
         <p className="problem" role="alert">

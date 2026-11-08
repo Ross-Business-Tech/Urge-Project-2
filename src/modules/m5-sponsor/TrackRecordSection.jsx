@@ -47,6 +47,70 @@ function Part({ part }) {
   )
 }
 
+// The worked sum behind the credibility score, so it is clear how the number was reached.
+function HowReached({ track }) {
+  const left = track.parts.filter((p) => !p.ok)
+  return (
+    <div className="reached">
+      <p className="reached-title">How this score was reached</p>
+      <ul className="reached-rows">
+        {track.breakdown.map((b) => (
+          <li key={b.id}>
+            <span>{b.title}</span>
+            <span className="reached-math">
+              {Math.round(b.score)} × {Math.round(b.share * 100)}% = {b.points.toFixed(1)}
+            </span>
+          </li>
+        ))}
+        <li className="reached-total">
+          <span>Credibility score</span>
+          <span className="reached-math">{track.score} out of 100</span>
+        </li>
+      </ul>
+      <p className="note">
+        Each part is the <strong>average across the completed projects</strong>, so a weak project is balanced by strong ones, not hidden: the project cards below show each
+        one on its own.
+        {left.length > 0 && ` Left out because it could not be worked out: ${left.map((p) => p.title.toLowerCase()).join(', ')}. The rest are scaled up to add to 100%.`}
+      </p>
+      {track.summary.count === 1 && <p className="note">This rests on a single completed project. Add more below for a more reliable score.</p>}
+    </div>
+  )
+}
+
+// A plain guide to adding more projects, with what is loaded so far.
+function AddProjects({ track, onAddProjects }) {
+  const rows = track.projects
+  const withT12 = rows.filter((p) => p.months > 0).length
+  const missing = rows.filter((p) => p.months === 0).map((p) => p.name)
+  return (
+    <div className="add-projects">
+      <p className="add-title">Add more completed projects</p>
+      <p>The more completed projects the sponsor has, the more reliable this score. You can add as many as you like:</p>
+      <ol>
+        <li>
+          Put each past project on its own <strong>Completed Project</strong> tab in the applicant workbook. One workbook holds them all, and each tab is read as its own project.
+        </li>
+        <li>
+          Load the workbook on the first tab. For each past project, choose the stage <strong>Completed</strong> and an &quot;as of&quot; date.
+        </li>
+        <li>
+          Open each completed project&apos;s <strong>Trailing 12 months</strong> group and load its T-12 file.
+        </li>
+      </ol>
+      <p className="add-status" role="status">
+        {rows.length === 0
+          ? 'No completed projects are loaded yet.'
+          : `${rows.length} completed project${rows.length === 1 ? '' : 's'} loaded, ${withT12} with a T-12.${missing.length ? ` Still needs a T-12: ${missing.join(', ')}.` : ''}`}
+      </p>
+      {onAddProjects && (
+        <button type="button" className="button small primary" onClick={onAddProjects}>
+          Go to Load workbook
+        </button>
+      )}
+    </div>
+  )
+}
+
 function Delivery({ project }) {
   return (
     <li className="delivery">
@@ -54,6 +118,7 @@ function Delivery({ project }) {
         <summary>
           <span className="project-name">{project.name}</span>
           <span className="chips">
+            {project.score !== null && project.score !== undefined && <span className={`chip ${BAND[labelFor(project.score).label]}`}>this project alone: {project.score}</span>}
             {project.units && <span className="chip">{project.units} units</span>}
             {project.size && <span className="chip">{fmt.usd(project.size)}</span>}
           </span>
@@ -93,7 +158,7 @@ function Delivery({ project }) {
 
 // M5-b: the sponsor's track record. "Has this sponsor delivered what it promised before?" Shows the credibility score,
 // the four parts behind it, and a promised-vs-delivered table for each completed project.
-export default function TrackRecordSection({ track, reviewedStage }) {
+export default function TrackRecordSection({ track, reviewedStage, onAddProjects }) {
   return (
     <section className="track">
       <p className="section-label">Track record: has this sponsor delivered before?</p>
@@ -132,6 +197,10 @@ export default function TrackRecordSection({ track, reviewedStage }) {
           {track.reason}
         </p>
       )}
+
+      {track.ok && <HowReached track={track} />}
+
+      <AddProjects track={track} onAddProjects={onAddProjects} />
 
       {track.parts.length > 0 && (
         <ul className="measures">
