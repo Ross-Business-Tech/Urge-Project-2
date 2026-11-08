@@ -23,6 +23,7 @@ import {
   dscr,
   annualDebtService,
   applyStageAndDate,
+  ratioIdsForStage,
   loadBenchmarks,
   contingencyBenchmark,
   costBenchmark,
@@ -603,7 +604,10 @@ export function prepare(project, context = {}, settings) {
   const used = maker.stage
   // A lease-up project's still-projected parts run under the development rules, so its ratios are read as development.
   const devRecord = used === 'development' ? project : applyStageAndDate(project, { stage: 'development' })
-  const ratios = Object.fromEntries(keyRatios(devRecord, settings).map((r) => [r.id, r]))
+  // Matched by position, not by the id on the result: M0's contingency, equity-share and runway ratios return a result with no
+  // id when an input is refused (a negative or absurd amount), and reading them by id would then find nothing. (Reported to M0.)
+  const results = keyRatios(devRecord, settings)
+  const ratios = Object.fromEntries(ratioIdsForStage('development').map((id, i) => [id, results[i]]))
   return {
     record: project,
     used,

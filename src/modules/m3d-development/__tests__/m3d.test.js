@@ -179,3 +179,36 @@ test('parseMonth reads years and months and refuses anything else', () => {
   assert.equal(parseMonth('soon'), null)
   assert.equal(parseMonth(null), null)
 })
+
+test('scrambled records never crash a check or produce a malformed flag', async () => {
+  const { record } = await load(byId('s01-healthy-development'))
+  const junk = [null, NaN, Infinity, -5, 1e15, 'abc', '', {}, [], true, 6.5, '2027-13', 99999]
+  let seed = 12345 // a fixed seed, so a failure can be repeated
+  const rand = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296
+  const pick = (o) => {
+    const keys = Object.keys(o)
+    return keys[Math.floor(rand() * keys.length)]
+  }
+  for (let i = 0; i < 1500; i++) {
+    const r = structuredClone(record)
+    for (let n = 0; n < 6; n++) {
+      let node = r.data[pick(r.data)]
+      for (let d = 0; d < 4 && node && typeof node === 'object'; d++) {
+        const k = pick(node)
+        if (k === undefined) break
+        if (typeof node[k] !== 'object' || node[k] === null) {
+          node[k] = junk[Math.floor(rand() * junk.length)]
+          break
+        }
+        node = node[k]
+      }
+    }
+    if (!['development', 'lease_up'].includes(r.data.stage.stage)) continue
+    for (const stage of ['development', 'lease_up']) {
+      const p = applyStageAndDate(r, { stage })
+      const { flags, notes } = run(p, {})
+      assert.ok(!ids(flags).includes('M3D-check-failed'), notes.join(' | '))
+      for (const f of flags) assert.deepEqual(validateFlag(f), [], f.id)
+    }
+  }
+})
