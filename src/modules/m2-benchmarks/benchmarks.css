@@ -1,0 +1,123 @@
+/* M2 market comparison table */
+
+.benchmarks {
+  margin: 4px 0 16px;
+}
+
+.bench-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.bench-table th,
+.bench-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.bench-table thead th {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.bench-table tbody th {
+  font-weight: 600;
+}
+
+.bench-basis {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.bench-row.ok .bench-result {
+  color: #0d6b3a;
+}
+
+.bench-row.out.high .bench-result,
+.bench-row.out.medium .bench-result {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.bench-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: var(--chip-bg);
+  color: var(--muted);
+}
+
+.bench-chip.high {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.bench-chip.medium {
+  background: var(--warn-bg);
+  color: var(--text);
+}
+
+.bench-questions {
+  margin: 0;
+  padding-left: 20px;
+  display: grid;
+  gap: 6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .bench-row.ok .bench-result {
+    color: #7ddca0;
+  }
+}
+
+/* Phones: each row becomes a small card, so nothing scrolls sideways. */
+@media (max-width: 600px) {
+  .bench-table thead {
+    display: none;
+  }
+
+  .bench-table,
+  .bench-table tbody,
+  .bench-table tr,
+  .bench-table th,
+  .bench-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .bench-table tr {
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+
+  .bench-table th,
+  .bench-table td {
+    border-bottom: none;
+    padding: 4px 0;
+  }
+
+  .bench-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .bench-row.out.high,
+  .bench-row.out.medium {
+    border-color: var(--danger);
+  }
+}
