@@ -23,6 +23,17 @@ export const THRESHOLDS = {
   //   below this fraction of it .... HIGH   (0.5 = under half of the low end, so under 2.5%)
   contingencyHighBelowFractionOfLow: 0.5,
 
+  // Contingency ABOVE a funder's cap. Some programs (MSHDA, per a reviewer's note) refuse a high contingency.
+  // The cap is a placeholder: ask which program applies. Above it is MEDIUM. (Between the benchmark's high end and this cap is not flagged.)
+  contingencyProgramCap: 0.15, // share of hard cost
+
+  // Permits, tap fees and bonds as a share of hard cost before contingency (one line a reviewer questioned as "so high").
+  permitsShareOfHard: { low: 0.02, medium: 0.04 }, // above the first is LOW, above the second is MEDIUM
+
+  // All developer and related-party fees (developer, project management, construction management, consulting, other
+  // related-party) as a share of total project cost.
+  developerFeesShareOfCost: { low: 0.1, medium: 0.15 }, // above the first is LOW, above the second is MEDIUM
+
   // Soft costs as a share of hard costs. Outside the usual range is LOW...
   softToHardRange: { low: 0.1, high: 0.4 },
   // ...and outside this wider range is MEDIUM.
@@ -39,6 +50,8 @@ export const THRESHOLDS = {
 
   // ---- MONEY AND TAKEOUT -----------------------------------------------------------------
   // (DSCR below the lender's minimum is always HIGH. The minimum itself is in settings.js.)
+  // DSCR that clears the minimum by less than this much is a thin cushion: MEDIUM.
+  dscrThinMargin: 0.1, // in times (0.10 means 1.20 to 1.29 with a 1.20 minimum)
 
   // Debt as a share of total project cost.
   debtToCost: { medium: 0.75, high: 0.85 }, // above the first is MEDIUM, above the second is HIGH
@@ -63,12 +76,15 @@ const pct = (n) => `${Math.round(n * 1000) / 10}%`
 export function cutoffRows(t = THRESHOLDS, { minDscr = 1.2, contingencyLow = 0.05, contingencyHigh = 0.1 } = {}) {
   return [
     { topic: 'Contingency (cushion for cost overruns), share of hard cost', high: `under ${pct(contingencyLow * t.contingencyHighBelowFractionOfLow)}`, medium: `under ${pct(contingencyLow)} (benchmark ${pct(contingencyLow)} to ${pct(contingencyHigh)})`, low: '' },
+    { topic: 'Contingency above a program cap', high: '', medium: `over ${pct(t.contingencyProgramCap)} of hard cost`, low: '' },
+    { topic: 'Permits, tap fees and bonds, share of hard cost', high: '', medium: `over ${pct(t.permitsShareOfHard.medium)}`, low: `over ${pct(t.permitsShareOfHard.low)}` },
+    { topic: 'Developer and related-party fees, share of total cost', high: '', medium: `over ${pct(t.developerFeesShareOfCost.medium)}`, low: `over ${pct(t.developerFeesShareOfCost.low)}` },
     { topic: 'Soft costs, share of hard cost', high: '', medium: `under ${pct(t.softToHardFar.low)} or over ${pct(t.softToHardFar.high)}`, low: `under ${pct(t.softToHardRange.low)} or over ${pct(t.softToHardRange.high)}` },
     { topic: 'Dates out of order', high: 'any', medium: '', low: '' },
     { topic: 'Construction length', high: '', medium: `under ${t.constructionMonths.low} or over ${t.constructionMonths.high} months`, low: '' },
     { topic: 'Lease-up length (completion to stabilization)', high: '', medium: `under ${t.leaseUpMonths.low} or over ${t.leaseUpMonths.high} months`, low: '' },
     { topic: 'Past planned completion date, still in development', high: `more than ${t.slippedMonthsHigh} months late`, medium: `up to ${t.slippedMonthsHigh} months late`, low: '' },
-    { topic: 'DSCR (income ÷ loan payments)', high: `under ${minDscr.toFixed(2)}×`, medium: '', low: '' },
+    { topic: 'DSCR (income ÷ loan payments)', high: `under ${minDscr.toFixed(2)}×`, medium: `${minDscr.toFixed(2)}× to ${(minDscr + t.dscrThinMargin - 0.005).toFixed(2)}× (thin cushion)`, low: '' },
     { topic: 'Debt as a share of project cost', high: `over ${pct(t.debtToCost.high)}`, medium: `over ${pct(t.debtToCost.medium)}`, low: '' },
     { topic: 'Debt yield (income ÷ debt)', high: `under ${pct(t.debtYieldMin.high)}`, medium: `under ${pct(t.debtYieldMin.medium)}`, low: '' },
     { topic: 'Construction interest budgeted vs. estimate', high: `under ${pct(t.interestReserve.high)} of estimate`, medium: `under ${pct(t.interestReserve.medium)} of estimate`, low: '' },

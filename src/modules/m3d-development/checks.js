@@ -95,6 +95,18 @@ function contingency(ctx) {
   const share = amount / base
   const range = `${fmt.pct(low, 0)} to ${fmt.pct(high, 0)} benchmark`
   const detail = `Contingency ${usd(amount)} on ${usd(base)} of hard cost (${fmt.pct(share)}) vs. a ${range}.`
+  if (share > LIMITS.contingencyProgramCap) {
+    const cap = fmt.pct(LIMITS.contingencyProgramCap, 0)
+    const f = flag({
+      id: 'M3D-contingency-high',
+      severity: 'medium',
+      title: 'Contingency is larger than many funders allow.',
+      evidence: `Contingency ${usd(amount)} on ${usd(base)} of hard cost: ${fmt.pct(share)}, above a ${cap} program cap (the cap is a placeholder).`,
+      cell_refs: cells,
+      follow_up: `Does the funding program allow a contingency this large? What is the cap, and what is the extra ${usd(amount - base * LIMITS.contingencyProgramCap)} covering?`,
+    })
+    return row(id, 'budget', title, 'fail', `${detail} Above the ${cap} program cap.`, { cells, flags: [f] })
+  }
   if (share >= low) return row(id, 'budget', title, 'pass', detail, { cells })
   const f = flag({
     id: 'M3D-contingency-low',
@@ -133,6 +145,55 @@ function softCostShare(ctx) {
       : 'Are fees, financing costs and reserves fully budgeted, or sitting in hard costs or left out?',
   })
   return row(id, 'budget', title, 'fail', detail, { flags: [f] })
+}
+
+// A single budget line a reviewer may question: permits, tap fees and bonds, against hard cost before contingency.
+function permitsLine(ctx) {
+  const { record, flag } = ctx
+  const id = 'permits'
+  const title = 'Permits and tap fees are in proportion'
+  const cells = citeCells(record, [amountPath('permitsBonds')])
+  const permits = amountOf(record, 'permitsBonds')
+  const base = sumOf(record, HARD_KEYS) - sumOf(record, HARD_CONTINGENCY)
+  if (permits === null || base <= 0) return row(id, 'budget', title, 'not_applicable', 'Needs the permits line and the hard costs filled in.')
+  const share = permits / base
+  const { low, medium } = LIMITS.permitsShareOfHard
+  const detail = `Permits, tap fees and bonds ${usd(permits)} are ${fmt.pct(share)} of the ${usd(base)} of hard cost (flagged above ${fmt.pct(low, 0)}).`
+  if (share <= low) return row(id, 'budget', title, 'pass', detail, { cells })
+  const f = flag({
+    id: 'M3D-permits-high',
+    severity: share > medium ? 'medium' : 'low',
+    title: 'The permit and tap fee line looks high for the size of the project.',
+    evidence: detail,
+    cell_refs: cells,
+    follow_up: 'Why are permits, tap fees and bonds this large? Please send the fee schedule or quotes behind the amount.',
+  })
+  return row(id, 'budget', title, 'fail', detail, { cells, flags: [f] })
+}
+
+// Fees paid to the developer and related parties, together, against total project cost.
+function developerFees(ctx) {
+  const { record, flag } = ctx
+  const id = 'developer-fees'
+  const title = 'Developer and related-party fees are in proportion'
+  const keys = ['developerFee', 'projectManagementFees', 'constructionManagementFees', 'consultingFees', 'relatedPartyFees']
+  const cells = citeCells(record, keys.filter((k) => amountOf(record, k) !== null).map(amountPath))
+  const fees = sumOf(record, keys)
+  const total = totalDevelopmentCost(record)
+  if (!anyEntered(record, keys) || !total.ok) return row(id, 'budget', title, 'not_applicable', 'Needs fees and the total development budget filled in.')
+  const share = fees / total.value
+  const { low, medium } = LIMITS.developerFeesShareOfCost
+  const detail = `Developer and related-party fees ${usd(fees)} are ${fmt.pct(share)} of the ${usd(total.value)} project cost (flagged above ${fmt.pct(low, 0)}).`
+  if (share <= low) return row(id, 'budget', title, 'pass', detail, { cells })
+  const f = flag({
+    id: 'M3D-developer-fees-high',
+    severity: share > medium ? 'medium' : 'low',
+    title: 'A large share of the project cost goes to the developer and related parties.',
+    evidence: detail,
+    cell_refs: cells,
+    follow_up: 'How much of the developer fee is paid in cash during construction and how much is deferred? Do the fees fit the funder\'s limits?',
+  })
+  return row(id, 'budget', title, 'fail', detail, { cells, flags: [f] })
 }
 
 // =============================================================================================
@@ -269,7 +330,19 @@ function dscrCheck(ctx) {
   }
   const min = settings.minDscr
   const detail = `DSCR ${fmt.times(result.value)} vs. the lender's minimum of ${fmt.times(min)}.`
-  if (result.value >= min) return row(id, 'capital', title, 'pass', detail, { cells })
+  if (result.value >= min + LIMITS.dscrThinMargin) return row(id, 'capital', title, 'pass', detail, { cells })
+  if (result.value >= min) {
+    const f = flag({
+      id: 'M3D-dscr-thin',
+      severity: 'medium',
+      title: 'Income clears the lender\'s minimum by only a sliver.',
+      evidence: `${detail} That is less than ${fmt.times(LIMITS.dscrThinMargin).replace('×', '')} above the minimum, so a small drop in income puts it under.`,
+      cell_refs: cells,
+      follow_up: `By how much can rents fall or costs rise before DSCR drops below ${fmt.times(min)}? Is there any cushion in the income projections?`,
+      transition: 'T3',
+    })
+    return row(id, 'capital', title, 'fail', `${detail} Only just above the minimum.`, { cells, flags: [f] })
+  }
   const f = flag({
     id: 'M3D-dscr-under-minimum',
     severity: 'high',
@@ -430,7 +503,7 @@ function team(ctx) {
 // =============================================================================================
 
 // The checks that run for a project. A lease-up project runs them all, as development checks, for what is still projected.
-export const CHECKS = [contingency, softCostShare, schedule, dscrCheck, debtToCostCheck, debtYieldCheck, lienOrder, interestReserve, team]
+export const CHECKS = [contingency, softCostShare, permitsLine, developerFees, schedule, dscrCheck, debtToCostCheck, debtYieldCheck, lienOrder, interestReserve, team]
 
 export const GROUPS = [
   { id: 'budget', label: 'Budget' },

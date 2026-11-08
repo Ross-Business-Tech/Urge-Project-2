@@ -221,3 +221,37 @@ test('the cutoffs list on screen is built from the same numbers the checks use',
   const changed = cutoffRows({ ...THRESHOLDS, debtToCost: { medium: 0.6, high: 0.7 } }, {})
   assert.match(JSON.stringify(changed), /over 70%/)
 })
+
+test('contingency above the program cap is medium; between the benchmark and the cap is not flagged', () => {
+  // hard cost before contingency is 3,500,000: 15% is 525,000
+  const over = flagOf(project('development', (d) => (d.budget.lines.constructionContingency.amount = 600000)), 'M3D-contingency-high')
+  assert.equal(over.severity, 'medium')
+  assert.match(over.evidence, /17\.1%/)
+  assert.equal(flagOf(project('development', (d) => (d.budget.lines.constructionContingency.amount = 450000)), 'M3D-contingency-high'), undefined) // 12.9%
+  assert.ok(!ids(project('development', (d) => (d.budget.lines.constructionContingency.amount = 600000))).includes('M3D-contingency-low'))
+})
+
+test('permits line: low above 2% of hard cost, medium above 4%', () => {
+  assert.equal(flagOf(project('development', (d) => (d.budget.lines.permitsBonds.amount = 83209)), 'M3D-permits-high').severity, 'low') // 2.4%
+  assert.equal(flagOf(project('development', (d) => (d.budget.lines.permitsBonds.amount = 200000)), 'M3D-permits-high').severity, 'medium')
+  assert.equal(flagOf(project('development', (d) => (d.budget.lines.permitsBonds.amount = 50000)), 'M3D-permits-high'), undefined)
+  assert.equal(flagOf(project(), 'M3D-permits-high'), undefined) // no permits line entered: nothing to say
+})
+
+test('developer fees: low above 10% of total cost, medium above 15%', () => {
+  // total cost in the sample is about 5.55M (about 5.69M with the test interest line)
+  const low = flagOf(project('development', (d) => (d.budget.lines.developerFee.amount = 700000)), 'M3D-developer-fees-high')
+  assert.equal(low.severity, 'low')
+  assert.equal(flagOf(project('development', (d) => { d.budget.lines.developerFee.amount = 600000; d.budget.lines.consultingFees.amount = 600000 }), 'M3D-developer-fees-high').severity, 'medium')
+  assert.equal(flagOf(project('development', (d) => (d.budget.lines.developerFee.amount = 180000)), 'M3D-developer-fees-high'), undefined)
+})
+
+test('a DSCR that only just clears the minimum is a medium "thin cushion" flag', () => {
+  // 1.20 minimum with a 0.10 margin: 1.20 up to 1.29 is thin. Raise the minimum so the 2.71 sample lands in that band.
+  const thin = flagOf(project(), 'M3D-dscr-thin', { settings: { minDscr: 2.65 } })
+  assert.equal(thin.severity, 'medium')
+  assert.equal(thin.transition, 'T3')
+  assert.equal(flagOf(project(), 'M3D-dscr-thin'), undefined) // 2.71 vs 1.20: comfortable
+  assert.equal(flagOf(project(), 'M3D-dscr-thin', { settings: { minDscr: 3 } }), undefined) // below the minimum is the other flag
+  assert.ok(ids(project(), { settings: { minDscr: 3 } }).includes('M3D-dscr-under-minimum'))
+})
