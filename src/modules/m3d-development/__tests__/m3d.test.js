@@ -345,3 +345,21 @@ test('a DSCR that only just clears the minimum is a medium "thin cushion" flag',
   assert.equal(flagOf(project(), 'M3D-dscr-thin', { settings: { minDscr: 3 } }), undefined) // below the minimum is the other flag
   assert.ok(ids(project(), { settings: { minDscr: 3 } }).includes('M3D-dscr-under-minimum'))
 })
+
+test('fees: a developer fee mostly paid in cash is flagged low with a question; mostly deferred is not', () => {
+  // the check fires only when a fee is budgeted; the healthy sample defers 550,000 ("Other")
+  assert.equal(ids(project('development')).includes('M3D-fee-mostly-cash'), false, 'no fee in the budget')
+  const cash = project('development', (d) => {
+    d.budget.lines.developerFee.amount = 200000
+    d.sources.rows[2].amount = 20000 // 20,000 deferred of 200,000
+  })
+  const f = flagOf(cash, 'M3D-fee-mostly-cash')
+  assert.equal(f.severity, 'low')
+  assert.match(f.evidence, /\$20,000 is deferred.*90% is paid in cash/)
+  assert.match(f.follow_up, /percentage of the developer fee/)
+  const deferred = project('development', (d) => {
+    d.budget.lines.developerFee.amount = 200000
+    d.sources.rows[2].amount = 150000 // 150,000 deferred of 200,000
+  })
+  assert.equal(ids(deferred).includes('M3D-fee-mostly-cash'), false)
+})

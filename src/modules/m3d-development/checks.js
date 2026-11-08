@@ -203,6 +203,20 @@ function developerFees(ctx) {
       }),
     )
   }
+  // Most of a developer fee paid in cash during the project is money leaving it before the building pays for itself.
+  const cashShare = fees > 0 ? 1 - Math.min(deferred, fees) / fees : 0
+  if (fees > 0 && cashShare > LIMITS.developerFeeCashShare) {
+    flags.push(
+      flag({
+        id: 'M3D-fee-mostly-cash',
+        severity: 'low',
+        title: 'Most of the developer fee is paid in cash during the project rather than deferred.',
+        evidence: `Developer and related-party fees ${usd(fees)}; ${deferred > 0 ? `${usd(Math.min(deferred, fees))} is deferred` : 'none is deferred'}, so about ${fmt.pct(cashShare, 0)} is paid in cash (flagged above ${fmt.pct(LIMITS.developerFeeCashShare, 0)}).`,
+        cell_refs: [...cells, ...deferredCells],
+        follow_up: 'What percentage of the developer fee will actually be received, and when? How much is deferred until after the loans are repaid?',
+      }),
+    )
+  }
   if (deferred > fees) {
     flags.push(
       flag({

@@ -34,6 +34,10 @@ export const THRESHOLDS = {
   // related-party) as a share of total project cost.
   developerFeesShareOfCost: { low: 0.1, medium: 0.15 }, // above the first is LOW, above the second is MEDIUM
 
+  // Share of the developer fee paid in cash (not shown as a deferred source). Above this is LOW, with a question about how much
+  // of the fee will really be received. Set from one underwriter's comment on one deal, so treat it as a first guess.
+  developerFeeCashShare: 0.5,
+
   // Soft costs as a share of hard costs. Outside the usual range is LOW...
   softToHardRange: { low: 0.1, high: 0.4 },
   // ...and outside this wider range is MEDIUM.
@@ -81,6 +85,7 @@ export function cutoffRows(t = THRESHOLDS, { minDscr = 1.2, contingencyLow = 0.0
     { topic: 'Contingency above a program cap', high: '', medium: `over ${pct(t.contingencyProgramCap)} of hard cost`, low: '' },
     { topic: 'Permits, tap fees and bonds, share of hard cost', high: '', medium: `over ${pct(t.permitsShareOfHard.medium)}`, low: `over ${pct(t.permitsShareOfHard.low)}` },
     { topic: 'Developer and related-party fees, share of total cost', high: '', medium: `over ${pct(t.developerFeesShareOfCost.medium)}`, low: `over ${pct(t.developerFeesShareOfCost.low)}` },
+    { topic: 'Developer fee paid in cash (not deferred), share of the fee', high: '', medium: '', low: `over ${pct(t.developerFeeCashShare)}` },
     { topic: 'Soft costs, share of hard cost', high: '', medium: `under ${pct(t.softToHardFar.low)} or over ${pct(t.softToHardFar.high)}`, low: `under ${pct(t.softToHardRange.low)} or over ${pct(t.softToHardRange.high)}` },
     { topic: 'Dates out of order', high: 'any', medium: '', low: '' },
     { topic: 'Construction length', high: '', medium: `under ${t.constructionMonths.low} or over ${t.constructionMonths.high} months`, low: '' },
