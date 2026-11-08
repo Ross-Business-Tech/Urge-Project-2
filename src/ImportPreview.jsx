@@ -17,6 +17,7 @@ import {
 import { GroupEditor } from './RecordEditor.jsx'
 import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
 import { T12Tools } from './T12Tools.jsx'
+import { ScenarioPanel } from './modules/m4-scenarios/ScenarioPanel.jsx'
 import { downloadReview, rescueStore } from './download.js'
 
 // Today's date on this device, as YYYY-MM-DD.
@@ -133,6 +134,7 @@ const ProjectCard = memo(function ProjectCard({ project, record, settings, onCha
         <div className="body">
           <StageControls project={project} record={record} onChange={onChange} />
           <KeyRatios record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
+          <ScenarioPanel record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
           <p className="section-label">Values (tap a group to view or edit)</p>
           <ul className="groups">
             {PROJECT_GROUPS.map((g) => (

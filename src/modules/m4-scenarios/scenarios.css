@@ -1,0 +1,220 @@
+/* Scenario screen (M4). Uses the page's colour variables, so it follows light and dark mode. */
+
+.scenarios {
+  margin: 12px 0;
+}
+
+.sc-cases {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.sc-case {
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-top-width: 4px;
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.sc-case.sc-downside {
+  border-top-color: var(--danger);
+}
+
+.sc-case.sc-base {
+  border-top-color: var(--accent);
+}
+
+.sc-case.sc-upside {
+  border-top-color: #1a7f4b;
+}
+
+.sc-case h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.sc-levers {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0 12px;
+}
+
+.sc-lever {
+  display: grid;
+  gap: 2px;
+}
+
+.sc-lever-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.sc-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sc-lever input[type='range'] {
+  width: 100%;
+  min-height: 32px; /* a comfortable thumb target on a phone */
+  accent-color: var(--accent);
+}
+
+.sc-results {
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.sc-result {
+  padding: 6px 0;
+}
+
+.sc-result dt {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.sc-result dd {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  overflow-wrap: anywhere;
+}
+
+.sc-result dd.sc-hint {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.sc-flags {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.sc-flags li {
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.sc-how {
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.sc-how summary {
+  cursor: pointer;
+  min-height: 32px;
+  font-weight: 600;
+}
+
+.sc-basis {
+  margin: 10px 0;
+  padding: 10px 12px;
+  background: var(--accent-bg);
+  border-radius: 12px;
+}
+
+.sc-basis p {
+  margin: 0 0 6px;
+}
+
+.sc-basis .button {
+  margin-top: 4px;
+}
+
+/* ---- break-even and one-lever-at-a-time ---- */
+
+.sc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6px 0 10px;
+  font-size: 0.9rem;
+}
+
+.sc-table th,
+.sc-table td {
+  padding: 8px 6px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.sc-table thead th {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.sc-table tbody th {
+  font-weight: 600;
+}
+
+.sc-table td {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-table td.warn {
+  color: var(--danger);
+}
+
+.sc-table td.good {
+  color: #1a7f4b;
+}
+
+.sc-impacts {
+  list-style: none;
+  margin: 6px 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.sc-impacts li {
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.sc-impact-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 10px;
+  font-size: 0.92rem;
+}
+
+.sc-bar {
+  height: 8px;
+  margin: 6px 0 4px;
+  background: var(--chip-bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sc-bar-fill {
+  height: 100%;
+  background: var(--danger);
+  border-radius: 4px;
+}
