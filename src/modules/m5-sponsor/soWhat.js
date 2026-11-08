@@ -1,14 +1,17 @@
-// "So what?": puts the sponsor's rating next to each project's own numbers, in a sentence a reviewer can act on.
+// "So what?": puts the sponsor's rating next to each project's own numbers, in a short sentence a reviewer can act on.
 //
-// A sound project under a weak sponsor is still a risk (and the risk is biggest for a project still being built, because
-// the sponsor has to fund any overrun). A weak project under a strong sponsor may still be supported. The sentence says
-// which of those cases applies. It uses the shared project DSCR calculator and the lender's minimum from the settings;
-// it never calls another module.
+// A sound project under a weak sponsor is still a risk (biggest for a project still being built, because the sponsor
+// has to fund any overrun). A weak project under a strong sponsor may still be supported. Each sentence leads with the
+// verdict and carries the numbers that show how serious it is. It uses the shared project DSCR calculator and the
+// lender's minimum from the settings; it never calls another module.
 
 import { dscr, fmt } from '../shared/calculators.js'
 import { sanitizeSettings } from '../shared/settings.js'
 
 const isWeak = (health) => health?.ok && ['Weak', 'Failing'].includes(health.label)
+
+// "Failing (5/100)"
+const rated = (health) => `${health.label} (${health.score}/100)`
 
 // One project: how it stands on its own, and what that means given the sponsor.
 export function projectSoWhat(project, health, settings) {
@@ -16,75 +19,62 @@ export function projectSoWhat(project, health, settings) {
   const cov = dscr(project)
   const stage = project.data?.stage?.stage ?? null
   const name = project.data?.identity?.name || project.meta?.sourceTab || 'Unnamed project'
-  const sponsor = health?.ok ? health.label : null
   const weak = isWeak(health)
+  const base = { name, stage, key: project.meta?.projectId ?? name, coverage: cov.ok ? cov.value : null }
 
-  const base = { name, stage, key: project.meta?.projectId ?? name }
   if (!cov.ok) {
-    return {
-      ...base,
-      state: 'unknown',
-      tone: '',
-      text: sponsor
-        ? `The project's own coverage is not available (${cov.reason}), so only the sponsor can be judged: ${sponsor}.`
-        : `The project's own coverage is not available (${cov.reason}), and the sponsor could not be scored.`,
-    }
+    return { ...base, state: 'unknown', tone: '', text: `Coverage not available: ${cov.reason}${health?.ok ? ` Sponsor: ${rated(health)}.` : ''}` }
   }
   const sound = cov.value >= min
-  const own = `${fmt.times(cov.value)} against the lender's minimum of ${fmt.times(min)}`
-  if (!sponsor) {
-    return { ...base, state: sound ? 'sound' : 'thin', tone: sound ? '' : 'amber', text: `The sponsor could not be scored, so this project is judged on its own numbers only: coverage ${own}.` }
+  const own = `${fmt.times(cov.value)} vs ${fmt.times(min)} minimum`
+  if (!health?.ok) {
+    return { ...base, state: sound ? 'sound' : 'thin', tone: sound ? '' : 'amber', text: `${sound ? 'Sound' : 'Thin'}: ${own}. Sponsor not scored.` }
   }
-  if (sound && !weak) {
-    return { ...base, state: 'sound', tone: 'good', text: `Sound on its own numbers (coverage ${own}), and the sponsor rates ${sponsor}.` }
-  }
+  if (sound && !weak) return { ...base, state: 'sound', tone: 'good', text: `Sound: ${own}. Sponsor ${rated(health)}.` }
   if (sound && weak) {
-    const why =
-      stage === 'development'
-        ? 'This matters most for a project still being built, because the sponsor has to fund any overrun or delay.'
-        : 'If the project slips, this sponsor has little room to absorb a miss.'
-    return { ...base, state: 'sound', tone: 'amber', text: `Sound on its own numbers (coverage ${own}), but the sponsor is the risk: it rates ${sponsor}. ${why}` }
+    const cost = stage === 'development' ? 'must fund any overrun or delay' : 'has little room to absorb a miss'
+    return { ...base, state: 'sound', tone: 'amber', text: `Sound alone (${own}), but the ${health.label} sponsor ${cost}.` }
   }
-  if (!sound && !weak) {
-    return { ...base, state: 'thin', tone: 'amber', text: `The sponsor rates ${sponsor}, but the project's own coverage is thin (${own}). The sponsor may have to support it.` }
-  }
-  return { ...base, state: 'thin', tone: 'warn', text: `A concern on both sides: the sponsor rates ${sponsor} and the project's own coverage is thin (${own}). This is the highest-risk combination.` }
+  if (!sound && !weak) return { ...base, state: 'thin', tone: 'amber', text: `Thin: ${own}. Sponsor ${rated(health)} may need to support it.` }
+  return { ...base, state: 'thin', tone: 'warn', text: `Highest risk: thin coverage (${own}) and a ${rated(health)} sponsor.` }
 }
 
 // The whole review in one sentence, then one line per project.
 export function soWhat(health, projects = [], settings) {
+  const min = sanitizeSettings(settings).minDscr
   const lines = projects.map((p) => projectSoWhat(p, health, settings))
   const weak = isWeak(health)
-  const thin = lines.filter((l) => l.state === 'thin').length
-  const sound = lines.filter((l) => l.state === 'sound').length
-  const unknown = lines.filter((l) => l.state === 'unknown').length
-  const many = projects.length > 1
+  const thin = lines.filter((l) => l.state === 'thin')
+  const sound = lines.filter((l) => l.state === 'sound')
+  const unknown = lines.filter((l) => l.state === 'unknown')
+  const lowest = Math.min(...lines.map((l) => l.coverage).filter((v) => v !== null))
+  const covText = Number.isFinite(lowest) ? `${fmt.times(lowest)}` : ''
 
   let headline
   let tone
   if (!health?.ok) {
-    headline = 'The sponsor could not be scored, so the review rests on the project numbers alone.'
+    headline = 'Sponsor not scored. Judged on project numbers only.'
     tone = 'amber'
   } else if (projects.length === 0) {
-    headline = weak ? `The sponsor rates ${health.label}. No projects are loaded to compare.` : `The sponsor rates ${health.label}. No projects are loaded to compare.`
+    headline = `Sponsor ${rated(health)}. No projects to compare.`
     tone = weak ? 'amber' : ''
-  } else if (weak && thin > 0) {
-    headline = 'Both the sponsor and at least one project are a concern. This is the highest-risk combination.'
+  } else if (weak && thin.length > 0) {
+    headline = `Highest risk: ${rated(health)} sponsor and thin project coverage (${covText} vs ${fmt.times(min)} minimum).`
     tone = 'warn'
-  } else if (weak && sound > 0) {
-    headline = many ? 'The projects look sound on their own numbers, but the sponsor is the risk.' : 'The project is sound on its own numbers, but the sponsor is the risk.'
+  } else if (weak && sound.length > 0) {
+    headline = `Sponsor is the risk: ${rated(health)}. ${projects.length > 1 ? `Projects are sound (lowest ${covText})` : `Project is sound (${covText})`}.`
     tone = 'amber'
   } else if (weak) {
-    headline = 'The sponsor is a concern, and the project figures are not available to balance it.'
+    headline = `Sponsor is the risk: ${rated(health)}. Project figures not available.`
     tone = 'amber'
-  } else if (thin > 0) {
-    headline = `The sponsor looks able to deliver, but ${many ? 'a project’s' : 'the project’s'} own coverage is thin, so the sponsor may have to support it.`
+  } else if (thin.length > 0) {
+    headline = `Sponsor ${rated(health)}, but project coverage is thin (${covText} vs ${fmt.times(min)} minimum).`
     tone = 'amber'
-  } else if (unknown > 0) {
-    headline = 'The sponsor looks sound. Some project figures are not available, so those projects are not judged.'
+  } else if (unknown.length > 0) {
+    headline = `Sponsor ${rated(health)}. Some project figures not available.`
     tone = ''
   } else {
-    headline = many ? 'The sponsor and the projects all look sound.' : 'The sponsor and the project both look sound.'
+    headline = `Sponsor ${rated(health)} and ${projects.length > 1 ? `projects sound (lowest ${covText})` : `project sound (${covText})`}.`
     tone = 'good'
   }
   return { headline, tone, projects: lines }
