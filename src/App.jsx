@@ -157,7 +157,7 @@ const VIEWS = [
     id: 'import',
     label: 'Load workbook',
     heading: 'Load an applicant workbook',
-    lede: "Drop the applicant's spreadsheet here to see what we can read from it. Nothing is sent anywhere. You can save the review as a file and reopen it later.",
+    lede: "Drop the applicant's spreadsheet here to see what we can read from it. One workbook can hold several projects: each project tab is read as its own project. Nothing is sent anywhere. You can save the review as a file and reopen it later.",
   },
   {
     id: 'firm',

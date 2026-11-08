@@ -1,45 +1,62 @@
-// M3D: Development risk (layer 3). "What can go wrong while this project is being built and filled?"
+// M3D: development risk (layer 3). "What can go wrong while this project is being built?"
 //
 //   run(project, context) -> { flags, notes }        the module interface every module shares (section 1d)
 //   checklist(project, context) -> [row]             every check with pass / fail / not checked / not applicable, for the screen
 //
-// context: { firm, settings, benchmarkSets } (all optional). The settings default to M0's (lender's minimum DSCR 1.20 and so
-// on) and the benchmark sets to M0's made-up sample sets.
+// Runs for `development` projects, and for `lease_up` projects (their still-projected parts: the budget, the remaining
+// schedule and the debt are checked the same way, and their flags say stage_used: development). A `completed` project is
+// M3C's job, so M3D reports nothing for it. M3D never changes the stage or any value.
 //
-// Runs for `development`, and for the still-projected parts of `lease_up`. For a `completed` project it has nothing to say
-// and returns no flags. It never changes the stage or any value: it only reports.
+// context (all optional): { firm, settings, benchmarkSets }. Settings are M0's (the lender's minimum DSCR comes from here).
 
-import { guardModule, missingDataFlag, sanitizeSettings, DEFAULT_SETTINGS } from '../shared/index.js'
-import { CHECKS, MODULE_ID, prepare } from './checks.js'
+import { createFlagMaker, guardModule, missingDataFlag, DEFAULT_SETTINGS } from '../shared/index.js'
+import { CHECKS, GROUPS } from './checks.js'
 
-export { MODULE_ID }
+export const MODULE_ID = 'M3D'
+export { GROUPS }
 
-const settingsOf = (context) => sanitizeSettings(context?.settings ?? DEFAULT_SETTINGS)
+const RUNS_FOR = ['development', 'lease_up']
 
-// Every check as a row, for the screen. Empty for a completed project, which this module does not review.
+function prepare(project, context = {}) {
+  const maker = createFlagMaker(MODULE_ID, project)
+  return {
+    record: project,
+    stage: maker.stage,
+    // A lease-up project's projected parts are development checks, so say so on the flag.
+    flag: (fields) => maker.flag({ stage_used: 'development', ...fields }),
+    settings: { ...DEFAULT_SETTINGS, ...(context.settings ?? {}) },
+    benchmarkSets: context.benchmarkSets,
+    firm: context.firm ?? null,
+  }
+}
+
+export function appliesTo(project) {
+  return RUNS_FOR.includes(project?.data?.stage?.stage)
+}
+
 export function checklist(project, context) {
-  const stage = project?.data?.stage?.stage
-  if (stage !== 'development' && stage !== 'lease_up') return []
-  const ctx = prepare(project, context, settingsOf(context))
-  return CHECKS.map((check) => check(ctx))
+  if (!appliesTo(project)) return []
+  const ctx = prepare(project, context)
+  return CHECKS.flatMap((check) => check(ctx))
 }
 
 function runChecks(project, context) {
-  const stage = project?.data?.stage?.stage
-  if (!stage) {
+  if (!project?.data?.stage?.stage) {
     return {
       flags: [missingDataFlag({ module: MODULE_ID, stage_used: 'development', check: 'stage', checkTitle: 'The development risk checks', missing: 'the stage chosen by the underwriter' })],
       notes: ['No stage chosen, so the development risk checks did not run.'],
     }
   }
-  if (stage === 'completed') return { flags: [], notes: ['M3D reviews development and lease-up projects. This project is completed, so M3C reviews it instead.'] }
-
+  if (!appliesTo(project)) return { flags: [], notes: ['Development risk checks are for development and lease-up projects. Completed projects are covered by M3C.'] }
   const rows = checklist(project, context)
   const failed = rows.filter((r) => r.status === 'fail').length
   const unchecked = rows.filter((r) => r.status === 'not_checked').length
-  const skipped = rows.filter((r) => r.status === 'not_applicable').length
-  const notes = [`${rows.length} development risk checks: ${rows.length - failed - unchecked - skipped} passed, ${failed} raised a flag, ${unchecked} could not run, ${skipped} not applicable.`]
-  if (stage === 'lease_up') notes.push('Lease-up project: only the still-projected parts ran (schedule, reserves, loans, team). The budget checks are skipped because the workbook holds the original budget.')
+  const passed = rows.filter((r) => r.status === 'pass').length
+  const notes = [
+    `${rows.length} development risk checks: ${passed} passed, ${failed} raised a flag, ${unchecked} could not run.`,
+    'Cost per square foot is compared with the market by M2. The workbook has no property manager or guarantor fields, so they count only when named under "Other" in the team table.',
+  ]
+  if (project.data.stage.stage === 'lease_up') notes.push('Lease-up project: the projected parts were checked as development. Stabilization and absorption belong to M3T.')
   return { flags: rows.flatMap((r) => r.flags), notes }
 }
 

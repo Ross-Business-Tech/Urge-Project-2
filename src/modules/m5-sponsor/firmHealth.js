@@ -77,6 +77,13 @@ const safe = (fn) => (...args) => {
 const balance = (firm, key, period = 'current') => read(firm.data.balanceSheet.lines[key]?.[period] ?? null, `Balance sheet "${BS_LABEL[key]}"`, 'balanceSheet')
 const personal = (firm, key) => read(firm.data.principalStatement.lines[key]?.amount ?? null, `Personal statement "${PFS_LABEL[key]}"`, 'principalStatement')
 
+// The record paths a measure read (only values that were entered), so a flag can name the workbook cells.
+const balancePaths = (firm, keys) => keys.filter((k) => isNum(firm.data.balanceSheet.lines[k]?.current)).map((k) => `balanceSheet.lines.${k}.current`)
+const earningPaths = (firm, row, keys) => {
+  const i = firm.data.earnings.rows.indexOf(row)
+  return keys.filter((k) => isNum(row[k])).map((k) => `earnings.rows.${i}.${k}`)
+}
+
 // Linear score between points, held flat outside them. points: [[value, score], ...] in rising order of value.
 export function interpolate(x, points) {
   if (x <= points[0][0]) return points[0][1]
@@ -148,6 +155,7 @@ export const liquidityCover = safe((firm) => {
   if (!entered(owed)) return na('No current liabilities (payables, cards, taxes, payroll) entered on the firm balance sheet.', need('balanceSheet'))
   const cash = sum(liquid)
   const owing = sum(owed)
+  const paths = balancePaths(firm, [...LIQUID_FIRM, ...OWED_NOW])
   const detail = [`Firm cash and investments ${fmt.usd(cash)} against ${fmt.usd(owing)} owed within a year`]
 
   const priorCash = sum(LIQUID_FIRM.map((k) => balance(firm, k, 'prior')))
@@ -157,16 +165,16 @@ export const liquidityCover = safe((firm) => {
   const personalLiquid = LIQUID_PERSONAL.map((k) => personal(firm, k))
   if (entered(personalLiquid)) detail.push(`The principal also holds ${fmt.usd(sum(personalLiquid))} in cash and securities (not counted in the score)`)
 
-  if (owing <= 0) return ok({ id: 'liquidity', title: 'Liquidity cover', value: null, text: 'No current obligations', score: 100, weight: WEIGHTS.liquidity, detail, notes: [], cash, owing })
+  if (owing <= 0) return ok({ id: 'liquidity', title: 'Liquidity cover', value: null, text: 'No current obligations', score: 100, weight: WEIGHTS.liquidity, detail, notes: [], cash, owing, paths })
   const value = cash / owing
-  return ok({ id: 'liquidity', title: 'Liquidity cover', value, score: interpolate(value, LIQUIDITY_POINTS), weight: WEIGHTS.liquidity, detail, notes: [], cash, owing })
+  return ok({ id: 'liquidity', title: 'Liquidity cover', value, score: interpolate(value, LIQUIDITY_POINTS), weight: WEIGHTS.liquidity, detail, notes: [], cash, owing, paths })
 })
 
 // Fee dependence: how much of the firm's income is the developer fee, and whether income is shrinking.
 export const feeDependence = safe((firm) => {
   const { rows } = fiscalYears(firm)
   if (rows.length === 0) return na('No firm earnings by year entered.', need('earnings'))
-  const window = rows.slice(-3).map((row) => ({ year: row.fiscalYear, ...income(row) }))
+  const window = rows.slice(-3).map((row) => ({ year: row.fiscalYear, row, ...income(row) }))
   const known = window.filter((w) => w.entered)
   if (known.length === 0) return na('No income entered in the firm earnings.', need('earnings'))
 
@@ -194,7 +202,7 @@ export const feeDependence = safe((firm) => {
     detail.push(`Income ${change < 0 ? 'fell' : 'rose'} ${fmt.pct(Math.abs(change), 0)} from ${first.year} to ${last.year}`)
   }
   if (scores.length === 0) return na('There is not enough income history to judge fee dependence.', need('earnings'))
-  return ok({ id: 'feeDependence', title: 'Fee dependence', value, text, score: Math.min(...scores), weight: WEIGHTS.feeDependence, detail, notes: [] })
+  return ok({ id: 'feeDependence', title: 'Fee dependence', value, text, score: Math.min(...scores), weight: WEIGHTS.feeDependence, detail, notes: [], paths: window.flatMap((w) => earningPaths(firm, w.row, [...FEE_KEYS, 'nonFeeIncome', 'operatingCashDistributions'])) })
 })
 
 // Firm debt against firm equity, from the firm balance sheet.
@@ -204,10 +212,11 @@ export const leverage = safe((firm) => {
   if (!entered(debt)) return na('No firm debt (notes, mortgage) entered on the firm balance sheet.', need('balanceSheet'))
   if (equityEntered === null) return na("No capital stock or partner's equity entered on the firm balance sheet.", need('balanceSheet'))
   const owing = sum(debt)
+  const paths = balancePaths(firm, [...FIRM_DEBT, 'partnersEquity'])
   const detail = [`Firm debt ${fmt.usd(owing)} against equity of ${fmt.usd(equityEntered)}`]
-  if (equityEntered <= 0) return ok({ id: 'leverage', title: 'Leverage', value: null, text: 'No positive equity', score: 0, weight: WEIGHTS.leverage, detail, notes: [] })
+  if (equityEntered <= 0) return ok({ id: 'leverage', title: 'Leverage', value: null, text: 'No positive equity', score: 0, weight: WEIGHTS.leverage, detail, notes: [], paths })
   const value = owing / equityEntered
-  return ok({ id: 'leverage', title: 'Leverage', value, score: interpolate(value, [[0.5, 100], [1, 70], [2, 30], [4, 0]]), weight: WEIGHTS.leverage, detail, notes: [] })
+  return ok({ id: 'leverage', title: 'Leverage', value, score: interpolate(value, [[0.5, 100], [1, 70], [2, 30], [4, 0]]), weight: WEIGHTS.leverage, detail, notes: [], paths })
 })
 
 // Global DSCR: what the firm earns plus what its projects earn (each at the firm's share), against every debt payment.
@@ -268,7 +277,7 @@ export const globalDscr = safe((firm, projects = [], settings) => {
   const min = Math.max(sanitizeSettings(settings).minDscr, 1.05)
   const score = interpolate(value, [[0.8, 0], [1, 40], [min, 70], [min + 0.3, 100]])
   detail.push(`All debt payments ${fmt.usd(debtService)} a year`)
-  return ok({ id: 'globalDscr', title: 'Global DSCR', value, score, weight: WEIGHTS.globalDscr, detail, notes, counted, total: projects.length, firmCashFlow, debtService })
+  return ok({ id: 'globalDscr', title: 'Global DSCR', value, score, weight: WEIGHTS.globalDscr, detail, notes, counted, total: projects.length, firmCashFlow, debtService, paths: earningPaths(firm, row, [...FEE_KEYS, 'nonFeeIncome', ...EXPENSE_KEYS, ...DEBT_PAYMENT_KEYS]) })
 })
 
 // ---------------------------------------------------------------------------------------------

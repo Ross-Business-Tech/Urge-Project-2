@@ -19,12 +19,12 @@ Claude: if the student hasn't named a module, show them the `OPEN` rows in plain
 | M0 | Shared foundation (project record, stage flag, flag format, sample projects) | Base | Shared | none | CLAIMED | NS |
 | M1 | Integrity checks | 1 | Shared | M0 | DONE | Zain |
 | M2 | Benchmarking engine | 2 | Shared engine, stage-specific benchmark sets | M0 | CLAIMED | Zain |
-| M3D | Development risk module | 3 | Development stage | M0 | OPEN | |
-| M3C | Completed risk module | 3 | Completed stage | M0 | OPEN | |
-| M3T | Transition checks (lease-up and the hand-offs between stages) | 3 | Lease-up stage and every transition | M0 | OPEN | |
+| M3D | Development risk module | 3 | Development stage | M0 | CLAIMED | AA |
+| M3C | Completed risk module | 3 | Completed stage | M0 | CLAIMED | AA |
+| M3T | Transition checks (lease-up and the hand-offs between stages) | 3 | Lease-up stage and every transition | M0 | CLAIMED | AA |
 | M4 | Scenario engine (downside / base / upside) | 4 | Shared mechanics, stage-specific levers | M0 | DONE | NS |
-| M5-a | Sponsor firm health (global DSCR, liquidity cover, fee dependence, firm health score) | 5 | Cross-project | M0 | CLAIMED | NS |
-| M5-b | Sponsor track record and credibility score (projected vs. delivered); waits until past-project data exists | 5 | Cross-project | M0 | OPEN | |
+| M5-a | Sponsor firm health (global DSCR, liquidity cover, fee dependence, firm health score) | 5 | Cross-project | M0 | DONE | NS |
+| M5-b | Sponsor track record and credibility score (projected vs. delivered, from completed projects with a T-12; budget and schedule need a later data source) | 5 | Cross-project | M0 | DONE | NS |
 | M6 | Synthesis (ranked flags, cell references, sponsor follow-up questions) | 6 | Shared | M0, plus any flags the other modules produce | OPEN | |
 
 Big modules can be split between two people. If you want half of one, add a row such as `M3D-a` and `M3D-b` (copy the parent row, say which half each covers, and do it in the claim pull request). Suggested splits are noted in each spec.

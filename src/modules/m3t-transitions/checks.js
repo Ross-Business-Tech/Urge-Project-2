@@ -32,19 +32,12 @@ import {
   fmt,
   DEBT_SOURCE_TYPES,
 } from '../shared/index.js'
+import { THRESHOLDS } from './thresholds.js'
 
 export const MODULE_ID = 'M3T'
 
-export const THRESHOLDS = {
-  lateMonths: { medium: 6, high: 12 }, // estimated stabilization later than underwritten by this many months
-  concessionShare: { medium: 0.05, high: 0.1 }, // free rent as a share of potential rent
-  delayMonths: 6, // the delivery delay the reserves are tested against
-  averageDrawn: 0.5, // on average half of a construction loan is drawn while it is being built
-  refinanceWindowMonths: 36, // a loan due within this long is tested for refinancing
-  refinanceRateShock: 0.02, // the refinance is tested at the loans' current rate plus this
-  refinanceAmortizationMonths: 360,
-  debtYieldMin: 0.08,
-}
+// The cutoffs live in thresholds.js (one clearly marked place to change them).
+export { THRESHOLDS }
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 const amount = (v) => (isNum(v) && v >= 0 ? v : 0)

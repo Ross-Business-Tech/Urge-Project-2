@@ -1,19 +1,23 @@
-/* M3D development risk */
+/* M3D development risk checks */
 
-.m3d {
+.devrisk {
   margin: 4px 0 16px;
 }
 
-.m3d-group-title {
-  margin: 12px 0 6px;
+.dev-group {
+  margin-top: 12px;
+}
+
+.dev-group-title {
+  margin: 0 0 6px;
   font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
+  font-weight: 600;
   letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
-.m3d-list {
+.dev-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -21,7 +25,7 @@
   gap: 8px;
 }
 
-.m3d-item {
+.dev-check {
   display: flex;
   gap: 10px;
   padding: 10px 12px;
@@ -30,16 +34,16 @@
   border-radius: 12px;
 }
 
-.m3d-item.fail {
+.dev-check.fail {
   border-color: var(--danger);
 }
 
-.m3d-item.unchecked,
-.m3d-item.na {
+.dev-check.unchecked,
+.dev-check.na {
   border-style: dashed;
 }
 
-.m3d-icon {
+.dev-icon {
   flex: none;
   width: 26px;
   height: 26px;
@@ -52,29 +56,29 @@
   background: var(--chip-bg);
 }
 
-.m3d-item.pass .m3d-icon {
+.dev-check.pass .dev-icon {
   color: #0d6b3a;
   background: #e1f5e9;
 }
 
-.m3d-item.fail .m3d-icon {
+.dev-check.fail .dev-icon {
   color: var(--danger);
   background: var(--danger-bg);
 }
 
 @media (prefers-color-scheme: dark) {
-  .m3d-item.pass .m3d-icon {
+  .dev-check.pass .dev-icon {
     color: #8fe0b2;
     background: #17301f;
   }
 }
 
-.m3d-body {
+.dev-body {
   min-width: 0;
   flex: 1;
 }
 
-.m3d-top {
+.dev-top {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -82,36 +86,50 @@
   gap: 4px 8px;
 }
 
-.m3d-title {
+.dev-title {
   font-weight: 600;
 }
 
-.m3d-detail {
+.dev-detail {
   margin: 4px 0 0;
   font-size: 0.85rem;
   color: var(--muted);
   overflow-wrap: anywhere;
 }
 
-.m3d-detail.strong,
-.m3d-detail.ask {
+.dev-detail.ask {
   color: var(--text);
 }
 
-.m3d-flag {
-  margin-top: 8px;
-  padding-top: 6px;
-  border-top: 1px dashed var(--border);
+.dev-cutoffs {
+  margin-top: 14px;
+  font-size: 0.85rem;
 }
 
-.m3d-cells {
-  margin: 6px 0 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+.dev-cutoffs summary {
+  cursor: pointer;
+  font-weight: 600;
 }
 
-.m3d-cells .chip {
-  white-space: normal;
-  overflow-wrap: anywhere;
+.dev-cutoff-scroll {
+  overflow-x: auto;
+}
+
+.dev-cutoffs table {
+  border-collapse: collapse;
+  min-width: 520px;
+  width: 100%;
+}
+
+.dev-cutoffs th,
+.dev-cutoffs td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dev-cutoffs th {
+  color: var(--muted);
+  font-weight: 600;
 }
