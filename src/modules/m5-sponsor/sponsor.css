@@ -1,0 +1,177 @@
+/* M5 sponsor page */
+
+.sponsor {
+  margin: 4px 0 16px;
+}
+
+.score-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.score-dial {
+  flex: none;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  border: 8px solid var(--border);
+  color: var(--text);
+}
+
+.score-dial.good {
+  border-color: #2e9e5b;
+}
+.score-dial.plain {
+  border-color: var(--accent);
+}
+.score-dial.amber {
+  border-color: #d99a00;
+}
+.score-dial.warn {
+  border-color: var(--danger);
+}
+
+.score-number {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-of {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.score-text {
+  min-width: 0;
+}
+
+.score-text p {
+  margin: 0 0 6px;
+}
+
+.score-label {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.measures,
+.project-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.measure {
+  padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.measure.missing {
+  border-style: dashed;
+}
+
+.measure-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.measure-title {
+  font-weight: 700;
+}
+
+.measure-question {
+  margin: 2px 0 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.measure-value {
+  margin: 0 0 8px;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.bar {
+  height: 10px;
+  background: var(--chip-bg);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+}
+.bar-fill.good {
+  background: #2e9e5b;
+}
+.bar-fill.amber {
+  background: #d99a00;
+}
+.bar-fill.warn {
+  background: var(--danger);
+}
+
+.measure-score {
+  margin: 4px 0 8px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.measure-detail {
+  margin: 0 0 6px;
+  padding-left: 18px;
+  font-size: 0.9rem;
+}
+
+.measure-note {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  background: var(--warn-bg);
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.how {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.how summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.project-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
