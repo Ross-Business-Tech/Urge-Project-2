@@ -8,4 +8,5 @@
 export const MODULE_ID = 'M5'
 
 export { run, runSponsorChecks } from './sponsorFlags.js'
+export { trackRecord, projectDelivery, TRACK_WEIGHTS, monthIndex } from './trackRecord.js'
 export { firmHealth, liquidityCover, globalDscr, feeDependence, leverage, WEIGHTS, LABELS, labelFor, interpolate } from './firmHealth.js'

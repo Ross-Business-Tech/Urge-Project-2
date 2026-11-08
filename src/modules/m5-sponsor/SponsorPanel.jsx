@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { fmt } from '../shared/index.js'
-import { firmHealth, run, WEIGHTS, LABELS } from './index.js'
+import { firmHealth, run, trackRecord, WEIGHTS, TRACK_WEIGHTS, LABELS } from './index.js'
 import { soWhat } from './soWhat.js'
+import TrackRecordSection from './TrackRecordSection.jsx'
 import './sponsor.css'
 
 // What each measure asks, in plain words.
@@ -70,25 +71,31 @@ function Measure({ part }) {
 // M5-a: the sponsor page for one firm and its projects. Shows the firm health score, what it means for the projects
 // ("so what"), and the four measures behind it. `sourceLabel` names where the data came from, such as the file name.
 export default function SponsorPanel({ firm, projects = [], settings, sourceLabel, onChooseStage }) {
-  const { result, meaning } = useMemo(() => {
+  // The project under review: the first one that is not yet completed, else the first with a stage. Flags always say
+  // which stage they ran under, and the scale fit compares this project with what the sponsor has delivered.
+  const reviewed = useMemo(() => {
+    const stage = (p) => p.data?.stage?.stage
+    return projects.find((p) => stage(p) && stage(p) !== 'completed') ?? projects.find((p) => stage(p)) ?? null
+  }, [projects])
+
+  const { result, meaning, track } = useMemo(() => {
     try {
       const health = firmHealth(firm, projects, settings)
-      return { result: health, meaning: soWhat(health, projects, settings) }
+      const track = trackRecord(firm, projects, settings, reviewed)
+      return { result: health, meaning: soWhat(health, projects, settings, track), track }
     } catch {
-      return { result: 'error', meaning: null }
+      return { result: 'error', meaning: null, track: null }
     }
-  }, [firm, projects, settings])
+  }, [firm, projects, settings, reviewed])
 
-  // Flags always say which stage they ran under, so they come from the first project that has one.
   const flagRun = useMemo(() => {
-    const staged = projects.find((p) => p.data?.stage?.stage)
-    if (!staged || !firm) return null
+    if (!reviewed || !firm) return null
     try {
-      return run(staged, { firm, projects, settings })
+      return run(reviewed, { firm, projects, settings })
     } catch {
       return null
     }
-  }, [firm, projects, settings])
+  }, [firm, projects, settings, reviewed])
 
   if (result === 'error') {
     return (
@@ -128,6 +135,7 @@ export default function SponsorPanel({ firm, projects = [], settings, sourceLabe
       <div className={`so-what ${meaning.tone || 'plain'}`} role="status">
         <p className="so-what-title">So what?</p>
         <p className="so-what-text">{meaning.headline}</p>
+        {meaning.trackLine && <p className="so-what-track">{meaning.trackLine}</p>}
       </div>
 
       <ul className="measures">
@@ -136,11 +144,13 @@ export default function SponsorPanel({ firm, projects = [], settings, sourceLabe
         ))}
       </ul>
 
+      <TrackRecordSection track={track} reviewedStage={reviewed?.data?.stage?.stage} onAddProjects={onChooseStage} />
+
       <p className="section-label">Review flags</p>
       {flagRun === null ? (
         <p className="note">Choose a stage for a project to produce the review flags.</p>
       ) : flagRun.flags.length === 0 ? (
-        <p className="ok">No review flags: the firm&apos;s finances look sound.</p>
+        <p className="ok">No review flags: the sponsor looks sound.</p>
       ) : (
         <ul className="flags">
           {flagRun.flags.map((f) => (
@@ -180,6 +190,12 @@ export default function SponsorPanel({ firm, projects = [], settings, sourceLabe
           <li>Fee dependence {Math.round(WEIGHTS.feeDependence * 100)}%: the developer fee as a share of income, and how income has moved over up to three years.</li>
           <li>Leverage {Math.round(WEIGHTS.leverage * 100)}%: firm debt against firm equity.</li>
         </ul>
+        <p>
+          The credibility score looks at the sponsor&apos;s completed projects: income delivered {Math.round(TRACK_WEIGHTS.income * 100)}% (T-12 NOI against
+          underwritten), rent and occupancy delivered {Math.round(TRACK_WEIGHTS.rentOccupancy * 100)}%, stabilization on time {Math.round(TRACK_WEIGHTS.stabilization * 100)}%,
+          and scale fit {Math.round(TRACK_WEIGHTS.scale * 100)}% (how much bigger the new project is than the largest delivered). It needs at least one real delivery
+          measure, so a sponsor with no T-12 is never scored from scale alone. Budget and completion date cannot be compared yet: the records hold one set of dates and no budget for a completed project.
+        </p>
         <p>
           Bands: {LABELS.map((l) => `${l.label} ${l.min === 0 ? 'below 35' : `${l.min} and up`}`).join(', ')}.
         </p>

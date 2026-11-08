@@ -40,8 +40,16 @@ export function projectSoWhat(project, health, settings) {
   return { ...base, state: 'thin', tone: 'warn', text: `Highest risk: thin coverage (${own}) and a ${rated(health)} sponsor.` }
 }
 
-// The whole review in one sentence, then one line per project.
-export function soWhat(health, projects = [], settings) {
+// One line on the sponsor's track record (M5-b), or null when there is nothing to say.
+function trackLine(track) {
+  if (!track) return null
+  if (track.ok) return `Track record: ${track.label} (${track.score}/100).`
+  if (track.noTrackRecord) return 'Track record: none to judge.'
+  return 'Track record: not scored (no usable T-12).'
+}
+
+// The whole review in one sentence, then one line per project. `track` is the credibility result from M5-b, if any.
+export function soWhat(health, projects = [], settings, track = null) {
   const min = sanitizeSettings(settings).minDscr
   const lines = projects.map((p) => projectSoWhat(p, health, settings))
   const weak = isWeak(health)
@@ -78,5 +86,7 @@ export function soWhat(health, projects = [], settings) {
     headline = `Sponsor ${rated(health)} and ${projects.length > 1 ? `projects sound (lowest ${covText})` : `project sound (${covText})`}.`
     tone = 'good'
   }
-  return { headline, tone, projects: lines }
+  // A weak or failing track record means the review is not all clear, even if the sponsor and the projects look sound.
+  if (track?.ok && ['Weak', 'Failing'].includes(track.label) && (tone === '' || tone === 'good')) tone = 'amber'
+  return { headline, tone, trackLine: trackLine(track), projects: lines }
 }
