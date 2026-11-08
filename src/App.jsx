@@ -5,6 +5,7 @@ import { RescueBoundary } from './RescueBoundary.jsx'
 import FlagFormat from './FlagFormat.jsx'
 import ScenarioDemo from './modules/m4-scenarios/ScenarioDemo.jsx'
 import DevelopmentRiskDemo from './modules/m3d-development/DevelopmentRiskDemo.jsx'
+import SponsorView from './modules/m5-sponsor/SponsorView.jsx'
 import { rescueStore } from './download.js'
 import {
   firmSchema,
@@ -183,6 +184,12 @@ const VIEWS = [
     lede: 'Budget, schedule, loans and team checks for projects being built or filling. Pick a made-up sample project, or open a project in "Load workbook" to check your own.',
   },
   {
+    id: 'sponsor',
+    label: 'Sponsor',
+    heading: 'Can this sponsor deliver?',
+    lede: 'How healthy is the sponsor firm? A score from 0 to 100 built from its cash, earnings and debt, and what it means for the projects. If you have loaded a workbook, this shows that sponsor. Otherwise pick a made-up sample.',
+  },
+  {
     id: 'flags',
     label: 'Flag format',
     heading: 'What a flag looks like',
@@ -229,6 +236,7 @@ export default function App() {
       </div>
       {current.id === 'scenarios' && <ScenarioDemo />}
       {current.id === 'devrisk' && <DevelopmentRiskDemo />}
+      {current.id === 'sponsor' && <SponsorView onChooseStage={() => setView('import')} />}
       {current.id === 'flags' && <FlagFormat />}
       {current.schema && (
         <>
