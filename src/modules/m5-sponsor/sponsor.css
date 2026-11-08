@@ -150,6 +150,17 @@
   font-size: 0.85rem;
 }
 
+.assumptions {
+  margin-top: 6px;
+  font-size: 0.85rem;
+}
+
+.assumptions summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+}
+
 .how {
   margin: 0 0 16px;
   padding: 10px 12px;

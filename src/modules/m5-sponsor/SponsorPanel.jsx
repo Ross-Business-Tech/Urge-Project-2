@@ -47,11 +47,16 @@ function Measure({ part }) {
               <li key={d}>{d}</li>
             ))}
           </ul>
-          {part.notes.map((n) => (
-            <p className="measure-note" key={n}>
-              {n}
-            </p>
-          ))}
+          {part.notes.length > 0 && (
+            <details className="assumptions">
+              <summary>Show assumptions ({part.notes.length})</summary>
+              {part.notes.map((n) => (
+                <p className="measure-note" key={n}>
+                  {n}
+                </p>
+              ))}
+            </details>
+          )}
         </>
       ) : (
         <p className="measure-note">{part.reason}</p>
