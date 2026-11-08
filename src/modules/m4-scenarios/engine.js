@@ -119,15 +119,23 @@ function fundingGap({ stage, original, stressed, n, ds, lv }) {
 
   const overrunUncovered = Math.max(0, overrunCost - contingency)
   const carryUncovered = Math.max(0, carry - reserves)
+  const extraCost = overrunCost + carry
+  const gap = overrunUncovered + carryUncovered
+  // How many months of plain delay the budgeted reserves could carry. null when a month of delay costs nothing.
+  const monthlyDelay = monthlyCarry({ stage, kind: 'delay' }, n, ds)
   return {
     ok: true,
+    extraCost, // everything the stress adds to what the project must pay, before contingency and reserves
+    covered: extraCost - gap, // the part the contingency and reserves absorb
+    monthlyDelay,
+    delayMonthsCovered: monthlyDelay > 0 ? reserves / monthlyDelay : null,
     overrunCost,
     contingency,
     overrunUncovered,
     carry,
     reserves,
     carryUncovered,
-    gap: overrunUncovered + carryUncovered,
+    gap,
     notes,
   }
 }

@@ -64,23 +64,36 @@ function CaseResults({ result, settings, stage, onOpenGroup }) {
         hint={result.yearlyShortfall > 0 ? `Short by ${fmt.usd(result.yearlyShortfall)} a year` : null}
       />
       <Result label="Debt yield" value={result.debtYield === null ? 'Not available' : fmt.pct(result.debtYield)} hint="NOI as a share of the debt" />
-      {stage !== 'completed' && gap && (
-        <Result
-          label="One-time funding gap"
-          value={gap.ok ? fmt.usd(gap.gap) : 'Not available'}
-          chip={gap.ok && gap.gap > 0 ? { chip: 'warn', label: 'needs new money' } : null}
-          hint={
-            gap.ok
-              ? [
-                  gap.overrunCost > 0 ? `Overrun ${fmt.usd(gap.overrunCost)} vs. ${fmt.usd(gap.contingency)} contingency` : null,
-                  gap.carry > 0 ? `Carrying cost ${fmt.usd(gap.carry)} vs. ${fmt.usd(gap.reserves)} reserves` : null,
-                  ...gap.notes,
-                ]
-                  .filter(Boolean)
-                  .join('. ') || 'Nothing extra to pay for in this case'
-              : gap.reason
-          }
-        />
+      {stage !== 'completed' && gap && !gap.ok && <Result label="One-time costs from the stress" value="Not available" hint={gap.reason} />}
+      {stage !== 'completed' && gap?.ok && (
+        <>
+          <Result
+            label="Extra cost from overrun and delay"
+            value={fmt.usd(gap.extraCost)}
+            hint={[`Overrun ${fmt.usd(gap.overrunCost)}`, `carrying cost of delay and slow filling ${fmt.usd(gap.carry)}`].join(' · ')}
+          />
+          <Result
+            label="Covered by contingency and reserves"
+            value={fmt.usd(gap.covered)}
+            hint={`${fmt.usd(gap.contingency)} contingency (for overruns) · ${fmt.usd(gap.reserves)} rent-up and operating reserves (for carrying costs)`}
+          />
+          <Result
+            label="Funding gap"
+            value={fmt.usd(gap.gap)}
+            chip={gap.gap > 0 ? { chip: 'warn', label: 'needs new money' } : null}
+            hint={gap.gap > 0 ? 'What is left after the contingency and reserves' : 'Nothing is left over'}
+          />
+          <Result
+            label="Delay the reserves can absorb"
+            value={gap.delayMonthsCovered === null ? 'Not available' : `${gap.delayMonthsCovered.toFixed(1)} months`}
+            hint={gap.delayMonthsCovered === null ? null : `A month of delay costs about ${fmt.usd(gap.monthlyDelay)}${stage === 'development' ? ' in loan payments' : ''}`}
+          />
+          {gap.notes.map((n) => (
+            <p className="ratio-detail" key={n}>
+              {n}
+            </p>
+          ))}
+        </>
       )}
       {result.exit && <Result label="Loan vs. value at takeout" value={fmt.pct(result.exit.loanToValue)} hint={`Worth ${fmt.usd(result.exit.value)} at a ${fmt.pct(result.exit.capRate, 2)} cap rate`} />}
       {result.notes.map((n) => (

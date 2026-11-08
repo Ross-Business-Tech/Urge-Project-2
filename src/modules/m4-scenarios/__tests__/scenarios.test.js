@@ -441,3 +441,54 @@ test('a bad T-12 input is never repaired: the project as entered is refused in e
   const out = runScenarios(p)
   assert.ok(CASES.every((c) => !out.cases[c.id].ok))
 })
+
+// ---------------------------------------------------------------- showing where the one-time money goes
+test('the extra cost moves with every cost slider, even when the contingency and reserves absorb it', () => {
+  const p = staged('development')
+  const at = (levers) => runScenarios(p, { levers: { downside: { costOverrun: 0, delayMonths: 0, absorptionMonths: 0, ...levers } } }).cases.downside.oneTime
+  const none = at({})
+  assert.equal(none.extraCost, 0)
+  assert.equal(none.gap, 0)
+  const delayed = at({ delayMonths: 3 })
+  assert.ok(delayed.extraCost > 0, 'a delay costs money')
+  assert.equal(delayed.gap, 0, 'but the reserves absorb it, which is why the funding gap alone looked frozen')
+  assert.equal(delayed.covered, delayed.extraCost)
+  assert.ok(at({ delayMonths: 6 }).extraCost > delayed.extraCost)
+  near(at({ costOverrun: 0.1 }).extraCost, 350000)
+  assert.ok(at({ absorptionMonths: 6 }).extraCost > 0)
+})
+
+test('extra cost = covered + funding gap, in every case and every stage that has one', () => {
+  for (const stage of ['development', 'lease_up']) {
+    for (const delay of [0, 6, 24]) {
+      const { cases } = runScenarios(staged(stage), { levers: { downside: { delayMonths: delay, absorptionMonths: stage === 'development' ? delay : undefined, costOverrun: stage === 'development' ? 0.4 : undefined } } })
+      for (const c of CASES) {
+        const g = cases[c.id].oneTime
+        near(g.extraCost, g.covered + g.gap, 0.001)
+        assert.ok(g.covered >= 0 && g.gap >= 0)
+        assert.ok(g.covered <= g.contingency + g.reserves + 0.001)
+      }
+    }
+  }
+})
+
+test('the reserves can absorb a number of months of delay, worked out from what a month of delay costs', () => {
+  const p = staged('development')
+  const { cases } = runScenarios(p)
+  // Reserves 300,000. A month of delay is a month of loan payments: base 215,838 / 12; downside 251,717 / 12 (rate +1.5 points).
+  near(cases.base.oneTime.monthlyDelay, 215838 / 12, 0.5)
+  near(cases.base.oneTime.delayMonthsCovered, 300000 / (215838 / 12), 0.01)
+  near(cases.downside.oneTime.delayMonthsCovered, 300000 / (251717 / 12), 0.01)
+  assert.ok(cases.downside.oneTime.delayMonthsCovered < cases.base.oneTime.delayMonthsCovered, 'a dearer loan leaves fewer months')
+})
+
+test('no reserves means no months, and nothing to divide by means "not available" instead of a number', () => {
+  const none = staged('development')
+  for (const k of ['rentUpReserve', 'operatingReserve']) none.data.budget.lines[k].amount = null
+  assert.equal(runScenarios(none).cases.base.oneTime.delayMonthsCovered, 0)
+
+  const free = staged('development')
+  free.data.sources.rows[0].paymentOverride = 1 // a typed payment of $1 a year: next to nothing to carry
+  const g = runScenarios(free).cases.base.oneTime
+  assert.ok(Number.isFinite(g.delayMonthsCovered))
+})
