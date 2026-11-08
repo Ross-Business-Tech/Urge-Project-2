@@ -209,3 +209,15 @@ test('readPeriod reads a year, a year and month, and a date; rejects the rest', 
   assert.equal(readPeriod('2026-03-15').precise, true)
   for (const bad of [null, '', 'soon', '2026-13', 20260301]) assert.equal(readPeriod(bad), null)
 })
+
+test('the cutoffs list on screen is built from the same numbers the checks use', async () => {
+  const { THRESHOLDS, cutoffRows } = await import('../thresholds.js')
+  const rows = cutoffRows(THRESHOLDS, { minDscr: 1.2, contingencyLow: 0.05, contingencyHigh: 0.1 })
+  const text = JSON.stringify(rows)
+  assert.match(text, /under 2\.5%/) // contingency high: half of 5%
+  assert.match(text, /over 85%/) // debt to cost high
+  assert.match(text, /under 7%/) // debt yield high
+  assert.match(text, /1\.20×/)
+  const changed = cutoffRows({ ...THRESHOLDS, debtToCost: { medium: 0.6, high: 0.7 } }, {})
+  assert.match(JSON.stringify(changed), /over 70%/)
+})

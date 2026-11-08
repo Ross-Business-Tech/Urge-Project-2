@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 import { checklist, GROUPS } from './index.js'
+import { cutoffRows } from './thresholds.js'
+import { BENCHMARK_SETS } from '../shared/index.js'
 import './development.css'
 
 const STATUS = {
@@ -92,6 +94,41 @@ export default function DevelopmentRisk({ record, settings }) {
           </div>
         )
       })}
+      <Cutoffs settings={settings} stage={stage} />
     </section>
+  )
+}
+
+// The numbers behind high / medium / low, in plain words, so a reviewer can see (and question) them. They are placeholders.
+function Cutoffs({ settings, stage }) {
+  const range = BENCHMARK_SETS[stage]?.contingencyShare
+  const rows = cutoffRows(undefined, { minDscr: settings?.minDscr ?? 1.2, contingencyLow: range?.low ?? 0.05, contingencyHigh: range?.high ?? 0.1 })
+  return (
+    <details className="dev-cutoffs">
+      <summary>Cutoffs used for high / medium / low</summary>
+      <p className="note">These numbers are made-up placeholders, waiting for the real ranges. They are all in one file (thresholds.js) and easy to change.</p>
+      <div className="dev-cutoff-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Check</th>
+              <th>High</th>
+              <th>Medium</th>
+              <th>Low</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.topic}>
+                <td>{r.topic}</td>
+                <td>{r.high || '–'}</td>
+                <td>{r.medium || '–'}</td>
+                <td>{r.low || '–'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
   )
 }

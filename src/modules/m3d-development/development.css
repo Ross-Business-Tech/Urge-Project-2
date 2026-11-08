@@ -100,3 +100,36 @@
 .dev-detail.ask {
   color: var(--text);
 }
+
+.dev-cutoffs {
+  margin-top: 14px;
+  font-size: 0.85rem;
+}
+
+.dev-cutoffs summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.dev-cutoff-scroll {
+  overflow-x: auto;
+}
+
+.dev-cutoffs table {
+  border-collapse: collapse;
+  min-width: 520px;
+  width: 100%;
+}
+
+.dev-cutoffs th,
+.dev-cutoffs td {
+  text-align: left;
+  vertical-align: top;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dev-cutoffs th {
+  color: var(--muted);
+  font-weight: 600;
+}

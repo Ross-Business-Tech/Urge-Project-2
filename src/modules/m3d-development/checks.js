@@ -9,8 +9,7 @@
 //   capital     DSCR against the lender minimum, debt-to-cost, debt yield (takeout), lien order, interest reserve
 //   team        general contractor, architect and a development partner are named
 //
-// The thresholds below that are not a benchmark or a setting are MADE-UP defaults for building and testing, like the
-// benchmark sets in M0. They sit together here so they are easy to change.
+// Every cutoff that decides high / medium / low is in thresholds.js (made-up defaults, easy to change).
 //
 // Cost per square foot is already compared with the market by M2, so M3D does not repeat it.
 
@@ -30,18 +29,10 @@ import {
   DEBT_SOURCE_TYPES,
   DEFAULT_SETTINGS,
 } from '../shared/index.js'
+import { THRESHOLDS } from './thresholds.js'
 
-export const LIMITS = {
-  softToHardRange: { low: 0.1, high: 0.4 }, // soft costs as a share of hard costs
-  softToHardFar: { low: 0.05, high: 0.6 }, // outside this the ratio is medium, not low
-  constructionMonths: { low: 6, high: 36 },
-  leaseUpMonths: { low: 3, high: 24 },
-  debtToCost: { medium: 0.75, high: 0.85 },
-  debtYieldMin: { medium: 0.08, high: 0.07 }, // below 8% is medium, below 7% is high
-  averageDrawn: 0.55, // average share of the loan outstanding while building, for the interest estimate
-  interestReserve: { medium: 0.8, high: 0.5 }, // budgeted interest as a share of the estimate
-  slippedMonthsHigh: 6, // a development project this many months past its completion date is high
-}
+// The cutoffs live in thresholds.js (one clearly marked place to change them).
+export const LIMITS = THRESHOLDS
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 const usd = (n) => fmt.usd(n)
@@ -107,7 +98,7 @@ function contingency(ctx) {
   if (share >= low) return row(id, 'budget', title, 'pass', detail, { cells })
   const f = flag({
     id: 'M3D-contingency-low',
-    severity: share < low * 0.5 ? 'high' : 'medium',
+    severity: share < low * LIMITS.contingencyHighBelowFractionOfLow ? 'high' : 'medium',
     title: 'The cushion for construction cost overruns is thin.',
     evidence: `Contingency ${usd(amount)} on ${usd(base)} of hard cost: ${fmt.pct(share)} vs. a ${range}.`,
     cell_refs: cells,
