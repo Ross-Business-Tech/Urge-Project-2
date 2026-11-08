@@ -150,7 +150,7 @@ export default function SponsorPanel({ firm, projects = [], settings, sourceLabe
       {flagRun === null ? (
         <p className="note">Choose a stage for a project to produce the review flags.</p>
       ) : flagRun.flags.length === 0 ? (
-        <p className="ok">No review flags: the firm&apos;s finances look sound.</p>
+        <p className="ok">No review flags: the sponsor looks sound.</p>
       ) : (
         <ul className="flags">
           {flagRun.flags.map((f) => (

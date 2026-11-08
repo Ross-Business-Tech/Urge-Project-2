@@ -15,6 +15,7 @@
 
 import { createFlagMaker, citeCells, flagFromUnavailable, missingDataFlag, guardModule, fmt } from '../shared/index.js'
 import { firmHealth, labelFor } from './firmHealth.js'
+import { trackRecord } from './trackRecord.js'
 
 export const MODULE_ID = 'M5'
 
@@ -54,28 +55,107 @@ function valueText(p) {
 }
 
 const unique = (list) => [...new Set(list)]
+const slug = (name, i) => String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || `project-${i + 1}`
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
 
-export const runSponsorChecks = (project, context = {}) => {
-  const stage = project?.data?.stage?.stage
-  if (!stage) {
-    return {
-      flags: [missingDataFlag({ module: MODULE_ID, stage_used: 'development', check: 'stage', checkTitle: 'The sponsor checks', missing: 'the stage chosen by the underwriter' })],
-      notes: ['No stage chosen, so the sponsor checks did not run.'],
-    }
-  }
-  const firm = context?.firm
-  if (!firm?.data) {
-    return {
-      flags: [missingDataFlag({ module: MODULE_ID, stage_used: stage, check: 'firm', checkTitle: 'The sponsor firm health check', missing: 'the firm record (load the applicant workbook)' })],
-      notes: ['No firm record was provided, so the sponsor checks did not run.'],
-    }
-  }
-
-  const health = firmHealth(firm, context.projects?.length ? context.projects : [project], context.settings)
-  const maker = createFlagMaker(MODULE_ID, project)
+// The flags from the sponsor's track record (M5-b). `project` is the one under review.
+function trackFlags({ maker, project, firm, projects, settings, stage }) {
+  const track = trackRecord(firm, projects, settings, project)
   const flags = []
-  const notes = [`Stage used: ${stage}.`, ...health.notes]
+  const notes = track.notes.map((n) => `Track record: ${n}`)
 
+  // No completed project at all: a real risk only for a project that is still being built.
+  if (track.noTrackRecord) {
+    const building = stage === 'development'
+    flags.push(
+      maker.flag({
+        id: 'M5-no-track-record',
+        severity: building ? 'medium' : 'low',
+        title: 'The sponsor has no completed projects to judge.',
+        evidence: `No completed projects are loaded for this sponsor, so there is no record of delivery. This project is at the ${stage.replace('_', '-')} stage.${track.declared ? ` The Cover reports ${plural(track.declared, 'completed project')}.` : ''}`,
+        cell_refs: [],
+        follow_up: building
+          ? 'Has the sponsor, or anyone on the development team, completed a project like this before? If not, who else (an experienced partner, a guarantor or the general contractor) carries the delivery risk?'
+          : 'Please provide the sponsor’s completed projects (one workbook tab each, with a T-12) so its track record can be judged.',
+      }),
+    )
+    return { flags, notes }
+  }
+
+  // Completed projects exist but none can be compared with its underwriting.
+  if (track.noDeliveryEvidence || (!track.ok && track.projects.length > 0)) {
+    flags.push(missingDataFlag({ module: MODULE_ID, stage_used: stage, check: 'track-record', checkTitle: 'The sponsor’s track record', missing: [track.reason, 'load a T-12 for each completed project'] }))
+  }
+
+  // Only some of the completed projects the Cover reports are loaded.
+  if (track.declared && track.summary && track.declared > track.summary.count) {
+    flags.push(
+      maker.flag({
+        id: 'M5-track-record-partial',
+        severity: 'low',
+        title: 'Only some of the sponsor’s completed projects are loaded.',
+        evidence: `The Cover reports ${plural(track.declared, 'completed project')}, but ${track.summary.count} ${track.summary.count === 1 ? 'is' : 'are'} loaded, so the track record covers ${track.summary.count} of ${track.declared}.`,
+        cell_refs: citeCells(firm, ['identity.completedProjectCount']),
+        follow_up: 'Please provide the other completed projects (one workbook tab each, with a T-12) so the whole record can be judged.',
+      }),
+    )
+  }
+
+  // Each completed project that fell short on its own, so a weak one cannot hide inside a good average.
+  track.projects.forEach((row, i) => {
+    const severity = severityFor(row.score ?? 100)
+    if (!severity || row.score === null) return
+    const missed = row.measures.filter((m) => m.status === 'watch' || m.status === 'concern')
+    flags.push(
+      maker.flag({
+        id: `M5-delivery-shortfall-${slug(row.name, i)}`,
+        severity,
+        title: `The completed project “${row.name}” fell short of what was promised.`,
+        evidence: `${row.name} scores ${row.score}/100 on its own. ${missed.map((m) => `${m.label}: promised ${m.projected}, delivered ${m.delivered}`).join('. ')}.`,
+        cell_refs: citeCells(row.ref, row.paths).slice(0, 50),
+        follow_up: `On “${row.name}”: ${missed.map((m) => m.note.replace(/\.$/, '')).join('. ')}. What caused it, and what is different about this project?`,
+      }),
+    )
+  })
+
+  // The overall credibility score.
+  if (track.ok) {
+    const severity = severityFor(track.score)
+    if (severity) {
+      const failing = severity === 'high'
+      flags.push(
+        maker.flag({
+          id: failing ? 'M5-track-record-failing' : 'M5-track-record-weak',
+          severity,
+          title: failing ? 'The sponsor’s completed projects fell well short of what was promised.' : 'The sponsor’s completed projects fell somewhat short of what was promised.',
+          evidence: `Credibility ${track.score}/100 (${track.label}) from ${plural(track.summary.count, 'completed project')}: ${track.breakdown.map((b) => `${b.title.toLowerCase()} ${Math.round(b.score)}`).join(', ')}.`,
+          cell_refs: unique(track.projects.flatMap((r) => citeCells(r.ref, r.paths))).slice(0, 50),
+          follow_up: 'Why did earlier projects miss their underwriting, and what will be different on this one?',
+        }),
+      )
+    }
+    // A big step up in size.
+    const scale = track.parts.find((p) => p.id === 'scale')
+    const scaleSeverity = scale?.ok ? severityFor(scale.score) : null
+    if (scaleSeverity) {
+      flags.push(
+        maker.flag({
+          id: 'M5-scale-step-up',
+          severity: scaleSeverity,
+          title: 'This project is much larger than anything the sponsor has completed.',
+          evidence: `${scale.detail[0]} (score ${Math.round(scale.score)}/100).`,
+          cell_refs: [],
+          follow_up: `This project is ${scale.step.toFixed(1)}× the largest the sponsor has completed. What is the team’s experience at this size, and is an experienced partner or general contractor involved?`,
+        }),
+      )
+    }
+  }
+  return { flags, notes }
+}
+
+// The flags from the firm's finances (M5-a). The headline goes first.
+function firmFlags({ maker, health, firm, stage }) {
+  const flags = []
   // Nothing could be worked out at all: one flag, not four.
   if (!health.ok) {
     flags.push(
@@ -87,7 +167,7 @@ export const runSponsorChecks = (project, context = {}) => {
         missing: health.parts.map((p) => p.reason),
       }),
     )
-    return { flags, notes }
+    return flags
   }
 
   // Individual measures
@@ -128,7 +208,36 @@ export const runSponsorChecks = (project, context = {}) => {
       }),
     )
   }
+  return flags
+}
 
+export const runSponsorChecks = (project, context = {}) => {
+  const stage = project?.data?.stage?.stage
+  if (!stage) {
+    return {
+      flags: [missingDataFlag({ module: MODULE_ID, stage_used: 'development', check: 'stage', checkTitle: 'The sponsor checks', missing: 'the stage chosen by the underwriter' })],
+      notes: ['No stage chosen, so the sponsor checks did not run.'],
+    }
+  }
+  const firm = context?.firm
+  if (!firm?.data) {
+    return {
+      flags: [missingDataFlag({ module: MODULE_ID, stage_used: stage, check: 'firm', checkTitle: 'The sponsor firm health check', missing: 'the firm record (load the applicant workbook)' })],
+      notes: ['No firm record was provided, so the sponsor checks did not run.'],
+    }
+  }
+
+  const health = firmHealth(firm, context.projects?.length ? context.projects : [project], context.settings)
+  const maker = createFlagMaker(MODULE_ID, project)
+  const flags = []
+  const notes = [`Stage used: ${stage}.`, ...health.notes]
+
+  flags.push(...firmFlags({ maker, health, firm, stage }))
+
+  const projects = context.projects?.length ? context.projects : [project]
+  const track = trackFlags({ maker, project, firm, projects, settings: context.settings, stage })
+  flags.push(...track.flags)
+  notes.push(...track.notes)
   return { flags, notes }
 }
 

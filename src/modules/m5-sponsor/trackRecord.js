@@ -169,7 +169,14 @@ export function projectDelivery(project, settings) {
     : [na('income', 'Income (NOI, a year)', 'No T-12 was loaded for this project.'), na('rent', 'Residential rent (a month)', 'No T-12 was loaded for this project.'), na('occupancy', 'Occupancy', 'No T-12 was loaded for this project.'), na('stabilization', 'Stabilization', 'No T-12 was loaded for this project.')]
   const size = totalSources(project)
   const units = sum(project.data.residentialIncome.rows.map((r) => r.units))
-  return { name: nameOf(project), stage: project.data.stage.stage, size: size.ok ? size.value : null, units: units > 0 ? units : null, measures: [...measures, NO_BUDGET, NO_COMPLETION], months: months.length, score: deliveryScore(measures) }
+  const paths = [
+    ...project.data.residentialIncome.rows.flatMap((r, i) => (isNum(r.units) && isNum(r.monthlyRent) ? [`residentialIncome.rows.${i}.units`, `residentialIncome.rows.${i}.monthlyRent`] : [])),
+    ...(isNum(project.data.residentialIncome.stabilizedVacancy) ? ['residentialIncome.stabilizedVacancy'] : []),
+    ...(project.data.timeline.stabilization ? ['timeline.stabilization'] : []),
+  ]
+  return {
+    ref: project,
+    paths, name: nameOf(project), stage: project.data.stage.stage, size: size.ok ? size.value : null, units: units > 0 ? units : null, measures: [...measures, NO_BUDGET, NO_COMPLETION], months: months.length, score: deliveryScore(measures) }
 }
 
 // ---- The sponsor ------------------------------------------------------------------------------
