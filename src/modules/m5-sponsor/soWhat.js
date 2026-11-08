@@ -41,9 +41,15 @@ export function projectSoWhat(project, health, settings) {
 }
 
 // One line on the sponsor's track record (M5-b), or null when there is nothing to say.
+// A big step up in size is part of the line, so a strong record cannot hide it.
+const bigStep = (track) => track?.parts?.find((p) => p.id === 'scale' && p.ok && p.score < 55) ?? null
+
 function trackLine(track) {
   if (!track) return null
-  if (track.ok) return `Track record: ${track.label} (${track.score}/100).`
+  if (track.ok) {
+    const step = bigStep(track)
+    return `Track record: ${track.label} (${track.score}/100).${step ? ` The new project is ${step.step.toFixed(1)}× the largest the sponsor has completed.` : ''}`
+  }
   if (track.noTrackRecord) return 'Track record: none to judge.'
   return 'Track record: not scored (no usable T-12).'
 }
@@ -87,6 +93,6 @@ export function soWhat(health, projects = [], settings, track = null) {
     tone = 'good'
   }
   // A weak or failing track record means the review is not all clear, even if the sponsor and the projects look sound.
-  if (track?.ok && ['Weak', 'Failing'].includes(track.label) && (tone === '' || tone === 'good')) tone = 'amber'
+  if (track?.ok && (['Weak', 'Failing'].includes(track.label) || bigStep(track)) && (tone === '' || tone === 'good')) tone = 'amber'
   return { headline, tone, trackLine: trackLine(track), projects: lines }
 }
