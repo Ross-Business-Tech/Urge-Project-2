@@ -4,14 +4,8 @@ import { fmt, DEFAULT_SETTINGS, STAGES } from '../shared/index.js'
 import { CASES, FILL_OCCUPANCY, resolveLevers } from './levers.js'
 import { runScenarios } from './engine.js'
 import { runScenarioChecks, basisSentence } from './index.js'
-
-// A lever's setting in words: "-10%", "+1.5%", "6 months".
-function leverText(def, value) {
-  if (def.unit === 'months') return `${value} month${value === 1 ? '' : 's'}`
-  const digits = def.step < 0.01 ? 2 : def.step < 0.1 ? 0 : 1
-  const sign = value > 0 && def.id !== 'exitCapRate' ? '+' : ''
-  return `${sign}${(value * 100).toFixed(def.id === 'exitCapRate' ? 2 : digits)}%`
-}
+import { leverText } from './format.js'
+import { Sensitivity } from './Sensitivity.jsx'
 
 const SEVERITY_CHIP = { high: 'warn', medium: 'amber', low: '' }
 
@@ -206,6 +200,8 @@ export function ScenarioPanel({ record, settings = DEFAULT_SETTINGS, onOpenGroup
           </div>
         ))}
       </div>
+
+      <Sensitivity record={record} settings={settings} levers={levers} basis={basisChoice} />
 
       <div className="actions">
         <button type="button" className="button small" disabled={!changed} onClick={() => setLevers(null)}>

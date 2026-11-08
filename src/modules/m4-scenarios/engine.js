@@ -199,21 +199,27 @@ function chooseBasis(project, stage, settings, wanted) {
   return { kind: 'projection', record: project, reason, reference: null, t12Usable: t.ok }
 }
 
-// Runs downside, base and upside for a project. `requested` can change any lever for any case (see resolveLevers).
-// Returns { ok: false, reason } when the project has no stage, otherwise { ok: true, stage, defs, levers, cases, basis, notes }.
-export function runScenarios(project, { settings = DEFAULT_SETTINGS, levers: requested, basis: wanted = 'auto' } = {}) {
+// Everything an analysis needs before it can start: the stage, the lever settings, what the cases start from, and whether
+// the project as entered can be worked out at all. Returns { ok: false, reason, needs } when it cannot.
+export function prepare(project, { settings = DEFAULT_SETTINGS, levers: requested, basis: wanted = 'auto' } = {}) {
   const stage = project?.data?.stage?.stage
   if (!stage) return { ok: false, reason: 'Choose the project’s stage first. The stage decides which levers apply.', needs: [{ group: 'stage', label: 'Stage and review date' }] }
   const { defs, cases: levers, problems } = resolveLevers(stage, requested)
   const basis = chooseBasis(project, stage, settings, wanted)
-  const start = basis.record
-  const cases = Object.fromEntries(CASES.map((c) => [c.id, evaluateCase(start, stage, settings, levers[c.id])]))
   // A stress test on a project whose own numbers cannot be worked out would be a guess dressed up as a result. The levers
-  // are applied to the project as entered, so if that is refused, every case says so, whatever its sliders are.
-  const asEntered = evaluateCase(start, stage, settings, Object.fromEntries(defs.map((d) => [d.id, d.neutral])))
-  if (!asEntered.ok) {
-    for (const c of CASES) cases[c.id] = { ok: false, reason: `The project as entered cannot be worked out, so it cannot be stress-tested. ${asEntered.reason}`, needs: asEntered.needs }
-  }
-  const { record: _record, ...basisInfo } = basis
-  return { ok: true, stage, defs, levers, cases, basis: basisInfo, notes: problems }
+  // are applied to the project as entered, so if that is refused, every analysis says so, whatever its sliders are.
+  const asEntered = evaluateCase(basis.record, stage, settings, Object.fromEntries(defs.map((d) => [d.id, d.neutral])))
+  const refused = asEntered.ok ? null : { reason: `The project as entered cannot be worked out, so it cannot be stress-tested. ${asEntered.reason}`, needs: asEntered.needs }
+  const { record: start, ...basisInfo } = basis
+  return { ok: true, stage, settings, defs, levers, problems, start, basis: basisInfo, refused }
+}
+
+// Runs downside, base and upside for a project. `requested` can change any lever for any case (see resolveLevers).
+// Returns { ok: false, reason } when the project has no stage, otherwise { ok: true, stage, defs, levers, cases, basis, notes }.
+export function runScenarios(project, options = {}) {
+  const prep = prepare(project, options)
+  if (!prep.ok) return prep
+  const { stage, settings, defs, levers, start, basis, refused } = prep
+  const cases = Object.fromEntries(CASES.map((c) => [c.id, refused ? { ok: false, ...refused } : evaluateCase(start, stage, settings, levers[c.id])]))
+  return { ok: true, stage, defs, levers, cases, basis, notes: prep.problems }
 }

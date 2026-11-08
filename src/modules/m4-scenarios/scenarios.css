@@ -141,3 +141,80 @@
 .sc-basis .button {
   margin-top: 4px;
 }
+
+/* ---- break-even and one-lever-at-a-time ---- */
+
+.sc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 6px 0 10px;
+  font-size: 0.9rem;
+}
+
+.sc-table th,
+.sc-table td {
+  padding: 8px 6px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.sc-table thead th {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.sc-table tbody th {
+  font-weight: 600;
+}
+
+.sc-table td {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-table td.warn {
+  color: var(--danger);
+}
+
+.sc-table td.good {
+  color: #1a7f4b;
+}
+
+.sc-impacts {
+  list-style: none;
+  margin: 6px 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.sc-impacts li {
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.sc-impact-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 10px;
+  font-size: 0.92rem;
+}
+
+.sc-bar {
+  height: 8px;
+  margin: 6px 0 4px;
+  background: var(--chip-bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sc-bar-fill {
+  height: 100%;
+  background: var(--danger);
+  border-radius: 4px;
+}

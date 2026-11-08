@@ -10,6 +10,7 @@ import { createFlagMaker, citeCells, flagFromUnavailable, sanitizeSettings, tota
 import { runScenarios } from './engine.js'
 
 export { runScenarios, applyLevers, evaluateCase } from './engine.js'
+export { runBreakEvens, runImpacts } from './sensitivity.js'
 export { CASES, FILL_OCCUPANCY, DEFAULT_EXIT_CAP, leversForStage, resolveLevers } from './levers.js'
 
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
