@@ -1,0 +1,424 @@
+<!doctype html>
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Underwriting Review Progress</title>
+<!--
+  TEMPLATE NOTES (for the next person who reuses this deck)
+  - Each slide is one <section class="slide">. Copy one, change the text, and
+    update the number of slides is automatic (the script counts them).
+  - All colours are set in the :root tokens below. Change them once there.
+  - Use made-up numbers and names only. This repository is public.
+  - Works with no JavaScript too: without it, every slide shows stacked.
+-->
+<style>
+  :root {
+    --bg: #F6F4EE;
+    --card: #FFFFFF;
+    --ink: #15213A;
+    --muted: #5B6478;
+    --rule: #D6D0C2;
+    --accent: #9A5E14;
+    --good: #2F6B4F;
+    --soon: #7D5E0C;
+    --todo: #5E6678;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1828;
+      --card: #172238;
+      --ink: #EEF1F7;
+      --muted: #A7AFC2;
+      --rule: #2E3A55;
+      --accent: #E4AA5C;
+      --good: #7FCBA3;
+      --soon: #E6C86F;
+      --todo: #A9B1C4;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1828;
+    --card: #172238;
+    --ink: #EEF1F7;
+    --muted: #A7AFC2;
+    --rule: #2E3A55;
+    --accent: #E4AA5C;
+    --good: #7FCBA3;
+    --soon: #E6C86F;
+    --todo: #A9B1C4;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 400 17px/1.6 "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 16px;
+    -webkit-text-size-adjust: 100%;
+  }
+  .deck { max-width: 960px; margin: 0 auto; }
+
+  .topbar {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 16px;
+    font: 500 12px/1.4 "IBM Plex Mono", ui-monospace, monospace;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted);
+    padding-bottom: 12px; border-bottom: 1px solid var(--rule);
+  }
+  .progress { height: 3px; background: var(--rule); margin: 0 0 8px; border-radius: 2px; overflow: hidden; }
+  .progress span { display: block; height: 100%; width: 0; background: var(--accent); transition: width 0.3s ease; }
+
+  .slide {
+    min-height: 70vh;
+    flex-direction: column; justify-content: center; gap: 22px;
+    padding: 28px 0 12px;
+    min-width: 0;
+  }
+  .kicker {
+    font: 500 12px/1.4 "IBM Plex Mono", ui-monospace, monospace;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent);
+    margin: 0;
+  }
+  h1, h2 {
+    font-family: "Newsreader", Georgia, "Times New Roman", serif;
+    font-weight: 600; line-height: 1.12; margin: 0; text-wrap: balance;
+  }
+  h1 { font-size: clamp(32px, 6.2vw, 60px); }
+  h2 { font-size: clamp(27px, 4.6vw, 42px); }
+  p { margin: 0; max-width: 62ch; }
+  .lede { font-size: clamp(18px, 2.4vw, 22px); color: var(--muted); }
+  ol.plain, ul.plain { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+
+  .grid2 { display: grid; grid-template-columns: 1fr; gap: 16px; min-width: 0; }
+  @media (min-width: 720px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+  .card {
+    background: var(--card); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 18px 20px; min-width: 0;
+  }
+  .card h3 {
+    margin: 0 0 8px; font: 600 15px/1.3 "IBM Plex Sans", system-ui, sans-serif;
+    text-transform: none; color: var(--ink);
+  }
+  .card p, .card li { font-size: 16px; }
+  .card ul { margin: 0; padding-left: 1.1em; display: grid; gap: 6px; }
+
+  .row {
+    display: grid; grid-template-columns: 1fr; gap: 6px 16px; align-items: start;
+    padding: 14px 0; border-bottom: 1px solid var(--rule);
+  }
+  @media (min-width: 640px) { .row { grid-template-columns: 2.4rem 1fr auto; align-items: center; } }
+  .row:first-child { border-top: 1px solid var(--rule); }
+  .num { font: 500 14px/1 "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); }
+  .row strong { font-weight: 600; display: block; }
+  .row span.sub { color: var(--muted); font-size: 15px; }
+
+  .pill {
+    justify-self: start; white-space: nowrap;
+    font: 500 12px/1 "IBM Plex Mono", ui-monospace, monospace; letter-spacing: 0.04em;
+    padding: 7px 10px; border-radius: 999px; border: 1px solid currentColor;
+  }
+  .built { color: var(--good); }
+  .wip { color: var(--soon); }
+  .todo { color: var(--todo); }
+
+  .stat { font-family: "Newsreader", Georgia, serif; font-size: 40px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+  .stat-label { font-size: 15px; color: var(--muted); margin-top: 8px; }
+
+  .principle {
+    border: 1px solid var(--accent); border-radius: 6px; padding: 16px 20px;
+    font-family: "Newsreader", Georgia, serif; font-size: clamp(20px, 3vw, 26px); line-height: 1.3;
+  }
+  .principle small {
+    display: block; margin-bottom: 6px; color: var(--accent);
+    font: 500 12px/1.4 "IBM Plex Mono", ui-monospace, monospace; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  .foot { font-size: 13px; color: var(--muted); }
+
+  /* navigation */
+  nav.controls {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding-top: 14px; border-top: 1px solid var(--rule); margin-top: 8px;
+  }
+  nav.controls button {
+    min-height: 44px; min-width: 110px; padding: 0 16px;
+    font: 500 15px/1 "IBM Plex Sans", system-ui, sans-serif; color: var(--ink);
+    background: transparent; border: 1px solid var(--ink); border-radius: 6px; cursor: pointer;
+  }
+  nav.controls button:hover:not(:disabled) { background: var(--card); }
+  nav.controls button:disabled { opacity: 0.4; cursor: default; }
+  nav.controls button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  #counter { font: 500 14px/1 "IBM Plex Mono", ui-monospace, monospace; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* before JS runs, show everything stacked; with JS, one slide at a time */
+  .js .slide { display: none; }
+  .js .slide.active { display: flex; }
+  .js nav.controls { display: flex; }
+  nav.controls { display: none; }
+  .js nav.controls { display: flex; }
+
+  @media (prefers-reduced-motion: reduce) { .progress span { transition: none; } }
+
+  @media print {
+    body { padding: 0; background: #fff; color: #000; }
+    .js .slide { display: flex !important; page-break-after: always; min-height: auto; padding: 24px 0; }
+    .progress, nav.controls { display: none !important; }
+  }
+</style>
+
+<div class="deck" id="deck">
+
+  <div class="topbar">
+    <span>Underwriting review · Progress update</span>
+    <span id="topcount">1 / 11</span>
+  </div>
+  <div class="progress" aria-hidden="true"><span id="bar"></span></div>
+
+  <!-- 1 -->
+  <section class="slide active" aria-label="Slide 1 of 11">
+    <p class="kicker">Progress update</p>
+    <h1>Underwriting review, with the context ready before the first read</h1>
+    <p class="lede">What we have built so far, what the AI summary will do, and what we need from Urge next.</p>
+    <p class="foot">Built with made-up sample data only.</p>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide" aria-label="Slide 2 of 11">
+    <p class="kicker">The problem</p>
+    <h2>Today, underwriters start from zero</h2>
+    <ul class="plain">
+      <li class="card"><p>When a borrower submits financial data through the EBIARA underwriting model, the underwriter reads the materials without any prepared context.</p></li>
+      <li class="card"><p>A large share of the time goes to reading and sorting numbers before the real judgement starts.</p></li>
+      <li class="card"><p>Key questions can surface late, and each file is reviewed in a different order.</p></li>
+    </ul>
+    <p class="lede">The goal: a summary and a short list of questions ready before the first review, the same way for every deal.</p>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide" aria-label="Slide 3 of 11">
+    <p class="kicker">What we are building</p>
+    <h2>Two parts that work together</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>1. Fixed checks</h3>
+        <p>Rules that read the submitted workbook and flag what needs attention. They give the same answer every time and are easy to audit.</p>
+      </div>
+      <div class="card">
+        <h3>2. An AI second opinion</h3>
+        <p>Reads what the checks found and writes a plain-language note: what the numbers seem to say, where they could mislead, what is missing, and what to ask the sponsor.</p>
+      </div>
+    </div>
+    <div class="principle"><small>The principle</small>The rules decide. The AI advises.</div>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide" aria-label="Slide 4 of 11">
+    <p class="kicker">How the review is organized</p>
+    <h2>Six questions, asked in the same order</h2>
+    <div>
+      <div class="row"><span class="num">1</span><div><strong>Is the data valid?</strong><span class="sub">Integrity checks: totals, errors, leftover template text</span></div><span class="pill built">BUILT</span></div>
+      <div class="row"><span class="num">2</span><div><strong>How does it compare with the market?</strong><span class="sub">Benchmarks for rents, expenses and costs</span></div><span class="pill built">BUILT</span></div>
+      <div class="row"><span class="num">3</span><div><strong>What can go wrong?</strong><span class="sub">Risk checks for projects being built, operating, or changing stage</span></div><span class="pill built">BUILT</span></div>
+      <div class="row"><span class="num">4</span><div><strong>What happens in a downside case?</strong><span class="sub">Scenarios: downside, base and upside, with adjustable levers</span></div><span class="pill built">BUILT</span></div>
+      <div class="row"><span class="num">5</span><div><strong>Can this sponsor deliver?</strong><span class="sub">Sponsor health, cash cover and track record</span></div><span class="pill built">BUILT</span></div>
+      <div class="row"><span class="num">6</span><div><strong>What should the reviewer look at first?</strong><span class="sub">Ranked summary, sponsor questions, and the AI second opinion</span></div><span class="pill todo">NOT STARTED</span></div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide" aria-label="Slide 5 of 11">
+    <p class="kicker">Where we are</p>
+    <h2>Five of six layers are built</h2>
+    <div class="grid2">
+      <div class="card"><div class="stat">5 of 6</div><p class="stat-label">layers built. The summary layer is next.</p></div>
+      <div class="card"><div class="stat">520</div><p class="stat-label">automated checks run on the merged code, and all of them pass.</p></div>
+      <div class="card"><div class="stat">16 + 3</div><p class="stat-label">made-up sample workbooks and made-up sponsors, used for testing.</p></div>
+      <div class="card"><div class="stat">0</div><p class="stat-label">AI features running today. The AI summary is written down as rules, not yet built.</p></div>
+    </div>
+    <p class="foot">Foundation work is nearly finished. Two items remain: a spec update for the workbook template, and running the tests automatically on every change.</p>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide" aria-label="Slide 6 of 11">
+    <p class="kicker">What a reviewer sees today</p>
+    <h2>Checks that already run on every deal</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>Data quality</h3>
+        <ul><li>Sources equal uses</li><li>Error cells and broken formulas</li><li>Template text left in</li><li>Numbers that must match across tabs</li></ul>
+      </div>
+      <div class="card">
+        <h3>Market comparison</h3>
+        <ul><li>Rents against comparable properties</li><li>Operating costs per unit</li><li>Construction cost per square foot</li></ul>
+      </div>
+      <div class="card">
+        <h3>Risk by project stage</h3>
+        <ul><li>Building: contingency, schedule, interest reserve, team</li><li>Operating: actuals against underwriting, vacancy, debt maturity</li><li>Filling up: timing of each stage change</li></ul>
+      </div>
+      <div class="card">
+        <h3>Sponsor</h3>
+        <ul><li>Coverage across all of the sponsor's projects</li><li>Cash and liquidity cover</li><li>Projected against delivered, from completed projects</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide" aria-label="Slide 7 of 11">
+    <p class="kicker">The AI second opinion</p>
+    <h2>What it will do, and what it will never do</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>It will</h3>
+        <ul>
+          <li>Read the flags and the data behind them</li>
+          <li>Explain how one piece of evidence changes another</li>
+          <li>Say where a rule may be too harsh or too soft, and why</li>
+          <li>Say what it cannot tell, and what would settle it</li>
+          <li>Suggest sponsor questions, clearly marked as suggestions</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>It will never</h3>
+        <ul>
+          <li>Change a flag, score, record or setting</li>
+          <li>Hide the rules' own result</li>
+          <li>Invent a number that is not in the workbook</li>
+          <li>Use outside facts about real companies or markets</li>
+          <li>Approve or decline a deal</li>
+          <li>Follow instructions hidden inside a workbook</li>
+          <li>Run unless a reviewer presses a button</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide" aria-label="Slide 8 of 11">
+    <p class="kicker">Every answer shows its sources</p>
+    <h2>What the reviewer gets back</h2>
+    <div>
+      <div class="row"><span class="num">A</span><div><strong>Second opinion</strong><span class="sub">Agrees with the rules, agrees with caveats, disagrees with a named rule, or cannot tell</span></div><span></span></div>
+      <div class="row"><span class="num">B</span><div><strong>Why</strong><span class="sub">Two to five plain sentences, with no jargon left unexplained</span></div><span></span></div>
+      <div class="row"><span class="num">C</span><div><strong>Evidence</strong><span class="sub">Every claim cites a flag ID or a workbook cell, such as Balance Sheet!B9</span></div><span></span></div>
+      <div class="row"><span class="num">D</span><div><strong>What is missing</strong><span class="sub">The data that would change the answer</span></div><span></span></div>
+      <div class="row"><span class="num">E</span><div><strong>Confidence</strong><span class="sub">High, medium or low, with one sentence on why</span></div><span></span></div>
+      <div class="row"><span class="num">F</span><div><strong>Suggested questions</strong><span class="sub">For the sponsor, each tied to a reason</span></div><span></span></div>
+    </div>
+    <p class="foot">Every answer is labelled "AI second opinion" with the date and time, so nobody mistakes it for a calculated result.</p>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide" aria-label="Slide 9 of 11">
+    <p class="kicker">Before anyone relies on it</p>
+    <h2>How we will test it</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3>The test set</h3>
+        <ul>
+          <li>16 made-up sample workbooks</li>
+          <li>3 made-up sample sponsors</li>
+          <li>Our own tricky cases, such as a sound project with a weak sponsor</li>
+          <li>Traps: hidden instructions and data that contradicts itself</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>It must pass all seven</h3>
+        <ul>
+          <li>Never invents a number</li>
+          <li>Every claim has a citation</li>
+          <li>Never changes or hides a rule's result</li>
+          <li>Says "cannot tell" where the data cannot settle it</li>
+          <li>Ignores instructions hidden in the data</li>
+          <li>Gives the same answer category when asked three times</li>
+          <li>Adds value compared with the rules alone</li>
+        </ul>
+      </div>
+    </div>
+    <p class="foot">One failure on invented numbers, changed results or hidden instructions stops the feature, whatever else it does well.</p>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide" aria-label="Slide 10 of 11">
+    <p class="kicker">What we need from Urge</p>
+    <h2>Four decisions</h2>
+    <div>
+      <div class="row"><span class="num">1</span><div><strong>May sponsor data go to an outside AI provider?</strong><span class="sub">Reduced, with names replaced. If not, the summary can only run on made-up data.</span></div><span class="pill wip">DECIDE</span></div>
+      <div class="row"><span class="num">2</span><div><strong>Who sets up the access key, with which provider, and what budget?</strong><span class="sub">The key stays on the hosting side and never appears in the app.</span></div><span class="pill wip">DECIDE</span></div>
+      <div class="row"><span class="num">3</span><div><strong>Can the no-network rule allow one approved connection?</strong><span class="sub">Only that single route, and nothing else.</span></div><span class="pill wip">DECIDE</span></div>
+      <div class="row"><span class="num">4</span><div><strong>Who reviews the AI's wording and test results?</strong><span class="sub">Before any underwriter uses it.</span></div><span class="pill wip">DECIDE</span></div>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide" aria-label="Slide 11 of 11">
+    <p class="kicker">Next steps</p>
+    <h2>In order</h2>
+    <div>
+      <div class="row"><span class="num">1</span><div><strong>Get the four decisions</strong><span class="sub">Nothing with real sponsor data starts before this.</span></div><span class="pill todo">NEXT</span></div>
+      <div class="row"><span class="num">2</span><div><strong>Build the summary as a read-only second opinion</strong><span class="sub">On the synthesis layer, with made-up data only</span></div><span class="pill todo">PLANNED</span></div>
+      <div class="row"><span class="num">3</span><div><strong>Judge it against the seven tests</strong><span class="sub">Before any reviewer relies on it</span></div><span class="pill todo">PLANNED</span></div>
+      <div class="row"><span class="num">4</span><div><strong>Consider a document reader later</strong><span class="sub">Only after step 3. Every value it reads would be confirmed by the reviewer.</span></div><span class="pill todo">LATER</span></div>
+    </div>
+    <p class="foot">Dates will follow once the four decisions are made.</p>
+  </section>
+
+  <nav class="controls" aria-label="Slide navigation">
+    <button type="button" id="prev">Back</button>
+    <span id="counter">1 / 11</span>
+    <button type="button" id="next">Next</button>
+  </nav>
+</div>
+
+<script>
+  (function () {
+    document.documentElement.classList.add('js');
+    var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+    var total = slides.length;
+    var current = 0;
+    var prev = document.getElementById('prev');
+    var next = document.getElementById('next');
+    var counter = document.getElementById('counter');
+    var topcount = document.getElementById('topcount');
+    var bar = document.getElementById('bar');
+
+    function go(n) {
+      current = Math.max(0, Math.min(total - 1, n));
+      slides.forEach(function (s, k) { s.classList.toggle('active', k === current); });
+      var label = (current + 1) + ' / ' + total;
+      counter.textContent = label;
+      topcount.textContent = label;
+      bar.style.width = ((current + 1) / total * 100) + '%';
+      prev.disabled = current === 0;
+      next.disabled = current === total - 1;
+      try { history.replaceState(null, '', '#' + (current + 1)); } catch (e) { /* no history in some views */ }
+    }
+
+    try {
+      var fromHash = parseInt(location.hash.replace('#', ''), 10);
+      if (fromHash >= 1 && fromHash <= total) current = fromHash - 1;
+    } catch (e) { /* ignore */ }
+
+    prev.addEventListener('click', function () { go(current - 1); });
+    next.addEventListener('click', function () { go(current + 1); });
+
+    document.addEventListener('keydown', function (ev) {
+      if (ev.target && /input|textarea|select/i.test(ev.target.tagName)) return;
+      if (ev.key === 'ArrowRight' || ev.key === 'PageDown' || ev.key === ' ') { ev.preventDefault(); go(current + 1); }
+      if (ev.key === 'ArrowLeft' || ev.key === 'PageUp') { ev.preventDefault(); go(current - 1); }
+    });
+
+    var startX = null;
+    document.addEventListener('touchstart', function (ev) { startX = ev.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend', function (ev) {
+      if (startX === null) return;
+      var dx = ev.changedTouches[0].clientX - startX;
+      startX = null;
+      if (Math.abs(dx) > 50) go(current + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+
+    go(current);
+  })();
+</script>
