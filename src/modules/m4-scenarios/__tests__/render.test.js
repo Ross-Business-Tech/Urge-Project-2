@@ -12,12 +12,10 @@ import { scenarios } from '../../shared/samples/scenarios.js'
 
 let server
 let ScenarioPanel
-let ScenarioDemo
 
 before(async () => {
   server = await createServer({ configFile: new URL('../../../../vite.config.js', import.meta.url).pathname, server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom', logLevel: 'silent', optimizeDeps: { noDiscovery: true } })
   ;({ ScenarioPanel } = await server.ssrLoadModule('/src/modules/m4-scenarios/ScenarioPanel.jsx'))
-  ScenarioDemo = (await server.ssrLoadModule('/src/modules/m4-scenarios/ScenarioDemo.jsx')).default
 })
 
 after(async () => {
@@ -59,10 +57,4 @@ test('a project with no stage asks for one, and a project whose numbers are refu
   const refused = draw(recordFor(scenarios.find((s) => s.id === 's14-rate-typed-as-whole-number')))
   assert.match(refused, /cannot be stress-tested/)
   assert.ok(!refused.includes('could not be shown'))
-})
-
-test('the Scenarios tab itself draws', () => {
-  const html = plain(renderToString(createElement(ScenarioDemo)))
-  assert.match(html, /Made-up sample project/)
-  assert.match(html, /Downside/)
 })

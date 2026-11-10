@@ -18,6 +18,9 @@ import { GroupEditor } from './RecordEditor.jsx'
 import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
 import { T12Tools } from './T12Tools.jsx'
 import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
+import DevelopmentRisk from './modules/m3d-development/DevelopmentRisk.jsx'
+import CompletedRisk from './modules/m3c-completed/CompletedRisk.jsx'
+import TransitionChecks from './modules/m3t-transitions/TransitionChecks.jsx'
 import BenchmarkTable from './modules/m2-benchmarks/BenchmarkTable.jsx'
 import { ScenarioPanel } from './modules/m4-scenarios/ScenarioPanel.jsx'
 import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
@@ -82,7 +85,7 @@ const GroupRow = memo(function GroupRow({ schemaGroup, reportGroup, record, reco
 })
 
 // The two choices only the underwriter can make for a project: its stage and the date its facts are "as of".
-function StageControls({ project, record, onChange }) {
+export function StageControls({ project, record, onChange }) {
   const { stage, asOfDate } = record.data.stage
   const today = todayLocal()
   const chosen = STAGES.find((s) => s.value === stage)
@@ -136,8 +139,16 @@ const ProjectCard = memo(function ProjectCard({ project, record, settings, onCha
       {open && (
         <div className="body">
           <StageControls project={project} record={record} onChange={onChange} />
+          <div className="controls">
+            <p className="section-label">T-12 (twelve months of actual results)</p>
+            <p className="note">{record.data.t12.rows.length > 0 ? `${record.data.t12.rows.length} month${record.data.t12.rows.length === 1 ? '' : 's'} loaded.` : 'No T-12 loaded yet. It is optional, and it is what lets the completed-property checks run.'}</p>
+            <T12Tools record={record} onEdit={(fn) => onEdit(project.id, fn)} />
+          </div>
           <KeyRatios record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
           <IntegrityChecklist record={record} firm={firm} facts={facts} report={report} />
+          <DevelopmentRisk record={record} firm={firm} settings={settings} />
+          <CompletedRisk record={record} firm={firm} settings={settings} />
+          <TransitionChecks record={record} firm={firm} settings={settings} />
           <BenchmarkTable record={record} />
           <ScenarioPanel record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
           <p className="section-label">Values (tap a group to view or edit)</p>
@@ -248,7 +259,7 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
   )
 }
 
-export default function ImportPreview() {
+export default function ImportPreview({ onReview }) {
   const [state, setState] = useState({ status: 'idle' })
   const [dragging, setDragging] = useState(false)
   const latest = useRef(0) // a ticket per file chosen, so a slow file cannot overwrite a newer choice
@@ -319,6 +330,13 @@ export default function ImportPreview() {
   const changeSettings = useCallback((patch) => setState((s) => ({ ...s, saved: false, result: { ...s.result, settings: { ...s.result.settings, ...patch } } })), [])
   const changeProject = useCallback((id, patch) => editRecord(id, (p) => applyStageAndDate(p, patch)), [editRecord])
 
+  // Tell the page what is loaded, so the other tabs can show it. null while nothing is loaded.
+  const done = state.status === 'done'
+  const result = done ? state.result : null
+  useEffect(() => {
+    onReview?.(result ? { result, editRecord, changeProject } : null)
+  }, [onReview, result, editRecord, changeProject])
+
   function save() {
     downloadReview(state.result)
     setState((s) => ({ ...s, saved: true }))
@@ -353,6 +371,7 @@ export default function ImportPreview() {
         />
         <span className="drop-title">{state.status === 'reading' ? `Reading ${state.name}…` : 'Drop the applicant workbook here'}</span>
         <span className="drop-sub">or a saved review. Tap to choose a file (.xlsx, .xlsm or .json)</span>
+        <span className="drop-sub">Several projects? Put them all in the one workbook, one tab each. Past projects help the sponsor&apos;s track record.</span>
       </label>
       {state.status === 'error' && (
         <p className="problem" role="alert">

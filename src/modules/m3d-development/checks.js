@@ -1,0 +1,607 @@
+// M3D: development risk (layer 3). "What can go wrong while this project is being built?"
+//
+// Four groups of checks, each returning checklist rows:
+//
+//   { id, title, group, status: 'pass' | 'fail' | 'not_checked' | 'not_applicable', detail, cells, flags }
+//
+//   budget      contingency size, soft-cost share of hard cost
+//   schedule    dates in a sensible order, believable construction and lease-up length, completion date not already past
+//   capital     DSCR against the lender minimum, debt-to-cost, debt yield (takeout), lien order, interest reserve
+//   team        general contractor, architect and a development partner are named
+//
+// Every cutoff that decides high / medium / low is in thresholds.js (made-up defaults, easy to change).
+//
+// Cost per square foot is already compared with the market by M2, so M3D does not repeat it.
+
+import {
+  projectSchema,
+  dscr,
+  annualDebtService,
+  totalDebt,
+  totalDevelopmentCost,
+  noi,
+  loadBenchmarks,
+  contingencyBenchmark,
+  missingDataFlag,
+  flagFromUnavailable,
+  citeCells,
+  isValidDate,
+  fmt,
+  DEBT_SOURCE_TYPES,
+  DEFAULT_SETTINGS,
+} from '../shared/index.js'
+import { THRESHOLDS } from './thresholds.js'
+
+// The cutoffs live in thresholds.js (one clearly marked place to change them).
+export const LIMITS = THRESHOLDS
+
+const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
+const usd = (n) => fmt.usd(n)
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`
+const named = (v) => typeof v === 'string' && v.trim() !== ''
+
+const BUDGET_ROWS = projectSchema.find((g) => g.id === 'budget').rows
+const HARD_KEYS = BUDGET_ROWS.filter((r) => r.section.startsWith('Hard costs')).map((r) => r.key)
+const SOFT_KEYS = BUDGET_ROWS.filter((r) => r.section.startsWith('Soft costs')).map((r) => r.key)
+const HARD_CONTINGENCY = ['constructionContingency', 'ownersContingency']
+const amountPath = (key) => `budget.lines.${key}.amount`
+const amountOf = (record, key) => {
+  const v = record.data.budget.lines[key]?.amount
+  return isNum(v) && v >= 0 ? v : null
+}
+const sumOf = (record, keys) => keys.reduce((t, k) => t + (amountOf(record, k) ?? 0), 0)
+const anyEntered = (record, keys) => keys.some((k) => amountOf(record, k) !== null)
+
+function row(id, group, title, status, detail, extra = {}) {
+  return { id, group, title, status, detail, cells: extra.cells ?? [], flags: extra.flags ?? [] }
+}
+
+// A check that could not run: one low-severity "could not be checked" flag that says what is missing.
+function notChecked(ctx, id, group, title, missing, cells = []) {
+  const flag = missingDataFlag({ module: 'M3D', stage_used: 'development', check: id, checkTitle: title, missing, cell_refs: cells })
+  return row(id, group, title, 'not_checked', `Could not be checked: ${[].concat(missing).join('; ')}`, { cells, flags: [flag] })
+}
+
+// "2026-03" -> a month number; "2026" -> a year only. Anything else is unreadable.
+export function readPeriod(text) {
+  if (typeof text !== 'string') return null
+  const m = /^(\d{4})(?:-(0[1-9]|1[0-2])(?:-\d{2})?)?$/.exec(text.trim())
+  if (!m) return null
+  const year = Number(m[1])
+  return m[2] ? { year, month: year * 12 + Number(m[2]) - 1, precise: true } : { year, month: year * 12, precise: false }
+}
+const monthsBetween = (a, b) => b.month - a.month
+
+// =============================================================================================
+// BUDGET
+// =============================================================================================
+
+function contingency(ctx) {
+  const { record, flag, stage } = ctx
+  const id = 'contingency'
+  const title = 'Construction contingency is large enough'
+  const cells = citeCells(record, HARD_CONTINGENCY.map(amountPath))
+  if (!anyEntered(record, HARD_KEYS)) return notChecked(ctx, id, 'budget', title, 'No hard costs entered in the development budget.', cells)
+  const contingencyEntered = anyEntered(record, HARD_CONTINGENCY)
+  if (!contingencyEntered) {
+    return notChecked(ctx, id, 'budget', title, 'Neither construction contingency nor owner\'s contingency is filled in. Is there really none?', cells)
+  }
+  const amount = sumOf(record, HARD_CONTINGENCY)
+  const base = sumOf(record, HARD_KEYS) - amount
+  if (base <= 0) return notChecked(ctx, id, 'budget', title, 'The hard costs before contingency add up to zero.', cells)
+  const loaded = loadBenchmarks(stage, ctx.benchmarkSets)
+  const bench = loaded.ok ? contingencyBenchmark(loaded.set) : loaded
+  if (!bench.ok) return notChecked(ctx, id, 'budget', title, bench.reason, cells)
+  const { low, high } = bench.range
+  const share = amount / base
+  const range = `${fmt.pct(low, 0)} to ${fmt.pct(high, 0)} benchmark`
+  const detail = `Contingency ${usd(amount)} on ${usd(base)} of hard cost (${fmt.pct(share)}) vs. a ${range}.`
+  if (share > LIMITS.contingencyProgramCap) {
+    const cap = fmt.pct(LIMITS.contingencyProgramCap, 0)
+    const f = flag({
+      id: 'M3D-contingency-high',
+      severity: 'medium',
+      title: 'Contingency is larger than many funders allow.',
+      evidence: `Contingency ${usd(amount)} on ${usd(base)} of hard cost: ${fmt.pct(share)}, above a ${cap} program cap (the cap is a placeholder).`,
+      cell_refs: cells,
+      follow_up: `Does the funding program allow a contingency this large? What is the cap, and what is the extra ${usd(amount - base * LIMITS.contingencyProgramCap)} covering?`,
+    })
+    return row(id, 'budget', title, 'fail', `${detail} Above the ${cap} program cap.`, { cells, flags: [f] })
+  }
+  if (share >= low) return row(id, 'budget', title, 'pass', detail, { cells })
+  const f = flag({
+    id: 'M3D-contingency-low',
+    severity: share < low * LIMITS.contingencyHighBelowFractionOfLow ? 'high' : 'medium',
+    title: 'The cushion for construction cost overruns is thin.',
+    evidence: `Contingency ${usd(amount)} on ${usd(base)} of hard cost: ${fmt.pct(share)} vs. a ${range}.`,
+    cell_refs: cells,
+    follow_up: `Why is contingency only ${fmt.pct(share)} of hard cost? How would a ${fmt.pct(low, 0)} cost overrun (${usd(base * low)}) be paid for?`,
+  })
+  return row(id, 'budget', title, 'fail', detail, { cells, flags: [f] })
+}
+
+function softCostShare(ctx) {
+  const { record, flag } = ctx
+  const id = 'soft-cost-ratio'
+  const title = 'Soft costs are in proportion to hard costs'
+  if (!anyEntered(record, HARD_KEYS) || !anyEntered(record, SOFT_KEYS)) {
+    return notChecked(ctx, id, 'budget', title, 'The development budget needs both hard costs and soft costs.')
+  }
+  const hard = sumOf(record, HARD_KEYS)
+  const soft = sumOf(record, SOFT_KEYS)
+  if (hard <= 0) return notChecked(ctx, id, 'budget', title, 'Hard costs add up to zero.')
+  const ratio = soft / hard
+  const { low, high } = LIMITS.softToHardRange
+  const detail = `Soft costs ${usd(soft)} are ${fmt.pct(ratio)} of hard costs ${usd(hard)} (usual range ${fmt.pct(low, 0)} to ${fmt.pct(high, 0)}).`
+  if (ratio >= low && ratio <= high) return row(id, 'budget', title, 'pass', detail)
+  const far = ratio < LIMITS.softToHardFar.low || ratio > LIMITS.softToHardFar.high
+  const heavy = ratio > high
+  const f = flag({
+    id: 'M3D-soft-cost-ratio',
+    severity: far ? 'medium' : 'low',
+    title: heavy ? 'Soft costs look heavy compared with construction cost.' : 'Soft costs look too light for the construction cost.',
+    evidence: `Soft costs ${usd(soft)} vs. hard costs ${usd(hard)}: ${fmt.pct(ratio)} against a usual ${fmt.pct(low, 0)} to ${fmt.pct(high, 0)}.`,
+    follow_up: heavy
+      ? 'What is in the soft-cost lines that makes them so large? How much is paid to the developer or related parties?'
+      : 'Are fees, financing costs and reserves fully budgeted, or sitting in hard costs or left out?',
+  })
+  return row(id, 'budget', title, 'fail', detail, { flags: [f] })
+}
+
+// A single budget line a reviewer may question: permits, tap fees and bonds, against hard cost before contingency.
+function permitsLine(ctx) {
+  const { record, flag } = ctx
+  const id = 'permits'
+  const title = 'Permits and tap fees are in proportion'
+  const cells = citeCells(record, [amountPath('permitsBonds')])
+  const permits = amountOf(record, 'permitsBonds')
+  const base = sumOf(record, HARD_KEYS) - sumOf(record, HARD_CONTINGENCY)
+  if (permits === null || base <= 0) return row(id, 'budget', title, 'not_applicable', 'Needs the permits line and the hard costs filled in.')
+  const share = permits / base
+  const { low, medium } = LIMITS.permitsShareOfHard
+  const detail = `Permits, tap fees and bonds ${usd(permits)} are ${fmt.pct(share)} of the ${usd(base)} of hard cost (flagged above ${fmt.pct(low, 0)}).`
+  if (share <= low) return row(id, 'budget', title, 'pass', detail, { cells })
+  const f = flag({
+    id: 'M3D-permits-high',
+    severity: share > medium ? 'medium' : 'low',
+    title: 'The permit and tap fee line looks high for the size of the project.',
+    evidence: detail,
+    cell_refs: cells,
+    follow_up: 'Why are permits, tap fees and bonds this large? Please send the fee schedule or quotes behind the amount.',
+  })
+  return row(id, 'budget', title, 'fail', detail, { cells, flags: [f] })
+}
+
+// Fees paid to the developer and related parties, together, against total project cost.
+function developerFees(ctx) {
+  const { record, flag } = ctx
+  const id = 'developer-fees'
+  const title = 'Developer and related-party fees are in proportion'
+  const keys = ['developerFee', 'projectManagementFees', 'constructionManagementFees', 'consultingFees', 'relatedPartyFees']
+  const cells = citeCells(record, keys.filter((k) => amountOf(record, k) !== null).map(amountPath))
+  const fees = sumOf(record, keys)
+  const total = totalDevelopmentCost(record)
+  if (!anyEntered(record, keys) || !total.ok) return row(id, 'budget', title, 'not_applicable', 'Needs fees and the total development budget filled in.')
+  const share = fees / total.value
+  const { low, medium } = LIMITS.developerFeesShareOfCost
+  // Money shown as deferred (typed "Other", or named deferred) is often an unpaid fee counted as a source of cash.
+  const deferredRows = record.data.sources.rows.map((r, i) => ({ r, i })).filter(({ r }) => isNum(r.amount) && r.amount > 0 && (r.type === 'other' || /defer/i.test(r.name ?? '')))
+  const deferred = deferredRows.reduce((t, { r }) => t + r.amount, 0)
+  const deferredCells = citeCells(record, deferredRows.map(({ i }) => `sources.rows.${i}.amount`))
+  let detail = `Developer and related-party fees ${usd(fees)} are ${fmt.pct(share)} of the ${usd(total.value)} project cost (flagged above ${fmt.pct(low, 0)}).`
+  if (deferred > 0) detail += ` ${usd(deferred)} of the sources is typed as Other or named as deferred.`
+  const flags = []
+  if (share > low) {
+    flags.push(
+      flag({
+        id: 'M3D-developer-fees-high',
+        severity: share > medium ? 'medium' : 'low',
+        title: 'A large share of the project cost goes to the developer and related parties.',
+        evidence: detail,
+        cell_refs: cells,
+        follow_up: 'How much of the developer fee is paid in cash during construction and how much is deferred? Do the fees fit the funder\'s limits?',
+      }),
+    )
+  }
+  // Most of a developer fee paid in cash during the project is money leaving it before the building pays for itself.
+  const cashShare = fees > 0 ? 1 - Math.min(deferred, fees) / fees : 0
+  if (fees > 0 && cashShare > LIMITS.developerFeeCashShare) {
+    flags.push(
+      flag({
+        id: 'M3D-fee-mostly-cash',
+        severity: 'low',
+        title: 'Most of the developer fee is paid in cash during the project rather than deferred.',
+        evidence: `Developer and related-party fees ${usd(fees)}; ${deferred > 0 ? `${usd(Math.min(deferred, fees))} is deferred` : 'none is deferred'}, so about ${fmt.pct(cashShare, 0)} is paid in cash (flagged above ${fmt.pct(LIMITS.developerFeeCashShare, 0)}).`,
+        cell_refs: [...cells, ...deferredCells],
+        follow_up: 'What percentage of the developer fee will actually be received, and when? How much is deferred until after the loans are repaid?',
+      }),
+    )
+  }
+  if (deferred > fees) {
+    flags.push(
+      flag({
+        id: 'M3D-deferred-exceeds-fees',
+        severity: 'low',
+        title: 'More money is shown as deferred than the fees in the budget, so some may be counted as equity by mistake.',
+        evidence: `Deferred or "Other" sources ${usd(deferred)} vs. ${usd(fees)} of developer and related-party fees in the budget.`,
+        cell_refs: [...cells, ...deferredCells],
+        follow_up: 'What exactly is deferred, and does it rank behind the loan?',
+      }),
+    )
+  }
+  return row(id, 'budget', title, flags.length ? 'fail' : 'pass', detail, { cells: [...cells, ...deferredCells], flags })
+}
+
+// =============================================================================================
+// SCHEDULE
+// =============================================================================================
+
+function schedule(ctx) {
+  const { record, flag } = ctx
+  const t = record.data.timeline
+  const cellKeys = ['constructionStart', 'constructionCompletion', 'stabilization']
+  const cells = citeCells(record, cellKeys.map((k) => `timeline.${k}`))
+  const start = readPeriod(t.constructionStart)
+  const end = readPeriod(t.constructionCompletion)
+  const stable = readPeriod(t.stabilization)
+  const missing = [
+    !start && 'construction start date',
+    !end && 'construction completion date',
+    !stable && 'stabilization date',
+  ].filter(Boolean)
+  const rows = []
+
+  // 1. dates in order
+  const orderTitle = 'Construction and stabilization dates are in order'
+  if (missing.length) {
+    rows.push(notChecked(ctx, 'schedule-order', 'schedule', orderTitle, `The ${missing.join(', ')} ${missing.length === 1 ? 'is' : 'are'} missing or not readable.`, cells))
+  } else {
+    const startAfterEnd = start.precise && end.precise ? start.month >= end.month : start.year > end.year
+    const endAfterStable = end.precise && stable.precise ? end.month > stable.month : end.year > stable.year
+    const detail = `Start ${t.constructionStart}, completion ${t.constructionCompletion}, stabilization ${t.stabilization}.`
+    if (!startAfterEnd && !endAfterStable) rows.push(row('schedule-order', 'schedule', orderTitle, 'pass', detail, { cells }))
+    else {
+      const f = flag({
+        id: 'M3D-schedule-order',
+        severity: 'high',
+        title: 'The project dates do not make sense in order.',
+        evidence: `${detail} ${startAfterEnd ? 'Construction does not finish after it starts.' : 'Construction finishes after the project is said to be stable.'}`,
+        cell_refs: cells,
+        follow_up: 'Please confirm the construction start, completion and stabilization dates and send a corrected schedule.',
+      })
+      rows.push(row('schedule-order', 'schedule', orderTitle, 'fail', detail, { cells, flags: [f] }))
+    }
+  }
+
+  // 2. construction length
+  const buildTitle = 'Construction length is believable'
+  if (!start?.precise || !end?.precise) {
+    rows.push(row('construction-length', 'schedule', buildTitle, 'not_applicable', 'Needs the construction start and completion as year and month (such as 2026-03). The workbook may give only years.', { cells }))
+  } else {
+    const n = monthsBetween(start, end)
+    const { low, high } = LIMITS.constructionMonths
+    const detail = `Construction takes ${plural(n, 'month')} (believable range ${low} to ${high} months).`
+    if (n <= 0 || (n >= low && n <= high)) {
+      rows.push(row('construction-length', 'schedule', buildTitle, n <= 0 ? 'not_applicable' : 'pass', n <= 0 ? 'See the date order check.' : detail, { cells }))
+    } else {
+      const f = flag({
+        id: 'M3D-construction-length',
+        severity: 'medium',
+        title: n < low ? 'The construction schedule is very short.' : 'The construction schedule is very long.',
+        evidence: detail,
+        cell_refs: cells,
+        follow_up: n < low ? 'What supports finishing construction this quickly? Does the contractor agree to this schedule?' : 'Why does construction take this long, and how are the extra interest and carrying costs covered?',
+      })
+      rows.push(row('construction-length', 'schedule', buildTitle, 'fail', detail, { cells, flags: [f] }))
+    }
+  }
+
+  // 3. lease-up length
+  const leaseTitle = 'Lease-up length is believable'
+  if (!end?.precise || !stable?.precise) {
+    rows.push(row('leaseup-length', 'schedule', leaseTitle, 'not_applicable', 'Needs the completion and stabilization dates as year and month (such as 2027-06).', { cells }))
+  } else {
+    const n = monthsBetween(end, stable)
+    const { low, high } = LIMITS.leaseUpMonths
+    const detail = `Lease-up takes ${plural(n, 'month')} from completion to stabilization (believable range ${low} to ${high} months).`
+    if (n < 0 || (n >= low && n <= high)) {
+      rows.push(row('leaseup-length', 'schedule', leaseTitle, n < 0 ? 'not_applicable' : 'pass', n < 0 ? 'See the date order check.' : detail, { cells }))
+    } else {
+      const f = flag({
+        id: 'M3D-leaseup-length',
+        severity: 'medium',
+        title: n < low ? 'The project is expected to fill up almost immediately.' : 'The project is expected to take a long time to fill up.',
+        evidence: detail,
+        cell_refs: cells,
+        follow_up: n < low ? 'What evidence supports leasing every unit this fast (pre-leasing, waitlists, comparable openings)?' : 'How long can the project carry its loan payments while it fills, and what pays for the extra months?',
+      })
+      rows.push(row('leaseup-length', 'schedule', leaseTitle, 'fail', detail, { cells, flags: [f] }))
+    }
+  }
+
+  // 4. completion date already passed (development only)
+  const slipTitle = 'Completion date has not already passed'
+  const asOf = isValidDate(record.data.stage.asOfDate) ? readPeriod(record.data.stage.asOfDate) : null
+  if (ctx.stage !== 'development') {
+    rows.push(row('completion-slipped', 'schedule', slipTitle, 'not_applicable', 'Only checked while the project is still in development.'))
+  } else if (!asOf || !end) {
+    rows.push(notChecked(ctx, 'completion-slipped', 'schedule', slipTitle, [!asOf && 'the "as of" date', !end && 'the construction completion date'].filter(Boolean), cells))
+  } else {
+    const late = end.precise ? asOf.month - end.month : asOf.year * 12 - (end.year * 12 + 11)
+    const detail = late > 0 ? `The project is still in development ${plural(late, 'month')} after its planned completion (${t.constructionCompletion}).` : `Planned completion ${t.constructionCompletion} is not before the "as of" date ${record.data.stage.asOfDate}.`
+    if (late <= 0) rows.push(row('completion-slipped', 'schedule', slipTitle, 'pass', detail, { cells }))
+    else {
+      const f = flag({
+        id: 'M3D-completion-slipped',
+        severity: late > LIMITS.slippedMonthsHigh ? 'high' : 'medium',
+        title: 'Construction is still going past its planned completion date.',
+        evidence: detail,
+        cell_refs: cells,
+        follow_up: 'Why is construction late? What is the new completion date, and what does the delay add to cost and interest?',
+        transition: 'T1',
+      })
+      rows.push(row('completion-slipped', 'schedule', slipTitle, 'fail', detail, { cells, flags: [f] }))
+    }
+  }
+  return rows
+}
+
+// =============================================================================================
+// CAPITAL STACK AND TAKEOUT
+// =============================================================================================
+
+function sourceCells(record, field) {
+  return citeCells(record, record.data.sources.rows.map((_, i) => `sources.rows.${i}.${field}`))
+}
+
+function dscrCheck(ctx) {
+  const { record, flag, settings } = ctx
+  const id = 'dscr'
+  const title = 'Income covers the loan payments (DSCR)'
+  const result = dscr(record)
+  const cells = sourceCells(record, 'amount')
+  if (!result.ok) {
+    const f = flagFromUnavailable(result, { module: 'M3D', stage_used: 'development', check: 'dscr', checkTitle: 'Debt service coverage' })
+    return row(id, 'capital', title, 'not_checked', `Could not be checked: ${result.reason}`, { flags: f ? [f] : [] })
+  }
+  const min = settings.minDscr
+  const detail = `DSCR ${fmt.times(result.value)} vs. the lender's minimum of ${fmt.times(min)}.`
+  if (result.value >= min + LIMITS.dscrThinMargin) return row(id, 'capital', title, 'pass', detail, { cells })
+  if (result.value >= min) {
+    const f = flag({
+      id: 'M3D-dscr-thin',
+      severity: 'medium',
+      title: 'Income clears the lender\'s minimum by only a sliver.',
+      evidence: `${detail} That is less than ${fmt.times(LIMITS.dscrThinMargin).replace('×', '')} above the minimum, so a small drop in income puts it under.`,
+      cell_refs: cells,
+      follow_up: `By how much can rents fall or costs rise before DSCR drops below ${fmt.times(min)}? Is there any cushion in the income projections?`,
+      transition: 'T3',
+    })
+    return row(id, 'capital', title, 'fail', `${detail} Only just above the minimum.`, { cells, flags: [f] })
+  }
+  const f = flag({
+    id: 'M3D-dscr-under-minimum',
+    severity: 'high',
+    title: 'Projected income does not cover the loan payments with the cushion lenders require.',
+    evidence: `DSCR ${fmt.times(result.value)} vs. a ${fmt.times(min)} minimum.`,
+    cell_refs: cells,
+    follow_up: `What closes the gap to ${fmt.times(min)}: more equity, a smaller loan, a lower rate or higher income? Please send a revised sources and uses.`,
+    transition: 'T3',
+  })
+  return row(id, 'capital', title, 'fail', detail, { cells, flags: [f] })
+}
+
+function debtToCostCheck(ctx) {
+  const { record, flag } = ctx
+  const id = 'debt-to-cost'
+  const title = 'Borrowing is a safe share of cost'
+  const debt = totalDebt(record)
+  const cost = totalDevelopmentCost(record)
+  const cells = sourceCells(record, 'amount')
+  const failure = [debt, cost].find((r) => !r.ok)
+  if (failure) return notChecked(ctx, id, 'capital', title, failure.reason, cells)
+  const share = debt.value / cost.value
+  const detail = `Debt ${usd(debt.value)} is ${fmt.pct(share)} of the ${usd(cost.value)} project cost.`
+  if (share <= LIMITS.debtToCost.medium) return row(id, 'capital', title, 'pass', detail, { cells })
+  const f = flag({
+    id: 'M3D-debt-to-cost-high',
+    severity: share > LIMITS.debtToCost.high ? 'high' : 'medium',
+    title: 'The project is funded mostly with borrowed money.',
+    evidence: `Debt ${usd(debt.value)} on ${usd(cost.value)} of cost: ${fmt.pct(share)} (more than ${fmt.pct(LIMITS.debtToCost.medium, 0)} is a concern).`,
+    cell_refs: cells,
+    follow_up: 'How much of the sponsor\'s own cash is really in this deal, and who absorbs the loss if costs rise?',
+  })
+  return row(id, 'capital', title, 'fail', detail, { cells, flags: [f] })
+}
+
+function debtYieldCheck(ctx) {
+  const { record, flag } = ctx
+  const id = 'debt-yield'
+  const title = 'Debt yield passes a refinance test'
+  const n = noi(record)
+  const debt = totalDebt(record)
+  const failure = [n, debt].find((r) => !r.ok)
+  if (failure) return notChecked(ctx, id, 'capital', title, failure.reason, sourceCells(record, 'amount'))
+  const cells = sourceCells(record, 'amount')
+  const value = n.value / debt.value
+  const detail = `Stabilized NOI ${usd(n.value)} on ${usd(debt.value)} of debt is a ${fmt.pct(value)} debt yield (lenders often want at least ${fmt.pct(LIMITS.debtYieldMin.medium, 0)}).`
+  if (value >= LIMITS.debtYieldMin.medium) return row(id, 'capital', title, 'pass', detail, { cells })
+  const f = flag({
+    id: 'M3D-debt-yield-low',
+    severity: value < LIMITS.debtYieldMin.high ? 'high' : 'medium',
+    title: 'The permanent lender may not refinance this much debt.',
+    evidence: detail,
+    cell_refs: cells,
+    follow_up: 'What does the permanent lender require for takeout, and does this debt amount meet it?',
+    transition: 'T3',
+  })
+  return row(id, 'capital', title, 'fail', detail, { cells, flags: [f] })
+}
+
+// A loan that comes due before the project is expected to stabilize has to be extended or refinanced before income is proven.
+function loanMaturity(ctx) {
+  const { record, flag, stage } = ctx
+  const id = 'loan-maturity'
+  const title = 'No loan comes due before the project stabilizes'
+  const loans = record.data.sources.rows
+    .map((r, i) => ({ r, i, name: r.name || `source ${i + 1}` }))
+    .filter(({ r }) => DEBT_SOURCE_TYPES.includes(r.type) && isNum(r.amount) && r.amount > 0 && isNum(r.termMonths) && r.termMonths > 0)
+  const start = readPeriod(record.data.timeline.constructionStart)
+  const stable = readPeriod(record.data.timeline.stabilization)
+  const asOf = readPeriod(record.data.stage.asOfDate)
+  const dateCells = citeCells(record, ['timeline.constructionStart', 'timeline.stabilization'])
+  if (loans.length === 0) return notChecked(ctx, id, 'capital', title, 'A loan with a term in the sources of money is needed.', citeCells(record, ['sources.rows.0.termMonths']))
+  const from = stage === 'development' ? start : asOf
+  if (!from || !stable) return notChecked(ctx, id, 'capital', title, `The ${stage === 'development' ? 'construction start' : '"as of"'} date and the stabilization date are needed.`, dateCells)
+  const horizon = monthsBetween(from, stable)
+  const early = loans.filter(({ r }) => r.termMonths < horizon)
+  const detail = `Stabilization is ${plural(Math.max(0, horizon), 'month')} ${stage === 'development' ? 'after construction starts' : 'from the "as of" date'}; the shortest loan term is ${plural(Math.min(...loans.map(({ r }) => r.termMonths)), 'month')}.`
+  if (early.length === 0) return row(id, 'capital', title, 'pass', detail, { cells: dateCells })
+  const cells = citeCells(record, [...early.map(({ i }) => `sources.rows.${i}.termMonths`), 'timeline.stabilization'])
+  const f = flag({
+    id: 'M3D-loan-matures-early',
+    severity: 'high',
+    title: 'A loan comes due before the project is expected to stabilize.',
+    evidence: `${early.map(({ r, name }) => `"${name}" term ${plural(r.termMonths, 'month')}`).join('; ')} vs. ${plural(horizon, 'month')} to stabilization. The loan must be extended or refinanced before income is proven.`,
+    cell_refs: cells,
+    follow_up: 'What happens if stabilization slips past the loan maturity? Are there extension options, and on what terms?',
+    transition: 'T2',
+  })
+  return row(id, 'capital', title, 'fail', detail, { cells, flags: [f] })
+}
+
+function lienOrder(ctx) {
+  const { record, flag } = ctx
+  const id = 'lien-priority'
+  const title = 'Lien priority is complete and in order'
+  const rows = record.data.sources.rows.map((r, i) => ({ ...r, i })).filter((r) => isNum(r.amount) && r.amount > 0)
+  const cells = sourceCells(record, 'lienPriority')
+  if (rows.length === 0) return notChecked(ctx, id, 'capital', title, 'No sources of money entered.')
+  const blank = rows.filter((r) => !isNum(r.lienPriority))
+  const seen = new Map()
+  for (const r of rows.filter((x) => isNum(x.lienPriority))) seen.set(r.lienPriority, [...(seen.get(r.lienPriority) ?? []), r])
+  const duplicates = [...seen.entries()].filter(([, list]) => list.length > 1)
+  const mezz = rows.filter((r) => r.type === 'mezzanine_debt' && isNum(r.lienPriority))
+  const senior = rows.filter((r) => r.type === 'hard_debt' && isNum(r.lienPriority))
+  const mezzAhead = mezz.filter((m) => senior.some((s) => m.lienPriority < s.lienPriority))
+  const name = (r) => r.name || `source ${r.i + 1}`
+  const problems = []
+  if (blank.length) problems.push(`no lien priority for ${blank.map(name).join(', ')}`)
+  if (duplicates.length) problems.push(`the same priority used twice: ${duplicates.map(([p, list]) => `${p} (${list.map(name).join(' and ')})`).join('; ')}`)
+  if (mezzAhead.length) problems.push(`mezzanine debt ranks ahead of the senior loan: ${mezzAhead.map(name).join(', ')}`)
+  if (problems.length === 0) {
+    const debtOnly = rows.filter((r) => DEBT_SOURCE_TYPES.includes(r.type)).length
+    return row(id, 'capital', title, 'pass', `${plural(rows.length, 'source')} ranked, ${plural(debtOnly, 'loan')} in a sensible order.`, { cells })
+  }
+  const f = flag({
+    id: 'M3D-lien-priority',
+    severity: mezzAhead.length ? 'medium' : 'low',
+    title: mezzAhead.length ? 'The order in which lenders are repaid looks wrong.' : 'The order in which lenders are repaid is not clear.',
+    evidence: `Problems: ${problems.join('; ')}.`,
+    cell_refs: cells,
+    follow_up: 'Please confirm who is repaid first, second and third, and send the intercreditor terms if there is more than one lender.',
+  })
+  return row(id, 'capital', title, 'fail', `Problems: ${problems.join('; ')}.`, { cells, flags: [f] })
+}
+
+function interestReserve(ctx) {
+  const { record, flag, stage } = ctx
+  const id = 'interest-reserve'
+  const title = 'Reserves cover loan interest until the project can pay its own way'
+  // The applicant form has no line called "interest reserve": the spec (section 1b) says to use these three budget lines.
+  const lines = stage === 'development' ? ['constructionInterest', 'rentUpReserve', 'operatingReserve'] : ['rentUpReserve', 'operatingReserve']
+  const cells = citeCells(record, lines.map(amountPath))
+  const ds = annualDebtService(record)
+  if (!ds.ok) return row(id, 'capital', title, 'not_checked', ds.reason, { cells, flags: [flagFromUnavailable(ds, { module: 'M3D', stage_used: 'development', check: id, checkTitle: title })] })
+  const start = readPeriod(record.data.timeline.constructionStart)
+  const end = readPeriod(record.data.timeline.constructionCompletion)
+  const stable = readPeriod(record.data.timeline.stabilization)
+  const asOf = readPeriod(record.data.stage.asOfDate)
+  const dateCells = citeCells(record, ['timeline.constructionStart', 'timeline.constructionCompletion', 'timeline.stabilization'])
+  let interest = 0
+  let carryMonths
+  const parts = []
+  if (stage === 'development') {
+    if (!start || !end || !stable) return notChecked(ctx, id, 'capital', title, 'The construction start, completion and stabilization dates are needed to estimate the interest.', dateCells)
+    const months = Math.max(0, monthsBetween(start, end))
+    carryMonths = Math.max(0, monthsBetween(end, stable))
+    const loans = record.data.sources.rows.filter((r) => DEBT_SOURCE_TYPES.includes(r.type) && isNum(r.amount) && r.amount > 0 && isNum(r.interestRate) && r.interestRate >= 0 && r.interestRate <= 1)
+    interest = loans.reduce((t, r) => t + r.amount * r.interestRate, 0) * LIMITS.averageDrawn * (months / 12)
+    parts.push(`interest while building about ${usd(interest)} (${fmt.pct(LIMITS.averageDrawn, 0)} drawn on average over ${plural(months, 'month')})`)
+  } else {
+    if (!stable || !asOf) return notChecked(ctx, id, 'capital', title, 'The stabilization date and the "as of" date are needed to see how long the reserves must last.', dateCells)
+    carryMonths = Math.max(0, monthsBetween(asOf, stable))
+  }
+  const carry = (ds.value * carryMonths) / 12
+  parts.push(`loan payments during ${plural(carryMonths, 'month')} of lease-up about ${usd(carry)} (assuming no income, the cautious case)`)
+  const required = interest + carry
+  const funded = lines.reduce((t, k) => t + (amountOf(record, k) ?? 0), 0)
+  if (required <= 0) return row(id, 'capital', title, 'pass', 'There is no interest or loan payment to carry before stabilization.', { cells })
+  const share = funded / required
+  const names = lines.map((k) => BUDGET_ROWS.find((r) => r.key === k).label.toLowerCase()).join(', ')
+  const detail = `Reserves of ${usd(funded)} (${names}) against about ${usd(required)} to carry: ${parts.join('; ')}. ${fmt.pct(share, 0)} covered.`
+  if (share >= LIMITS.interestReserve.medium) return row(id, 'capital', title, 'pass', detail, { cells })
+  const f = flag({
+    id: 'M3D-interest-reserve-short',
+    severity: share < LIMITS.interestReserve.high ? 'high' : 'medium',
+    title: 'The interest and rent-up reserves may run out before the project can pay its own way.',
+    evidence: `${detail} A simple estimate, not a draw schedule.`,
+    cell_refs: cells,
+    follow_up: 'Please share the draw schedule and interest carry. If the reserves run out before the first units lease, who funds the shortfall?',
+    transition: 'T1',
+  })
+  return row(id, 'capital', title, 'fail', detail, { cells, flags: [f] })
+}
+
+// =============================================================================================
+// TEAM
+// =============================================================================================
+
+// The workbook names a general contractor, an architect and development partners. It has no property manager, guarantor
+// or experience fields, so those cannot be checked yet (see the notes M3D returns).
+function team(ctx) {
+  const { record, flag, firm } = ctx
+  const id = 'team'
+  const title = 'The development team is named'
+  const lines = record.data.team.lines
+  const has = (key) => named(lines[key]?.firmName) || named(lines[key]?.principal)
+  // The workbook's team table has no row for a property manager or a guarantor, so they count only when named under "Other".
+  const otherText = ['other1', 'other2'].filter(has).map((k) => `${lines[k].firmName ?? ''} ${lines[k].principal ?? ''}`).join(' ')
+  const roles = [
+    ['generalContractor', 'general contractor', has('generalContractor')],
+    ['architect', 'architect', has('architect')],
+    ['development partner', 'development partner', ['devPartner1', 'devPartner2', 'devPartner3'].some(has)],
+    ['property manager', 'property manager', /manag/i.test(otherText)],
+    ['guarantor', 'guarantor', /guarant/i.test(otherText)],
+  ]
+  const absent = roles.filter((r) => !r[2]).map((r) => r[1])
+  const noTrack = firm?.data?.identity?.completedProjectCount === 0
+  const cells = citeCells(record, ['generalContractor', 'architect', 'devPartner1'].map((k) => `team.lines.${k}.firmName`))
+  if (absent.length === 0 && !noTrack) return row(id, 'team', title, 'pass', 'A general contractor, architect, development partner, property manager and guarantor are named.', { cells })
+  const parts = []
+  if (absent.length) parts.push(`Not named: ${absent.join(', ')}. (${roles.length - absent.length} of ${roles.length} roles named; the property manager and guarantor count only when named under "Other".)`)
+  if (noTrack) parts.push('The firm reports no completed projects, so there is no track record of delivering one.')
+  const f = flag({
+    id: 'M3D-team-incomplete',
+    severity: 'low',
+    title: noTrack && absent.length === 0 ? 'The sponsor has no completed projects to show.' : 'Part of the development team is not named.',
+    evidence: parts.join(' '),
+    cell_refs: cells,
+    follow_up: `Please name ${absent.length ? `the ${absent.join(', ')}` : 'who will deliver the project'}, describe each one's experience with projects of this size, and say who is guaranteeing the loan.`,
+  })
+  return row(id, 'team', title, 'fail', parts.join(' '), { cells, flags: [f] })
+}
+
+// =============================================================================================
+
+// The checks that run for a project. A lease-up project runs them all, as development checks, for what is still projected.
+export const CHECKS = [contingency, softCostShare, permitsLine, developerFees, schedule, dscrCheck, debtToCostCheck, debtYieldCheck, loanMaturity, lienOrder, interestReserve, team]
+
+export const GROUPS = [
+  { id: 'budget', label: 'Budget' },
+  { id: 'schedule', label: 'Schedule' },
+  { id: 'capital', label: 'Money and takeout' },
+  { id: 'team', label: 'Team' },
+]
+
+export { DEFAULT_SETTINGS }
