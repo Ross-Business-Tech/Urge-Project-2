@@ -1,13 +1,14 @@
 import { useState } from 'react'
+import LoadedProject, { EmptyState } from './LoadedProject.jsx'
+import { ScenarioPanel } from './modules/m4-scenarios/ScenarioPanel.jsx'
+import DevelopmentRisk from './modules/m3d-development/DevelopmentRisk.jsx'
+import CompletedRisk from './modules/m3c-completed/CompletedRisk.jsx'
+import TransitionChecks from './modules/m3t-transitions/TransitionChecks.jsx'
+import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
 import './App.css'
 import ImportPreview from './ImportPreview.jsx'
 import { RescueBoundary } from './RescueBoundary.jsx'
 import FlagFormat from './FlagFormat.jsx'
-import ScenarioDemo from './modules/m4-scenarios/ScenarioDemo.jsx'
-import DevelopmentRiskDemo from './modules/m3d-development/DevelopmentRiskDemo.jsx'
-import CompletedRiskDemo from './modules/m3c-completed/CompletedRiskDemo.jsx'
-import TransitionChecksDemo from './modules/m3t-transitions/TransitionChecksDemo.jsx'
-import SponsorView from './modules/m5-sponsor/SponsorView.jsx'
 import { rescueStore } from './download.js'
 import {
   firmSchema,
@@ -177,31 +178,31 @@ const VIEWS = [
     id: 'scenarios',
     label: 'Scenarios',
     heading: 'Stress-test a project',
-    lede: 'What happens to the loan in the downside, base and upside cases? Pick a made-up sample project, or open a project in "Load workbook" to stress your own. Move the sliders to try your own numbers.',
+    lede: 'What happens to the loan in the downside, base and upside cases? Shows the projects in the workbook you loaded. Move the sliders to try your own numbers.',
   },
   {
     id: 'devrisk',
     label: 'Development risk',
     heading: 'What can go wrong while it is built',
-    lede: 'Budget, schedule, loans and team checks for projects being built or filling. Pick a made-up sample project, or open a project in "Load workbook" to check your own.',
+    lede: 'Budget, schedule, loans and team checks for projects being built or filling. Shows the projects in the workbook you loaded.',
   },
   {
     id: 'completedrisk',
     label: 'Completed risk',
     heading: 'Is it performing as promised?',
-    lede: 'Actual results against the underwriting, expenses, vacancy and loan maturity for properties that are open. Pick a made-up sample project, or open a project in "Load workbook" to check your own.',
+    lede: 'Actual results against the underwriting, expenses, vacancy and loan maturity for properties that are open. Shows the projects in the workbook you loaded.',
   },
   {
     id: 'transitions',
     label: 'Stage changes',
     heading: 'Will it make the next jump?',
-    lede: 'Every project is heading for a hand-off: construction to leasing, leasing to stable, stable to refinance. This shows where a project is, which hand-off is next, and what could break it. Pick a made-up sample project, or open a project in "Load workbook" to check your own.',
+    lede: 'Every project is heading for a hand-off: construction to leasing, leasing to stable, stable to refinance. This shows where a project is, which hand-off is next, and what could break it. Shows the projects in the workbook you loaded.',
   },
   {
     id: 'sponsor',
     label: 'Sponsor',
     heading: 'Can this sponsor deliver?',
-    lede: 'How healthy is the sponsor firm? A score from 0 to 100 built from its cash, earnings and debt, and what it means for the projects. If you have loaded a workbook, this shows that sponsor. Otherwise pick a made-up sample.',
+    lede: 'How healthy is the sponsor firm? A score from 0 to 100 built from its cash, earnings and debt, and what it means for the projects. Shows the sponsor in the workbook you loaded.',
   },
   {
     id: 'flags',
@@ -213,6 +214,8 @@ const VIEWS = [
 
 export default function App() {
   const [view, setView] = useState('import')
+  const [review, setReview] = useState(null) // what "Load workbook" has on screen; the other tabs show it
+  const goLoad = () => setView('import')
   const [attempt, setAttempt] = useState(0) // changing this starts the review screen over after a crash
   const current = VIEWS.find((v) => v.id === view)
 
@@ -245,14 +248,35 @@ export default function App() {
             setAttempt((n) => n + 1)
           }}
         >
-          <ImportPreview />
+          <ImportPreview onReview={setReview} />
         </RescueBoundary>
       </div>
-      {current.id === 'scenarios' && <ScenarioDemo />}
-      {current.id === 'devrisk' && <DevelopmentRiskDemo />}
-      {current.id === 'completedrisk' && <CompletedRiskDemo />}
-      {current.id === 'transitions' && <TransitionChecksDemo />}
-      {current.id === 'sponsor' && <SponsorView onChooseStage={() => setView('import')} />}
+      {current.id === 'scenarios' && (
+        <LoadedProject review={review} onGoLoad={goLoad}>
+          {(record, firm, settings) => <ScenarioPanel key={record.meta?.projectId} record={record} settings={settings} />}
+        </LoadedProject>
+      )}
+      {current.id === 'devrisk' && (
+        <LoadedProject review={review} onGoLoad={goLoad}>
+          {(record, firm, settings) => <DevelopmentRisk key={record.meta?.projectId} record={record} firm={firm} settings={settings} />}
+        </LoadedProject>
+      )}
+      {current.id === 'completedrisk' && (
+        <LoadedProject review={review} onGoLoad={goLoad} withT12>
+          {(record, firm, settings) => <CompletedRisk key={record.meta?.projectId} record={record} firm={firm} settings={settings} />}
+        </LoadedProject>
+      )}
+      {current.id === 'transitions' && (
+        <LoadedProject review={review} onGoLoad={goLoad}>
+          {(record, firm, settings) => <TransitionChecks key={record.meta?.projectId} record={record} firm={firm} settings={settings} />}
+        </LoadedProject>
+      )}
+      {current.id === 'sponsor' &&
+        (review ? (
+          <SponsorPanel firm={review.result.firm} projects={review.result.projects} settings={review.result.settings} sourceLabel={review.result.report?.fileName} onChooseStage={goLoad} />
+        ) : (
+          <EmptyState onGoLoad={goLoad} />
+        ))}
       {current.id === 'flags' && <FlagFormat />}
       {current.schema && (
         <>
