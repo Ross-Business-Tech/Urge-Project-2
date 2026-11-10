@@ -455,3 +455,65 @@
     transition: none !important;
   }
 }
+
+/* ---- Every expandable section shows a chevron button on its right, and turns it over when open ---- */
+
+.page details > summary {
+  position: relative;
+  padding-right: 52px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.page details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.page details > summary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  margin-top: -14px;
+  background: var(--accent-bg);
+  border-radius: 50%;
+  transition: background 0.12s;
+}
+
+.page details > summary::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 23px;
+  width: 7px;
+  height: 7px;
+  margin-top: -6px;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(45deg);
+  transition: transform 0.15s, border-color 0.12s;
+}
+
+.page details[open] > summary::after {
+  margin-top: -2px;
+  transform: rotate(-135deg);
+}
+
+.page details > summary:hover::before {
+  background: var(--accent);
+}
+
+.page details > summary:hover::after {
+  border-color: var(--on-accent);
+}
+
+/* Plain text links that open a section (no card around them) read as links. */
+.page details.sc-how > summary,
+.page details.dev-cutoffs > summary,
+.page details.assumptions > summary,
+.page details.how > summary {
+  font-weight: 600;
+  color: var(--accent);
+}
