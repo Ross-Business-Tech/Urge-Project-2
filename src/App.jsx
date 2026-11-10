@@ -11,6 +11,7 @@ import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
 import './App.css'
 import './shell.css'
 import { NAV_GROUPS, VIEWS } from './views.jsx'
+import ScreenSummary from './ScreenSummary.jsx'
 import ImportPreview from './ImportPreview.jsx'
 import { RescueBoundary } from './RescueBoundary.jsx'
 import FlagFormat from './FlagFormat.jsx'
@@ -249,8 +250,9 @@ export default function App() {
           </div>
           {current.id === 'keynumbers' && (
             <LoadedProject review={review} onGoLoad={goLoad}>
-              {(record, firm, settings) => (
+              {(record, firm, settings, result) => (
                 <>
+                  <ScreenSummary kind="keynumbers" record={record} firm={firm} settings={settings} result={result} />
                   <SettingsPanel settings={settings} onChange={review.changeSettings} />
                   <KeyRatios key={record.meta?.projectId} record={record} settings={settings} onOpenGroup={goLoad} />
                   <BenchmarkTable record={record} />
@@ -260,27 +262,52 @@ export default function App() {
           )}
           {current.id === 'datachecks' && (
             <LoadedProject review={review} onGoLoad={goLoad}>
-              {(record, firm, settings, result) => <IntegrityChecklist key={record.meta?.projectId} record={record} firm={firm} facts={result.facts} report={result.report} />}
+              {(record, firm, settings, result) => (
+                <>
+                  <ScreenSummary kind="datachecks" record={record} firm={firm} settings={settings} result={result} />
+                  <IntegrityChecklist key={record.meta?.projectId} record={record} firm={firm} facts={result.facts} report={result.report} />
+                </>
+              )}
             </LoadedProject>
           )}
           {current.id === 'scenarios' && (
             <LoadedProject review={review} onGoLoad={goLoad}>
-              {(record, firm, settings) => <ScenarioPanel key={record.meta?.projectId} record={record} settings={settings} onOpenGroup={goLoad} />}
+              {(record, firm, settings, result) => (
+                <>
+                  <ScreenSummary kind="scenarios" record={record} firm={firm} settings={settings} result={result} />
+                  <ScenarioPanel key={record.meta?.projectId} record={record} settings={settings} onOpenGroup={goLoad} />
+                </>
+              )}
             </LoadedProject>
           )}
           {current.id === 'devrisk' && (
             <LoadedProject review={review} onGoLoad={goLoad}>
-              {(record, firm, settings) => <DevelopmentRisk key={record.meta?.projectId} record={record} firm={firm} settings={settings} />}
+              {(record, firm, settings, result) => (
+                <>
+                  <ScreenSummary kind="devrisk" record={record} firm={firm} settings={settings} result={result} />
+                  <DevelopmentRisk key={record.meta?.projectId} record={record} firm={firm} settings={settings} />
+                </>
+              )}
             </LoadedProject>
           )}
           {current.id === 'completedrisk' && (
             <LoadedProject review={review} onGoLoad={goLoad} withT12>
-              {(record, firm, settings) => <CompletedRisk key={record.meta?.projectId} record={record} firm={firm} settings={settings} />}
+              {(record, firm, settings, result) => (
+                <>
+                  <ScreenSummary kind="completedrisk" record={record} firm={firm} settings={settings} result={result} />
+                  <CompletedRisk key={record.meta?.projectId} record={record} firm={firm} settings={settings} />
+                </>
+              )}
             </LoadedProject>
           )}
           {current.id === 'transitions' && (
             <LoadedProject review={review} onGoLoad={goLoad}>
-              {(record, firm, settings) => <TransitionChecks key={record.meta?.projectId} record={record} firm={firm} settings={settings} />}
+              {(record, firm, settings, result) => (
+                <>
+                  <ScreenSummary kind="transitions" record={record} firm={firm} settings={settings} result={result} />
+                  <TransitionChecks key={record.meta?.projectId} record={record} firm={firm} settings={settings} />
+                </>
+              )}
             </LoadedProject>
           )}
           {current.id === 'sponsor' &&

@@ -39,9 +39,18 @@ export default function LoadedProject({ review, onGoLoad, children, withStage = 
   const ready = projectReadiness(record).ready
   const edit = (fn) => review.editRecord(chosen.id, fn)
 
+  const asOf = record.data.stage.asOfDate
+  const needsT12 = withT12 && record.data.t12.rows.length === 0
+  const label = [chosen.name || chosen.tab, stageLabel ? `${stageLabel} stage` : 'no stage chosen', asOf ? `as of ${asOf}` : null].filter(Boolean).join(' \u00b7 ')
+
   return (
     <>
-      <div className="project-bar">
+      {/* One line saying which project is on screen. It opens by itself when a choice is still missing. */}
+      <details className="project-bar" key={`${chosen.id}-${ready}-${needsT12}`} open={!ready || needsT12}>
+        <summary>
+          <span className="project-label">{label}</span>
+          <span className="project-change">{ready ? 'Change project, stage or date' : 'Choose a stage and date'}</span>
+        </summary>
         <label className="field">
           <span>Project from {result.report.fileName}</span>
           <select value={chosen.id} onChange={(e) => setPick(e.target.value)}>
@@ -60,7 +69,7 @@ export default function LoadedProject({ review, onGoLoad, children, withStage = 
             <T12Tools record={record} onEdit={edit} />
           </div>
         )}
-      </div>
+      </details>
       {!ready && <p className="banner warn">Choose a stage and an &quot;as of&quot; date above to see the checks for this project.</p>}
       {children(record, result.firm, result.settings, result)}
     </>
