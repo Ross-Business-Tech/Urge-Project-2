@@ -4,6 +4,9 @@ import { ScenarioPanel } from './modules/m4-scenarios/ScenarioPanel.jsx'
 import DevelopmentRisk from './modules/m3d-development/DevelopmentRisk.jsx'
 import CompletedRisk from './modules/m3c-completed/CompletedRisk.jsx'
 import TransitionChecks from './modules/m3t-transitions/TransitionChecks.jsx'
+import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
+import BenchmarkTable from './modules/m2-benchmarks/BenchmarkTable.jsx'
+import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
 import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
 import './App.css'
 import ImportPreview from './ImportPreview.jsx'
@@ -175,6 +178,18 @@ const VIEWS = [
     lede: 'The record structure, grouped the way the applicant workbook groups it. Tap a group to see its fields. Blue "new" tags mark things the workbook does not have.',
   },
   {
+    id: 'keynumbers',
+    label: 'Key numbers',
+    heading: 'The key numbers',
+    lede: 'The main ratios for each project, and how they compare with typical ranges. Shows the projects in the workbook you loaded.',
+  },
+  {
+    id: 'datachecks',
+    label: 'Data checks',
+    heading: 'Can the workbook be trusted?',
+    lede: 'Checks that the numbers in the workbook agree with each other. Shows the projects in the workbook you loaded.',
+  },
+  {
     id: 'scenarios',
     label: 'Scenarios',
     heading: 'Stress-test a project',
@@ -251,9 +266,25 @@ export default function App() {
           <ImportPreview onReview={setReview} />
         </RescueBoundary>
       </div>
+      {current.id === 'keynumbers' && (
+        <LoadedProject review={review} onGoLoad={goLoad}>
+          {(record, firm, settings) => (
+            <>
+              <SettingsPanel settings={settings} onChange={review.changeSettings} />
+              <KeyRatios key={record.meta?.projectId} record={record} settings={settings} onOpenGroup={goLoad} />
+              <BenchmarkTable record={record} />
+            </>
+          )}
+        </LoadedProject>
+      )}
+      {current.id === 'datachecks' && (
+        <LoadedProject review={review} onGoLoad={goLoad}>
+          {(record, firm, settings, result) => <IntegrityChecklist key={record.meta?.projectId} record={record} firm={firm} facts={result.facts} report={result.report} />}
+        </LoadedProject>
+      )}
       {current.id === 'scenarios' && (
         <LoadedProject review={review} onGoLoad={goLoad}>
-          {(record, firm, settings) => <ScenarioPanel key={record.meta?.projectId} record={record} settings={settings} />}
+          {(record, firm, settings) => <ScenarioPanel key={record.meta?.projectId} record={record} settings={settings} onOpenGroup={goLoad} />}
         </LoadedProject>
       )}
       {current.id === 'devrisk' && (

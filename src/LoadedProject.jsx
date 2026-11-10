@@ -21,7 +21,7 @@ export function EmptyState({ onGoLoad }) {
   )
 }
 
-// Picks one of the loaded projects (projects with entries only) and draws `children(record, firm, settings)` for it.
+// Picks one of the loaded projects (projects with entries only) and draws `children(record, firm, settings, result)` for it.
 // withStage: show the stage / date choices above the result, so they can be set without leaving this tab.
 // withT12: show the T-12 upload above the result.
 export default function LoadedProject({ review, onGoLoad, children, withStage = true, withT12 = false }) {
@@ -60,7 +60,7 @@ export default function LoadedProject({ review, onGoLoad, children, withStage = 
         </div>
       )}
       {!ready && <p className="banner warn">Choose a stage and an &quot;as of&quot; date above to see the checks for this project.</p>}
-      {children(record, result.firm, result.settings)}
+      {children(record, result.firm, result.settings, result)}
     </>
   )
 }
