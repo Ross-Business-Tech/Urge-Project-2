@@ -15,15 +15,7 @@ import {
   DEFAULT_SETTINGS,
 } from './modules/shared/index.js'
 import { GroupEditor } from './RecordEditor.jsx'
-import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
 import { T12Tools } from './T12Tools.jsx'
-import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
-import DevelopmentRisk from './modules/m3d-development/DevelopmentRisk.jsx'
-import CompletedRisk from './modules/m3c-completed/CompletedRisk.jsx'
-import TransitionChecks from './modules/m3t-transitions/TransitionChecks.jsx'
-import BenchmarkTable from './modules/m2-benchmarks/BenchmarkTable.jsx'
-import { ScenarioPanel } from './modules/m4-scenarios/ScenarioPanel.jsx'
-import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
 import { downloadReview, rescueStore } from './download.js'
 
 // Today's date on this device, as YYYY-MM-DD.
@@ -35,14 +27,6 @@ function todayLocal() {
 
 function plural(n, word) {
   return `${n} ${word}${n === 1 ? '' : 's'}`
-}
-
-// Jump to a group's form: open it and every card around it, then scroll to it.
-function openGroup(recordKey, groupId) {
-  const el = document.querySelector(`[data-group="${CSS.escape(`${recordKey}:${groupId}`)}"]`)
-  if (!el) return
-  for (let node = el; node; node = node.parentElement?.closest('details')) node.open = true
-  el.scrollIntoView({ block: 'center', behavior: 'smooth' })
 }
 
 // Groups that have no tab to read from in the applicant workbook.
@@ -121,7 +105,7 @@ export function StageControls({ project, record, onChange }) {
 
 const PROJECT_GROUPS = projectSchema.filter((g) => g.id !== 'stage')
 
-const ProjectCard = memo(function ProjectCard({ project, record, settings, onChange, onEdit, firm, facts, report }) {
+const ProjectCard = memo(function ProjectCard({ project, record, onChange, onEdit }) {
   const [open, setOpen] = useState(false)
   const visibility = project.state === 'veryHidden' ? 'very hidden tab' : project.state === 'hidden' ? 'hidden tab' : null
   const { ready } = projectReadiness(record)
@@ -144,13 +128,6 @@ const ProjectCard = memo(function ProjectCard({ project, record, settings, onCha
             <p className="note">{record.data.t12.rows.length > 0 ? `${record.data.t12.rows.length} month${record.data.t12.rows.length === 1 ? '' : 's'} loaded.` : 'No T-12 loaded yet. It is optional, and it is what lets the completed-property checks run.'}</p>
             <T12Tools record={record} onEdit={(fn) => onEdit(project.id, fn)} />
           </div>
-          <KeyRatios record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
-          <IntegrityChecklist record={record} firm={firm} facts={facts} report={report} />
-          <DevelopmentRisk record={record} firm={firm} settings={settings} />
-          <CompletedRisk record={record} firm={firm} settings={settings} />
-          <TransitionChecks record={record} firm={firm} settings={settings} />
-          <BenchmarkTable record={record} />
-          <ScenarioPanel record={record} settings={settings} onOpenGroup={(groupId) => openGroup(project.id, groupId)} />
           <p className="section-label">Values (tap a group to view or edit)</p>
           <ul className="groups">
             {PROJECT_GROUPS.map((g) => (
@@ -163,7 +140,7 @@ const ProjectCard = memo(function ProjectCard({ project, record, settings, onCha
   )
 })
 
-function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, onEdit, onSettings }) {
+function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, onEdit }) {
   const { report } = result
   const readiness = reviewReadiness(result.projects)
   const recordFor = (id) => result.projects.find((r) => r.meta?.projectId === id)
@@ -206,8 +183,7 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
       )}
 
       <h2>The firm</h2>
-      <SponsorPanel firm={result.firm} projects={result.projects} settings={result.settings} />
-      <p className="note">Tap a group to see and edit its values. A small tag under each value says where it came from.</p>
+      <p className="note">Tap a group to see and edit its values. A small tag under each value says where it came from. The checks and analysis are on the other tabs.</p>
       <ul className="groups">
         {firmSchema.map((g) => (
           <GroupRow
@@ -222,7 +198,6 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
       </ul>
 
       <h2>The projects</h2>
-      <SettingsPanel settings={result.settings} onChange={onSettings} />
       {withData.length === 0 && <p className="note">No project tab has any entries.</p>}
       {withData.length > 0 && (
         <p className={readiness.ready ? 'ok' : 'banner warn'} role="status">
@@ -233,7 +208,7 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
       )}
       {withData.map((p) => {
         const record = recordFor(p.id)
-        return record ? <ProjectCard key={p.id} project={p} record={record} settings={result.settings} onChange={onProjectChange} onEdit={onEdit} firm={result.firm} facts={result.facts} report={report} /> : null
+        return record ? <ProjectCard key={p.id} project={p} record={record} onChange={onProjectChange} onEdit={onEdit} /> : null
       })}
       {emptyReadable.length > 0 && (
         <p className="note">
@@ -334,8 +309,8 @@ export default function ImportPreview({ onReview }) {
   const done = state.status === 'done'
   const result = done ? state.result : null
   useEffect(() => {
-    onReview?.(result ? { result, editRecord, changeProject } : null)
-  }, [onReview, result, editRecord, changeProject])
+    onReview?.(result ? { result, editRecord, changeProject, changeSettings } : null)
+  }, [onReview, result, editRecord, changeProject, changeSettings])
 
   function save() {
     downloadReview(state.result)
@@ -343,7 +318,7 @@ export default function ImportPreview({ onReview }) {
   }
 
   if (state.status === 'done') {
-    return <Report result={state.result} saved={state.saved} reopenedAt={state.reopenedAt} onSave={save} onReset={reset} onProjectChange={changeProject} onEdit={editRecord} onSettings={changeSettings} />
+    return <Report result={state.result} saved={state.saved} reopenedAt={state.reopenedAt} onSave={save} onReset={reset} onProjectChange={changeProject} onEdit={editRecord} />
   }
 
   return (
