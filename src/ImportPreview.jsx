@@ -17,6 +17,7 @@ import {
 import { GroupEditor } from './RecordEditor.jsx'
 import { T12Tools } from './T12Tools.jsx'
 import { downloadReview, rescueStore } from './download.js'
+import { SAMPLES, buildSampleReview } from './sampleReview.js'
 
 // Today's date on this device, as YYYY-MM-DD.
 function todayLocal() {
@@ -140,7 +141,7 @@ const ProjectCard = memo(function ProjectCard({ project, record, onChange, onEdi
   )
 })
 
-function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, onEdit }) {
+function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, onEdit, onContinue }) {
   const { report } = result
   const readiness = reviewReadiness(result.projects)
   const recordFor = (id) => result.projects.find((r) => r.meta?.projectId === id)
@@ -152,22 +153,34 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
 
   return (
     <>
-      <section className="card plain">
-        <div className="body">
-          <p className="file-name">{report.fileName}</p>
-          <ul className="facts">
-            <li>
-              Workbook version: <strong>{w.version ?? 'not found'}</strong>{' '}
-              {w.version && <span className={`chip ${w.versionKnown ? '' : 'warn'}`}>{w.versionKnown ? 'recognized' : 'not recognized'}</span>}
-            </li>
-            <li>
-              {plural(w.sheetCount, 'tab')} ({w.visible} visible, {w.hidden} hidden, {w.veryHidden} very hidden)
-            </li>
-            <li>{plural(withData.length, 'project')} with data</li>
-          </ul>
-          {reopenedAt && <p className="note">Reopened from a review saved on {new Date(reopenedAt).toLocaleDateString()}.</p>}
-          <p className="note">Read on this device only. Nothing was uploaded.</p>
+      <section className="summary-card">
+        <div className="summary-top">
+          <div>
+            <p className="eyebrow">Workbook loaded</p>
+            <p className="file-name">{report.fileName}</p>
+          </div>
+          {onContinue && (
+            <button type="button" className="button primary" onClick={onContinue}>
+              See the key numbers
+            </button>
+          )}
         </div>
+        <ul className="stats">
+          <li>
+            <span className="stat-value">{withData.length}</span>
+            <span className="stat-label">{withData.length === 1 ? 'project' : 'projects'} with data</span>
+          </li>
+          <li>
+            <span className="stat-value">{w.sheetCount}</span>
+            <span className="stat-label">tabs ({w.hidden + w.veryHidden} hidden)</span>
+          </li>
+          <li>
+            <span className="stat-value small">{w.version ?? 'not found'}</span>
+            <span className="stat-label">{w.version ? (w.versionKnown ? 'workbook version, recognized' : 'workbook version, not recognized') : 'workbook version'}</span>
+          </li>
+        </ul>
+        {reopenedAt && <p className="note">Reopened from a review saved on {new Date(reopenedAt).toLocaleDateString()}.</p>}
+        <p className="note">Read on this device only. Nothing was uploaded.</p>
       </section>
 
       <h2>Things to look at</h2>
@@ -234,7 +247,7 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
   )
 }
 
-export default function ImportPreview({ onReview }) {
+export default function ImportPreview({ onReview, onContinue }) {
   const [state, setState] = useState({ status: 'idle' })
   const [dragging, setDragging] = useState(false)
   const latest = useRef(0) // a ticket per file chosen, so a slow file cannot overwrite a newer choice
@@ -284,6 +297,19 @@ export default function ImportPreview({ onReview }) {
     }
   }
 
+  async function loadSample(id) {
+    const ticket = ++latest.current
+    setState({ status: 'reading', name: 'the sample' })
+    try {
+      const result = await buildSampleReview(id)
+      if (ticket !== latest.current) return
+      setState({ status: 'done', result, saved: true })
+    } catch {
+      if (ticket !== latest.current) return
+      setState({ status: 'error', message: 'The sample could not be opened. Please try again, or load a workbook of your own.' })
+    }
+  }
+
   function reset() {
     if (unsaved && !window.confirm('This review has not been saved. Leave without saving?')) return
     latest.current++ // cancels any file still being read
@@ -318,7 +344,7 @@ export default function ImportPreview({ onReview }) {
   }
 
   if (state.status === 'done') {
-    return <Report result={state.result} saved={state.saved} reopenedAt={state.reopenedAt} onSave={save} onReset={reset} onProjectChange={changeProject} onEdit={editRecord} />
+    return <Report result={state.result} saved={state.saved} reopenedAt={state.reopenedAt} onSave={save} onReset={reset} onProjectChange={changeProject} onEdit={editRecord} onContinue={onContinue} />
   }
 
   return (
@@ -344,16 +370,33 @@ export default function ImportPreview({ onReview }) {
             e.target.value = ''
           }}
         />
+        <span className="drop-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 16V4M7 9l5-5 5 5M5 20h14" />
+          </svg>
+        </span>
         <span className="drop-title">{state.status === 'reading' ? `Reading ${state.name}…` : 'Drop the applicant workbook here'}</span>
-        <span className="drop-sub">or a saved review. Tap to choose a file (.xlsx, .xlsm or .json)</span>
-        <span className="drop-sub">Several projects? Put them all in the one workbook, one tab each. Past projects help the sponsor&apos;s track record.</span>
+        <span className="drop-sub">or tap to choose a file (.xlsx, .xlsm, or a saved review .json)</span>
+        <span className="drop-sub faint">Several projects? Put them in one workbook, one tab each. Past projects help the sponsor&apos;s track record.</span>
       </label>
       {state.status === 'error' && (
         <p className="problem" role="alert">
           {state.message}
         </p>
       )}
-      <p className="note">Files are read on this device only. Nothing is uploaded, and macros are never run.</p>
+      <div className="samples">
+        <p className="section-label">No workbook handy? Try a sample</p>
+        <div className="sample-grid">
+          {SAMPLES.map((sample) => (
+            <button type="button" key={sample.id} className="sample" disabled={state.status === 'reading'} onClick={() => loadSample(sample.id)}>
+              <span className="sample-title">{sample.label}</span>
+              <span className="sample-blurb">{sample.blurb}</span>
+            </button>
+          ))}
+        </div>
+        <p className="note">Samples use made-up data.</p>
+      </div>
+      <p className="privacy">Files are read on this device only. Nothing is uploaded, and macros are never run.</p>
     </>
   )
 }

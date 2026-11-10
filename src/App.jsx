@@ -9,13 +9,14 @@ import BenchmarkTable from './modules/m2-benchmarks/BenchmarkTable.jsx'
 import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
 import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
 import './App.css'
+import './shell.css'
+import { NAV_GROUPS, VIEWS } from './views.jsx'
+import ScreenSummary from './ScreenSummary.jsx'
 import ImportPreview from './ImportPreview.jsx'
 import { RescueBoundary } from './RescueBoundary.jsx'
 import FlagFormat from './FlagFormat.jsx'
 import { rescueStore } from './download.js'
 import {
-  firmSchema,
-  projectSchema,
   describeGroup,
   STAGES,
   SOURCE_TYPES,
@@ -156,167 +157,176 @@ function GroupCard({ group }) {
   )
 }
 
-const VIEWS = [
-  {
-    id: 'import',
-    label: 'Load workbook',
-    heading: 'Load an applicant workbook',
-    lede: "Drop the applicant's spreadsheet here to see what we can read from it. One workbook can hold several projects: each project tab is read as its own project. Nothing is sent anywhere. You can save the review as a file and reopen it later.",
-  },
-  {
-    id: 'firm',
-    label: 'Firm record',
-    schema: firmSchema,
-    heading: 'What we store about a firm',
-    lede: 'The record structure, grouped the way the applicant workbook groups it. Tap a group to see its fields. Blue "new" tags mark things the workbook does not have.',
-  },
-  {
-    id: 'project',
-    label: 'Project record',
-    schema: projectSchema,
-    heading: 'What we store about a project',
-    lede: 'The record structure, grouped the way the applicant workbook groups it. Tap a group to see its fields. Blue "new" tags mark things the workbook does not have.',
-  },
-  {
-    id: 'keynumbers',
-    label: 'Key numbers',
-    heading: 'The key numbers',
-    lede: 'The main ratios for each project, and how they compare with typical ranges. Shows the projects in the workbook you loaded.',
-  },
-  {
-    id: 'datachecks',
-    label: 'Data checks',
-    heading: 'Can the workbook be trusted?',
-    lede: 'Checks that the numbers in the workbook agree with each other. Shows the projects in the workbook you loaded.',
-  },
-  {
-    id: 'scenarios',
-    label: 'Scenarios',
-    heading: 'Stress-test a project',
-    lede: 'What happens to the loan in the downside, base and upside cases? Shows the projects in the workbook you loaded. Move the sliders to try your own numbers.',
-  },
-  {
-    id: 'devrisk',
-    label: 'Development risk',
-    heading: 'What can go wrong while it is built',
-    lede: 'Budget, schedule, loans and team checks for projects being built or filling. Shows the projects in the workbook you loaded.',
-  },
-  {
-    id: 'completedrisk',
-    label: 'Completed risk',
-    heading: 'Is it performing as promised?',
-    lede: 'Actual results against the underwriting, expenses, vacancy and loan maturity for properties that are open. Shows the projects in the workbook you loaded.',
-  },
-  {
-    id: 'transitions',
-    label: 'Stage changes',
-    heading: 'Will it make the next jump?',
-    lede: 'Every project is heading for a hand-off: construction to leasing, leasing to stable, stable to refinance. This shows where a project is, which hand-off is next, and what could break it. Shows the projects in the workbook you loaded.',
-  },
-  {
-    id: 'sponsor',
-    label: 'Sponsor',
-    heading: 'Can this sponsor deliver?',
-    lede: 'How healthy is the sponsor firm? A score from 0 to 100 built from its cash, earnings and debt, and what it means for the projects. Shows the sponsor in the workbook you loaded.',
-  },
-  {
-    id: 'flags',
-    label: 'Flag format',
-    heading: 'What a flag looks like',
-    lede: 'Every module reports what it finds in the same shape, so the findings can be combined and ranked.',
-  },
-]
+const APP_NAME = 'Deal Review'
+
+function NavButton({ view, active, hasReview, onPick }) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      className={`nav-item${view.needsReview && !hasReview ? ' idle' : ''}`}
+      aria-selected={active}
+      aria-controls="main-panel"
+      onClick={() => onPick(view.id)}
+    >
+      <span className="nav-icon" aria-hidden="true">
+        {view.icon}
+      </span>
+      <span className="nav-label">{view.label}</span>
+    </button>
+  )
+}
 
 export default function App() {
   const [view, setView] = useState('import')
   const [review, setReview] = useState(null) // what "Load workbook" has on screen; the other tabs show it
-  const goLoad = () => setView('import')
   const [attempt, setAttempt] = useState(0) // changing this starts the review screen over after a crash
   const current = VIEWS.find((v) => v.id === view)
+  const hasReview = Boolean(review)
+  const goLoad = () => goTo('import')
+  function goTo(id) {
+    setView(id)
+    window.scrollTo({ top: 0 })
+  }
+
+  const heading = current.id === 'import' && !hasReview ? 'Review a loan application in minutes' : current.heading
+  const lede =
+    current.id === 'import' && !hasReview
+      ? 'Load the applicant\u2019s spreadsheet and get the key numbers, data checks, stress tests and risk flags on one page. Everything stays on your device.'
+      : current.lede
+  const fileName = review?.result?.report?.fileName
 
   return (
-    <main className="page">
-      <h1>{current.heading}</h1>
-      <p className="lede">{current.lede}</p>
+    <div className="shell">
+      <header className="topbar">
+        <button type="button" className="brand" onClick={goLoad} aria-label={`${APP_NAME}: back to the start`}>
+          <span className="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 20V10l8-6 8 6v10M9 20v-6h6v6" />
+            </svg>
+          </span>
+          <span className="brand-name">{APP_NAME}</span>
+        </button>
+        {fileName && (
+          <span className="file-pill" title={fileName}>
+            <span className="dot" aria-hidden="true" />
+            <span className="file-pill-name">{fileName}</span>
+          </span>
+        )}
+      </header>
 
-      <div className="tabs" role="tablist" aria-label="What to show">
-        {VIEWS.map((v) => (
-          <button
-            key={v.id}
-            type="button"
-            role="tab"
-            className="tab"
-            aria-selected={view === v.id}
-            onClick={() => setView(v.id)}
-          >
-            {v.label}
-          </button>
-        ))}
-      </div>
+      <div className="layout">
+        <nav className="nav" aria-label="Sections">
+          <div className="nav-groups" role="tablist" aria-label="What to show">
+            {NAV_GROUPS.map((g) => (
+              <div className="nav-group" key={g.title}>
+                <p className="nav-title">{g.title}</p>
+                <div className="nav-items">
+                  {g.ids.map((id) => {
+                    const v = VIEWS.find((x) => x.id === id)
+                    return <NavButton key={id} view={v} active={view === id} hasReview={hasReview} onPick={goTo} />
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </nav>
 
-      {/* Kept on the page (just hidden) so a loaded review is not lost when you look at another tab. */}
-      <div hidden={current.id !== 'import'}>
-        <RescueBoundary
-          key={attempt}
-          onReset={() => {
-            rescueStore.current = null
-            setAttempt((n) => n + 1)
-          }}
-        >
-          <ImportPreview onReview={setReview} />
-        </RescueBoundary>
-      </div>
-      {current.id === 'keynumbers' && (
-        <LoadedProject review={review} onGoLoad={goLoad}>
-          {(record, firm, settings) => (
+        <main className="page" id="main-panel" role="tabpanel">
+          <h1>{heading}</h1>
+          <p className="lede">{lede}</p>
+
+          {/* Kept on the page (just hidden) so a loaded review is not lost when you look at another tab. */}
+          <div hidden={current.id !== 'import'}>
+            <RescueBoundary
+              key={attempt}
+              onReset={() => {
+                rescueStore.current = null
+                setAttempt((n) => n + 1)
+              }}
+            >
+              <ImportPreview onReview={setReview} onContinue={() => goTo('keynumbers')} />
+            </RescueBoundary>
+          </div>
+          {current.id === 'keynumbers' && (
+            <LoadedProject review={review} onGoLoad={goLoad}>
+              {(record, firm, settings, result) => (
+                <>
+                  <ScreenSummary kind="keynumbers" record={record} firm={firm} settings={settings} result={result} />
+                  <SettingsPanel settings={settings} onChange={review.changeSettings} />
+                  <KeyRatios key={record.meta?.projectId} record={record} settings={settings} onOpenGroup={goLoad} />
+                  <BenchmarkTable record={record} />
+                </>
+              )}
+            </LoadedProject>
+          )}
+          {current.id === 'datachecks' && (
+            <LoadedProject review={review} onGoLoad={goLoad}>
+              {(record, firm, settings, result) => (
+                <>
+                  <ScreenSummary kind="datachecks" record={record} firm={firm} settings={settings} result={result} />
+                  <IntegrityChecklist key={record.meta?.projectId} record={record} firm={firm} facts={result.facts} report={result.report} />
+                </>
+              )}
+            </LoadedProject>
+          )}
+          {current.id === 'scenarios' && (
+            <LoadedProject review={review} onGoLoad={goLoad}>
+              {(record, firm, settings, result) => (
+                <>
+                  <ScreenSummary kind="scenarios" record={record} firm={firm} settings={settings} result={result} />
+                  <ScenarioPanel key={record.meta?.projectId} record={record} settings={settings} onOpenGroup={goLoad} />
+                </>
+              )}
+            </LoadedProject>
+          )}
+          {current.id === 'devrisk' && (
+            <LoadedProject review={review} onGoLoad={goLoad}>
+              {(record, firm, settings, result) => (
+                <>
+                  <ScreenSummary kind="devrisk" record={record} firm={firm} settings={settings} result={result} />
+                  <DevelopmentRisk key={record.meta?.projectId} record={record} firm={firm} settings={settings} />
+                </>
+              )}
+            </LoadedProject>
+          )}
+          {current.id === 'completedrisk' && (
+            <LoadedProject review={review} onGoLoad={goLoad} withT12>
+              {(record, firm, settings, result) => (
+                <>
+                  <ScreenSummary kind="completedrisk" record={record} firm={firm} settings={settings} result={result} />
+                  <CompletedRisk key={record.meta?.projectId} record={record} firm={firm} settings={settings} />
+                </>
+              )}
+            </LoadedProject>
+          )}
+          {current.id === 'transitions' && (
+            <LoadedProject review={review} onGoLoad={goLoad}>
+              {(record, firm, settings, result) => (
+                <>
+                  <ScreenSummary kind="transitions" record={record} firm={firm} settings={settings} result={result} />
+                  <TransitionChecks key={record.meta?.projectId} record={record} firm={firm} settings={settings} />
+                </>
+              )}
+            </LoadedProject>
+          )}
+          {current.id === 'sponsor' &&
+            (review ? (
+              <SponsorPanel firm={review.result.firm} projects={review.result.projects} settings={review.result.settings} sourceLabel={review.result.report?.fileName} onChooseStage={goLoad} />
+            ) : (
+              <EmptyState onGoLoad={goLoad} />
+            ))}
+          {current.id === 'flags' && <FlagFormat />}
+          {current.schema && (
             <>
-              <SettingsPanel settings={settings} onChange={review.changeSettings} />
-              <KeyRatios key={record.meta?.projectId} record={record} settings={settings} onOpenGroup={goLoad} />
-              <BenchmarkTable record={record} />
+              <p className="summary-line">{plural(current.schema.length, 'group')}</p>
+              {current.schema.map((g) => (
+                <GroupCard key={g.id} group={g} />
+              ))}
             </>
           )}
-        </LoadedProject>
-      )}
-      {current.id === 'datachecks' && (
-        <LoadedProject review={review} onGoLoad={goLoad}>
-          {(record, firm, settings, result) => <IntegrityChecklist key={record.meta?.projectId} record={record} firm={firm} facts={result.facts} report={result.report} />}
-        </LoadedProject>
-      )}
-      {current.id === 'scenarios' && (
-        <LoadedProject review={review} onGoLoad={goLoad}>
-          {(record, firm, settings) => <ScenarioPanel key={record.meta?.projectId} record={record} settings={settings} onOpenGroup={goLoad} />}
-        </LoadedProject>
-      )}
-      {current.id === 'devrisk' && (
-        <LoadedProject review={review} onGoLoad={goLoad}>
-          {(record, firm, settings) => <DevelopmentRisk key={record.meta?.projectId} record={record} firm={firm} settings={settings} />}
-        </LoadedProject>
-      )}
-      {current.id === 'completedrisk' && (
-        <LoadedProject review={review} onGoLoad={goLoad} withT12>
-          {(record, firm, settings) => <CompletedRisk key={record.meta?.projectId} record={record} firm={firm} settings={settings} />}
-        </LoadedProject>
-      )}
-      {current.id === 'transitions' && (
-        <LoadedProject review={review} onGoLoad={goLoad}>
-          {(record, firm, settings) => <TransitionChecks key={record.meta?.projectId} record={record} firm={firm} settings={settings} />}
-        </LoadedProject>
-      )}
-      {current.id === 'sponsor' &&
-        (review ? (
-          <SponsorPanel firm={review.result.firm} projects={review.result.projects} settings={review.result.settings} sourceLabel={review.result.report?.fileName} onChooseStage={goLoad} />
-        ) : (
-          <EmptyState onGoLoad={goLoad} />
-        ))}
-      {current.id === 'flags' && <FlagFormat />}
-      {current.schema && (
-        <>
-          <p className="summary-line">{plural(current.schema.length, 'group')}</p>
-          {current.schema.map((g) => (
-            <GroupCard key={g.id} group={g} />
-          ))}
-        </>
-      )}
-    </main>
+        </main>
+      </div>
+    </div>
   )
 }
