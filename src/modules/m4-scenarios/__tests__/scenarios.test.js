@@ -492,3 +492,46 @@ test('no reserves means no months, and nothing to divide by means "not available
   const g = runScenarios(free).cases.base.oneTime
   assert.ok(Number.isFinite(g.delayMonthsCovered))
 })
+
+// ---------------------------------------------------------------- a typed payment that flatters the stress test
+test('a typed payment far below the loan’s own terms is flagged, with the stress results as typed and on the loan’s own terms', () => {
+  const p = scenario('s13-typed-payment-too-low') // typed 100,000 a year on a 3,000,000 loan whose terms need about 215,838
+  const f = run(p, {}).flags.find((x) => x.id === 'M4-typed-payment-flatters')
+  assert.ok(f, 'the flag is raised')
+  assert.equal(f.severity, 'medium', 'still above the lender’s minimum on the loan’s own terms')
+  assert.match(f.evidence, /\$100,000 against \$215,838/)
+  assert.match(f.evidence, /As typed: base case DSCR 5\.86×, downside 5\.09×/)
+  assert.match(f.evidence, /On the loan's own terms: base 2\.71×, downside 2\.02×/)
+  assert.match(f.follow_up, /Which yearly payment is right/)
+  assert.ok(f.cell_refs.length >= 3)
+  assert.ok(!f.cell_refs.some((c) => /\.(lines|rows)\./.test(c)), 'cells in words, not paths')
+  // The numbers the screen already shows are unchanged: the typed base case is still what M4 reports as the base case.
+  assert.equal(runScenarios(p).cases.base.dscr, 5.86)
+})
+
+test('it is a high flag when the loan’s own terms would miss the lender’s minimum', () => {
+  const p = staged('development', healthyProject())
+  p.data.sources.rows[0] = { ...p.data.sources.rows[0], amount: 5550000, interestRate: 0.09, paymentOverride: 100000 } // own terms: DSCR 1.09
+  p.data.sources.rows = [p.data.sources.rows[0]]
+  const f = run(p, {}).flags.find((x) => x.id === 'M4-typed-payment-flatters')
+  assert.equal(f.severity, 'high')
+  assert.match(f.evidence, /misses the lender's minimum of 1\.20×/)
+})
+
+test('a typed payment only a little low, a typed payment that is not low, and no typed payment raise nothing here', () => {
+  const flagged = (edit) => {
+    const p = staged('development', healthyProject())
+    edit(p.data.sources.rows[0])
+    return run(p, {}).flags.some((x) => x.id === 'M4-typed-payment-flatters')
+  }
+  assert.equal(flagged((r) => (r.paymentOverride = null)), false, 'no typed payment')
+  assert.equal(flagged((r) => (r.paymentOverride = 215838 * 0.95)), false, '5% low is M1’s business, not a stress-test warning')
+  assert.equal(flagged((r) => (r.paymentOverride = 300000)), false, 'higher than the loan’s terms')
+  assert.equal(flagged((r) => (r.paymentOverride = 215838 * 0.85)), true, '15% low')
+})
+
+test('the flag is skipped, not guessed, when the loan’s own terms cannot be worked out', () => {
+  const p = staged('development', healthyProject())
+  p.data.sources.rows[0] = { ...p.data.sources.rows[0], paymentOverride: 100000, interestRate: null }
+  assert.equal(run(p, {}).flags.some((x) => x.id === 'M4-typed-payment-flatters'), false)
+})

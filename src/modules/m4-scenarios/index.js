@@ -6,7 +6,7 @@
 //   context.scenarios  optional lever settings, { downside: { rentChange: -0.15 }, ... }; the starting values are used otherwise
 // M4 never calls another module. Its flags come from the downside and base cases only; the upside is shown on screen.
 
-import { createFlagMaker, citeCells, flagFromUnavailable, sanitizeSettings, totalDevelopmentCost, fmt, guardModule } from '../shared/index.js'
+import { createFlagMaker, citeCells, flagFromUnavailable, sanitizeSettings, totalDevelopmentCost, monthlyPayment, fmt, guardModule, RESERVE_TESTS_NOTE } from '../shared/index.js'
 import { runScenarios } from './engine.js'
 
 export { runScenarios, applyLevers, evaluateCase } from './engine.js'
@@ -48,6 +48,22 @@ function inputPaths(record, extra = [], loansOnly = false) {
 }
 
 const budgetPaths = (record, keys) => keys.filter((k) => isNum(record.data.budget.lines[k]?.amount)).map((k) => `budget.lines.${k}.amount`)
+
+// A typed yearly payment replaces the one the loan's amount, rate and term produce. When it is far lower, every coverage figure
+// built on it looks better than the loan allows, including the downside case. "Far lower" here is more than 10% below, a gap
+// that matters to a stress test (M1 flags any typed payment more than 1% low, as an integrity matter).
+const TYPED_PAYMENT_GAP = 0.9
+function typedPaymentsBelowTerms(project) {
+  const out = []
+  project.data.sources.rows.forEach((r, i) => {
+    if (!isNum(r.paymentOverride) || r.paymentOverride <= 0) return
+    const monthly = monthlyPayment(r.amount, r.interestRate, r.termMonths)
+    if (monthly === null) return
+    const own = monthly * 12
+    if (r.paymentOverride < own * TYPED_PAYMENT_GAP) out.push({ i, name: r.name || `source ${i + 1}`, typed: r.paymentOverride, own })
+  })
+  return out
+}
 
 export const runScenarioChecks = (project, context = {}) => {
   const settings = sanitizeSettings(context?.settings)
@@ -137,11 +153,39 @@ export const runScenarioChecks = (project, context = {}) => {
         id: 'M4-downside-funding-gap',
         severity: large ? 'high' : 'medium',
         title: 'In the downside case, the budget and reserves run out before the project is paid for.',
-        evidence: `Funding gap ${fmt.usd(gap.gap)}: ${parts.join('; ')}. Stress: ${describeCase(defs, levers.downside)}.`,
+        evidence: `Funding gap ${fmt.usd(gap.gap)}: ${parts.join('; ')}. Stress: ${describeCase(defs, levers.downside)}. ${RESERVE_TESTS_NOTE}`,
         cell_refs: citeCells(project, budgetPaths(project, ['constructionContingency', 'ownersContingency', 'rentUpReserve', 'operatingReserve', 'land'])),
         follow_up: `In the downside case (${describeCase(defs, levers.downside)}), where would the extra ${fmt.usd(gap.gap)} come from, and who is committed to provide it?`,
       }),
     )
+  }
+
+  // The stress test is only as good as the payment it starts from. If a typed payment is far below what the loan's own terms
+  // produce, run the base and downside cases again on those terms and show both, so the reader does not take a comfortable
+  // number at face value. M1 reports the typed payment itself; this is about what it does to the stress results.
+  const low = typedPaymentsBelowTerms(project)
+  if (low.length) {
+    const ownProject = structuredClone(project)
+    for (const l of low) ownProject.data.sources.rows[l.i].paymentOverride = null
+    const own = runScenarios(ownProject, { settings, levers: context?.scenarios, basis: context?.basis })
+    if (own.ok && own.cases.base.ok && own.cases.downside.ok) {
+      const x = (v) => (isNum(v) ? fmt.times(v) : 'not available')
+      const ob = own.cases.base
+      const od = own.cases.downside
+      const first = low[0]
+      const more = low.length > 1 ? ` (and ${low.length - 1} more typed payment${low.length === 2 ? '' : 's'} below the loan's terms)` : ''
+      const failsOwn = (isNum(ob.dscr) && ob.dscr < min) || (isNum(od.dscr) && od.dscr < 1)
+      flags.push(
+        maker.flag({
+          id: 'M4-typed-payment-flatters',
+          severity: failsOwn ? 'high' : 'medium',
+          title: 'The stress test starts from a typed loan payment that is lower than the loan’s own terms, so its coverage looks better than it is.',
+          evidence: `Typed yearly payment on "${first.name}": ${fmt.usd(first.typed)} against ${fmt.usd(first.own)} from its amount, rate and term${more}. As typed: base case DSCR ${x(base.dscr)}, downside ${x(downside.dscr)}. On the loan's own terms: base ${x(ob.dscr)}, downside ${x(od.dscr)}${failsOwn ? `, which misses the lender's minimum of ${fmt.times(min)} or falls below 1.00×` : ''}.`,
+          cell_refs: citeCells(project, low.flatMap((l) => ['amount', 'interestRate', 'termMonths', 'paymentOverride'].map((k) => `sources.rows.${l.i}.${k}`))),
+          follow_up: `Which yearly payment is right: the typed ${fmt.usd(first.typed)} or the ${fmt.usd(first.own)} that the loan's amount, rate and term produce? Please confirm the loan terms.`,
+        }),
+      )
+    }
   }
 
   return { flags, notes }

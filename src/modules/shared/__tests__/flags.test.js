@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import * as M from '../index.js'
-import { blankProject } from '../records.js'
+import { blankProject, blankFirm } from '../records.js'
 import { roundNumberProject } from './helpers.js'
 
 const good = () => ({
@@ -182,7 +182,26 @@ test('citeCells names where each number came from, in spreadsheet terms', () => 
   rec.sources['t12.rows.0.month'] = 'T-12 template!A5'
   rec.sources['identity.name'] = 'manual'
   const refs = M.citeCells(rec, ['sources.rows.0.amount', 't12.rows.0.month', 'identity.name', 'identity.address', 'sources.rows.0.amount'])
-  assert.deepEqual(refs, ['Development Project 1 Details!F28', 'T-12 template!A5', 'identity.name (entered by hand)', 'identity.address (blank)'])
+  assert.deepEqual(refs, ['Development Project 1 Details!F28', 'T-12 template!A5', 'Project identity: Project name (entered by hand)', 'Project identity: Address (blank)'])
+})
+
+test('a blank or typed value is named in words, never by the record’s internal path', () => {
+  const rec = roundNumberProject()
+  const refs = M.citeCells(rec, ['budget.lines.constructionInterest.amount', 'sources.rows.2.termMonths', 'residentialIncome.rows', 'residentialIncome.stabilizedVacancy', 'operatingExpenses.lines.propertyTaxes.amount', 'not.a.real.path'])
+  assert.deepEqual(refs, [
+    'Development budget: Construction interest (blank)',
+    'Sources of money, row 3: Term (months) (blank)',
+    'Residential income (blank)',
+    'Residential income: Stabilized vacancy (blank)',
+    'Operating expenses (annual, at stabilization): Property taxes (blank)',
+    'not.a.real.path (blank)',
+  ])
+  for (const r of refs.slice(0, 5)) assert.doesNotMatch(r, /\.(lines|rows)\b|[a-z][A-Z]/, `${r} should have no path text`)
+})
+
+test('citing a blank firm value uses the firm schema', () => {
+  const firm = blankFirm()
+  assert.deepEqual(M.citeCells(firm, ['identity.name', 'balanceSheet.lines.cash.current']), ['Firm identity: Name of firm (blank)', 'Firm balance sheet: Cash (Current period) (blank)'])
 })
 
 // ---------------------------------------------------------------- the module contract
@@ -305,4 +324,29 @@ test('the written description of the flag format covers every field, in order', 
   const f = M.makeFlag(good())
   assert.deepEqual(M.FLAG_FIELD_DOCS.map((d) => d.field), Object.keys(f))
   assert.ok(M.FLAG_FIELD_DOCS.every((d) => d.meaning && d.rule))
+})
+
+// ---------------------------------------------------------------- the three reserve tests explain themselves
+test('M3D, M3T and M4 each say that the other modules test the same reserves under other assumptions', async () => {
+  const { scenarios } = await import('../samples/scenarios.js')
+  const { applyStageAndDate, DEFAULT_SETTINGS } = M
+  const { run: m3d } = await import('../../m3d-development/index.js')
+  const { run: m3t } = await import('../../m3t-transitions/index.js')
+  const { run: m4 } = await import('../../m4-scenarios/index.js')
+  const s = scenarios.find((x) => x.id.startsWith('s15'))
+  const record = applyStageAndDate(s.build().projects[0].record, { stage: s.stage, asOfDate: s.asOf })
+  const context = { settings: DEFAULT_SETTINGS }
+  const found = [
+    ['M3D', m3d(record, context).flags.find((f) => f.id === 'M3D-interest-reserve-short'), /60% covered/],
+    ['M3T', m3t(record, context).flags.find((f) => f.id === 'M3T-delivery-delay-buffer'), /82% covered/],
+    ['M4', m4(record, context).flags.find((f) => f.id === 'M4-downside-funding-gap'), /Funding gap \$165,753/],
+  ]
+  for (const [module, flag, figure] of found) {
+    assert.ok(flag, `${module} raised its reserve flag`)
+    assert.match(flag.evidence, figure, `${module} keeps its own figure`)
+    assert.ok(flag.evidence.includes(M.RESERVE_TESTS_NOTE), `${module} explains that the figures differ on purpose`)
+    assert.ok(flag.evidence.length <= 1000, `${module} evidence is within the limit (${flag.evidence.length})`)
+    assert.deepEqual(M.validateFlag(flag), [], module)
+  }
+  assert.match(M.RESERVE_TESTS_NOTE, /M3D assumes lease-up with no income, M3T assumes a delivery delay, and M4 assumes the whole downside case/)
 })

@@ -31,6 +31,7 @@ import {
   createFlagMaker,
   fmt,
   DEBT_SOURCE_TYPES,
+  RESERVE_TESTS_NOTE,
 } from '../shared/index.js'
 import { THRESHOLDS } from './thresholds.js'
 
@@ -179,7 +180,7 @@ function deliveryDelay(ctx) {
     severity: coverage < 0.5 ? 'high' : 'medium',
     transition: 'T1',
     title: `The reserves could not carry the loans through a ${THRESHOLDS.delayMonths}-month delivery delay.`,
-    evidence: `${detail} A simple estimate, not a draw schedule; the ${THRESHOLDS.delayMonths}-month delay is a working assumption.`,
+    evidence: `${detail} A simple estimate, not a draw schedule; the ${THRESHOLDS.delayMonths}-month delay is a working assumption. ${RESERVE_TESTS_NOTE}`,
     cell_refs: cells,
     follow_up: `What happens to the loan payments if delivery slips ${THRESHOLDS.delayMonths} months? Who funds the shortfall?`,
   })

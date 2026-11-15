@@ -125,3 +125,27 @@ test('a project with no stage is reported, not crashed', () => {
   const p = healthyProject()
   assert.deepEqual(run(p, {}).flags.map((f) => f.id), ['M2-stage-missing'])
 })
+
+test('expenses that look low only because a key line has no amount cannot be judged: a low note, not an alarm', () => {
+  // Taxes missing (a broken cell reads as blank): 116,000 over 40 units is far below the range, which used to be a high flag.
+  const broken = project('development', (d) => (d.operatingExpenses.lines.propertyTaxes.amount = null))
+  const f = flagOf(broken, 'M2-expenses-below-comps')
+  assert.equal(f.severity, 'low')
+  assert.match(f.title, /cannot be judged yet: property taxes has no amount/)
+  assert.match(f.follow_up, /no amount for property taxes/)
+  assert.match(f.evidence, /may be understated/)
+  assert.deepEqual(validateFlag(f), [])
+  // Two missing lines are both named.
+  const two = project('development', (d) => { d.operatingExpenses.lines.propertyTaxes.amount = null; d.operatingExpenses.lines.propertyLiabilityInsurance.amount = null })
+  assert.match(flagOf(two, 'M2-expenses-below-comps').title, /property taxes, insurance have no amount/)
+})
+
+test('a complete expense list that is genuinely far below the market is still a high flag', () => {
+  const thin = project('development', (d) => {
+    for (const line of Object.values(d.operatingExpenses.lines)) if (line.amount) line.amount = Math.round(line.amount * 0.4)
+  })
+  const f = flagOf(thin, 'M2-expenses-below-comps')
+  assert.equal(f.severity, 'high')
+  assert.match(f.title, /below the comparable range by a wide margin/)
+  assert.doesNotMatch(f.title, /cannot be judged/)
+})

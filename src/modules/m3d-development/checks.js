@@ -29,6 +29,7 @@ import {
   fmt,
   DEBT_SOURCE_TYPES,
   DEFAULT_SETTINGS,
+  RESERVE_TESTS_NOTE,
 } from '../shared/index.js'
 import { THRESHOLDS } from './thresholds.js'
 
@@ -328,16 +329,28 @@ function schedule(ctx) {
     rows.push(notChecked(ctx, 'completion-slipped', 'schedule', slipTitle, [!asOf && 'the "as of" date', !end && 'the construction completion date'].filter(Boolean), cells))
   } else {
     const late = end.precise ? asOf.month - end.month : asOf.year * 12 - (end.year * 12 + 11)
-    const detail = late > 0 ? `The project is still in development ${plural(late, 'month')} after its planned completion (${t.constructionCompletion}).` : `Planned completion ${t.constructionCompletion} is not before the "as of" date ${record.data.stage.asOfDate}.`
-    if (late <= 0) rows.push(row('completion-slipped', 'schedule', slipTitle, 'pass', detail, { cells }))
+    const baseDetail = late > 0 ? `The project is still in development ${plural(late, 'month')} after its planned completion (${t.constructionCompletion}).` : `Planned completion ${t.constructionCompletion} is not before the "as of" date ${record.data.stage.asOfDate}.`
+    if (late <= 0) rows.push(row('completion-slipped', 'schedule', slipTitle, 'pass', baseDetail, { cells }))
     else {
+      // A T-12 with collected rent is real operating history: a project that has it is almost certainly built, so "construction
+      // is late" is probably the wrong story and the stage is the thing to confirm (M1 and M3T ask the same). A passed
+      // stabilization date alone is not enough to say that, because a project that is truly very late has passed it too.
+      const hasActuals = record.data.t12.rows.some((r) => [r.residentialRevenue, r.commercialRevenue, r.otherRevenue].some((v) => isNum(v) && v > 0))
+      const stabilizationPast = stable ? (stable.precise ? asOf.month - stable.month : asOf.year * 12 - (stable.year * 12 + 11)) > 0 : false
+      const detail = hasActuals
+        ? `${baseDetail} A T-12 with collected rent is loaded, so the project may already be built and the stage may be wrong.`
+        : stabilizationPast
+          ? `${baseDetail} The planned stabilization date (${t.stabilization}) has also passed, so the stage may need updating.`
+          : baseDetail
       const f = flag({
         id: 'M3D-completion-slipped',
-        severity: late > LIMITS.slippedMonthsHigh ? 'high' : 'medium',
-        title: 'Construction is still going past its planned completion date.',
+        severity: hasActuals ? 'medium' : late > LIMITS.slippedMonthsHigh ? 'high' : 'medium',
+        title: hasActuals ? 'Construction looks long overdue, or the project is no longer in development.' : 'Construction is still going past its planned completion date.',
         evidence: detail,
         cell_refs: cells,
-        follow_up: 'Why is construction late? What is the new completion date, and what does the delay add to cost and interest?',
+        follow_up: hasActuals
+          ? 'Has the project been delivered? If not, what is the new completion date and what is holding it up? If it has, please confirm its current stage.'
+          : 'Why is construction late? What is the new completion date, and what does the delay add to cost and interest?',
         transition: 'T1',
       })
       rows.push(row('completion-slipped', 'schedule', slipTitle, 'fail', detail, { cells, flags: [f] }))
@@ -545,7 +558,7 @@ function interestReserve(ctx) {
     id: 'M3D-interest-reserve-short',
     severity: share < LIMITS.interestReserve.high ? 'high' : 'medium',
     title: 'The interest and rent-up reserves may run out before the project can pay its own way.',
-    evidence: `${detail} A simple estimate, not a draw schedule.`,
+    evidence: `${detail} A simple estimate, not a draw schedule. ${RESERVE_TESTS_NOTE}`,
     cell_refs: cells,
     follow_up: 'Please share the draw schedule and interest carry. If the reserves run out before the first units lease, who funds the shortfall?',
     transition: 'T1',

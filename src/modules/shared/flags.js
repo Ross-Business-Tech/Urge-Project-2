@@ -13,6 +13,7 @@
 //  - guardModule: wraps a module's run(project, context) so a crash or malformed result becomes a flag, not a lost check.
 
 import { STAGE_VALUES } from './projectStage.js'
+import { labelForPath } from './pathLabels.js'
 
 export const SEVERITIES = ['high', 'medium', 'low']
 export const TRANSITIONS = ['T1', 'T2', 'T3']
@@ -178,16 +179,21 @@ export function flagFromUnavailable(result, { module, stage_used, check, checkTi
 }
 
 // Cell references for a flag, from where each value came from. Values typed by hand and blank values are named too, so a
-// flag never points at a cell that does not exist.
+// flag never points at a cell that does not exist. These are named in words ("Development budget: Construction interest
+// (blank)"), never by the record's internal path.
 export function citeCells(record, paths) {
   const refs = []
   for (const path of paths) {
     const source = record.sources?.[path]
-    const ref = source && source !== 'manual' ? source : `${path} (${source === 'manual' ? 'entered by hand' : 'blank'})`
+    const ref = source && source !== 'manual' ? source : `${labelForPath(record, path)} (${source === 'manual' ? 'entered by hand' : 'blank'})`
     if (!refs.includes(ref)) refs.push(ref)
   }
   return refs
 }
+
+// Three modules test the SAME reserves against DIFFERENT cases, so their coverage figures differ on purpose. Each says so, in
+// these words, so a reader who sees 60%, 82% and a funding gap does not think one of them is wrong.
+export const RESERVE_TESTS_NOTE = 'Other checks test the same reserves under other assumptions, so the figures differ on purpose: M3D assumes lease-up with no income, M3T assumes a delivery delay, and M4 assumes the whole downside case.'
 
 const MAX_FLAGS_PER_MODULE = 1000
 
