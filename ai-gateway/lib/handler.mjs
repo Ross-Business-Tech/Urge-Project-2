@@ -88,11 +88,21 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
 
   // 3. Is the service set up? If anything is missing it refuses everyone. It never opens up by default. The provider
   //    and the model are chosen here by the instructor, never by the caller.
-  const apiKey = env.AI_API_KEY
+  // Settings pasted into a dashboard often carry a stray space or newline, or a capital letter, so those are forgiven.
+  const apiKey = String(env.AI_API_KEY ?? '').trim()
   const codes = list(env.ACCESS_CODES)
-  const provider = Object.hasOwn(PROVIDERS, env.AI_PROVIDER ?? '') ? PROVIDERS[env.AI_PROVIDER] : null
-  const model = provider ? env.AI_MODEL || provider.defaultModel : null
-  if (!apiKey || codes.length === 0 || !provider || !model) return fail(503, 'not_configured', 'The AI service is not set up yet.', cors)
+  const providerId = String(env.AI_PROVIDER ?? '').trim().toLowerCase()
+  const provider = Object.hasOwn(PROVIDERS, providerId) ? PROVIDERS[providerId] : null
+  const model = provider ? String(env.AI_MODEL ?? '').trim() || provider.defaultModel : null
+  if (!apiKey || codes.length === 0 || !provider || !model) {
+    // Say which settings are missing, by NAME only (the names are in the public README). Never a value.
+    const missing = []
+    if (!apiKey) missing.push('AI_API_KEY')
+    if (codes.length === 0) missing.push('ACCESS_CODES')
+    if (!provider) missing.push('AI_PROVIDER (must be gemini or anthropic)')
+    else if (!model) missing.push('AI_MODEL')
+    return respond(503, { ok: false, error: 'not_configured', message: 'The AI service is not set up yet.', missing }, cors)
+  }
 
   // 4. The access code.
   if (!codeAccepted(request.headers.get('x-access-code'), codes)) return fail(401, 'bad_code', 'The access code is missing or wrong.', cors)

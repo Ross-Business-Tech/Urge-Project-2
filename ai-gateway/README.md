@@ -118,7 +118,7 @@ Everything sent here goes on to the AI provider, so both Vercel and the provider
 
 ```bash
 cd ai-gateway
-npm test      # 37 tests, no key and no network needed
+npm test      # 39 tests, no key and no network needed
 ```
 
 The logic is in `lib/handler.mjs`. `api/ai.mjs` connects it to Vercel and `server.mjs` (the Render start command) connects it to a normal web server. The instructions the AI receives are in `lib/prompts.mjs` and are **drafts**: the answer shapes will change when the app side is built, and every answer carries a `prompt_version` so quality tests can tell which wording produced it.

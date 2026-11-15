@@ -350,3 +350,30 @@ test('gemini: the key and the data never appear in any response or log', async (
   assert.doesNotMatch(everything, new RegExp(`${KEY}|${secretData}`))
   assert.equal(JSON.parse(logs[0]).provider, 'gemini')
 })
+
+
+test('when it is not set up it names which settings are missing, never a value', async () => {
+  const cases = [
+    [{ AI_API_KEY: '' }, ['AI_API_KEY']],
+    [{ ACCESS_CODES: '' }, ['ACCESS_CODES']],
+    [{ AI_PROVIDER: '' }, ['AI_PROVIDER (must be gemini or anthropic)']],
+    [{ AI_PROVIDER: 'openai-secret-looking-value' }, ['AI_PROVIDER (must be gemini or anthropic)']],
+    [{ AI_PROVIDER: 'gemini' }, ['AI_MODEL']],
+    [{ AI_API_KEY: '', ACCESS_CODES: '', AI_PROVIDER: '' }, ['AI_API_KEY', 'ACCESS_CODES', 'AI_PROVIDER (must be gemini or anthropic)']],
+  ]
+  for (const [change, missing] of cases) {
+    const { res, body } = await run(post(good), env(change))
+    assert.equal(res.status, 503)
+    assert.equal(body.error, 'not_configured')
+    assert.deepEqual(body.missing, missing)
+    assert.doesNotMatch(JSON.stringify(body), new RegExp(`${KEY}|openai-secret-looking-value|${CODE}`))
+  }
+})
+
+test('a setting pasted with stray spaces or capital letters still works, and the key is sent without the stray spaces', async () => {
+  const messy = env({ AI_PROVIDER: ' Gemini\n', AI_API_KEY: `  ${KEY}\n`, AI_MODEL: '  gemini-test-model  ' })
+  const { res, fetchImpl } = await run(post(good), messy, provider(gemReply()))
+  assert.equal(res.status, 200)
+  assert.equal(fetchImpl.calls[0].init.headers['x-goog-api-key'], KEY)
+  assert.equal(fetchImpl.calls[0].url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-test-model:generateContent')
+})
