@@ -1,0 +1,11 @@
+{
+  "name": "ai-gateway",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The small server that holds the AI provider's API key for the underwriting review tool.",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test"
+  }
+}
