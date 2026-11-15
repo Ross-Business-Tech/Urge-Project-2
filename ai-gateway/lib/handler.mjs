@@ -9,13 +9,11 @@
 
 import { createHash, timingSafeEqual } from 'node:crypto'
 import { LAYERS, PROMPT_VERSION, systemPromptFor, userMessageFor } from './prompts.mjs'
-
-const PROVIDER_URL = 'https://api.anthropic.com/v1/messages'
-const PROVIDER_VERSION = '2023-06-01'
+import { PROVIDERS } from './providers.mjs'
 
 // Every limit here can be changed by an environment variable, but never by the person calling. The hard caps cannot be
 // raised by an environment variable either, so a typo cannot turn this into an expensive endpoint.
-const DEFAULTS = { model: 'claude-sonnet-5-5', maxTokens: 4000, maxBodyBytes: 200_000, timeoutMs: 120_000, temperature: 0 }
+const DEFAULTS = { maxTokens: 4000, maxBodyBytes: 200_000, timeoutMs: 120_000, temperature: 0 }
 const HARD = { maxTokens: 8000, maxBodyBytes: 1_000_000, timeoutMs: 250_000 }
 
 const clampInt = (value, fallback, max) => {
@@ -88,10 +86,13 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
   }
   if (request.method !== 'POST') return fail(405, 'method_not_allowed', 'Use POST.', { ...cors, allow: 'POST, OPTIONS' })
 
-  // 3. Is the service set up? If anything is missing it refuses everyone. It never opens up by default.
-  const apiKey = env.ANTHROPIC_API_KEY
+  // 3. Is the service set up? If anything is missing it refuses everyone. It never opens up by default. The provider
+  //    and the model are chosen here by the instructor, never by the caller.
+  const apiKey = env.AI_API_KEY
   const codes = list(env.ACCESS_CODES)
-  if (!apiKey || codes.length === 0) return fail(503, 'not_configured', 'The AI service is not set up yet.', cors)
+  const provider = Object.hasOwn(PROVIDERS, env.AI_PROVIDER ?? '') ? PROVIDERS[env.AI_PROVIDER] : null
+  const model = provider ? env.AI_MODEL || provider.defaultModel : null
+  if (!apiKey || codes.length === 0 || !provider || !model) return fail(503, 'not_configured', 'The AI service is not set up yet.', cors)
 
   // 4. The access code.
   if (!codeAccepted(request.headers.get('x-access-code'), codes)) return fail(401, 'bad_code', 'The access code is missing or wrong.', cors)
@@ -124,16 +125,20 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
 
   // 6. The provider request. The caller supplies only the data. The model, the size cap, the temperature and the
   //    instructions are all fixed here: anything the caller sends for them is ignored.
-  const providerBody = {
-    model: env.AI_MODEL || DEFAULTS.model,
-    max_tokens: clampInt(env.AI_MAX_TOKENS, DEFAULTS.maxTokens, HARD.maxTokens),
-    system: systemPromptFor(layer),
-    messages: [{ role: 'user', content: userMessageFor(layer, body.payload) }],
-  }
+  let temperature = null
   if (String(env.AI_TEMPERATURE ?? '').toLowerCase() !== 'none') {
     const t = Number.parseFloat(env.AI_TEMPERATURE)
-    providerBody.temperature = Number.isFinite(t) ? Math.min(Math.max(t, 0), 1) : DEFAULTS.temperature
+    temperature = Number.isFinite(t) ? Math.min(Math.max(t, 0), 1) : DEFAULTS.temperature
   }
+  const call = provider.request({
+    apiKey,
+    model,
+    maxTokens: clampInt(env.AI_MAX_TOKENS, DEFAULTS.maxTokens, HARD.maxTokens),
+    temperature,
+    system: systemPromptFor(layer),
+    user: userMessageFor(layer, body.payload),
+    json: layer !== 'ping',
+  })
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), clampInt(env.AI_TIMEOUT_MS, DEFAULTS.timeoutMs, HARD.timeoutMs))
@@ -142,12 +147,7 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
   try {
     let res
     try {
-      res = await fetchImpl(PROVIDER_URL, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': PROVIDER_VERSION },
-        body: JSON.stringify(providerBody),
-        signal: controller.signal,
-      })
+      res = await fetchImpl(call.url, { method: 'POST', headers: call.headers, body: JSON.stringify(call.body), signal: controller.signal })
     } catch (err) {
       if (controller.signal.aborted || err?.name === 'AbortError') {
         status = 504
@@ -158,16 +158,23 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
 
     // Whatever the provider says when it refuses can repeat the request, so only the kind of failure is passed on.
     if (!res.ok) {
-      if (res.status === 401 || res.status === 403) {
+      let errorBody = null
+      try {
+        errorBody = await res.json()
+      } catch {
+        /* no readable body: the status alone decides */
+      }
+      const kind = provider.classify(res.status, errorBody)
+      if (kind === 'auth') {
         status = 502
         return fail(502, 'provider_auth', "The AI provider did not accept this service's credentials. Tell the instructor.", cors)
       }
-      if (res.status === 429 || res.status === 529) {
+      if (kind === 'busy') {
         status = 503
         return fail(503, 'busy', 'The AI service is busy or over its limit. Try again in a minute.', { ...cors, 'retry-after': '60' })
       }
       status = 502
-      return fail(502, res.status === 400 ? 'provider_rejected' : 'provider_error', 'The AI provider could not complete the request.', cors)
+      return fail(502, kind === 'rejected' ? 'provider_rejected' : 'provider_error', 'The AI provider could not complete the request.', cors)
     }
 
     let answer
@@ -176,23 +183,27 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
     } catch {
       return fail(502, 'provider_error', 'The AI provider sent an answer that could not be read.', cors)
     }
-    const out = (Array.isArray(answer?.content) ? answer.content : []).filter((c) => c?.type === 'text').map((c) => c.text).join('')
-    usage = answer?.usage ?? {}
+    const parsed = provider.parse(answer, model)
+    usage = parsed.usage
+    if (parsed.blocked) {
+      status = 422
+      return fail(422, 'blocked', 'The AI provider declined to answer this request.', cors)
+    }
     status = 200
     return respond(200, {
       ok: true,
       layer,
-      text: out,
-      model: typeof answer?.model === 'string' ? answer.model : providerBody.model,
-      stop_reason: answer?.stop_reason ?? null, // "max_tokens" means the answer was cut off
-      usage: { input_tokens: usage.input_tokens ?? null, output_tokens: usage.output_tokens ?? null },
+      text: parsed.text,
+      model: parsed.model,
+      stop_reason: parsed.stopReason, // "max_tokens" means the answer was cut off
+      usage,
       prompt_version: PROMPT_VERSION,
     }, cors)
   } finally {
     clearTimeout(timer)
     // One line of counts and timing. Never the data sent, the answer, the access code or the key.
     try {
-      log(JSON.stringify({ event: 'ai_call', layer, status, ms: Date.now() - started, input_tokens: usage.input_tokens ?? null, output_tokens: usage.output_tokens ?? null }))
+      log(JSON.stringify({ event: 'ai_call', provider: provider.id, layer, status, ms: Date.now() - started, input_tokens: usage.input_tokens ?? null, output_tokens: usage.output_tokens ?? null }))
     } catch {
       /* logging must never break a response */
     }

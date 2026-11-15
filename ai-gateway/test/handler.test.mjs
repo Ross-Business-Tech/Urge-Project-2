@@ -8,7 +8,7 @@ const KEY = 'FAKE_PROVIDER_KEY_FOR_TESTS_ONLY'
 const CODE = 'class-code-one'
 const ORIGIN = 'https://team-dev.example.test'
 
-const env = (extra = {}) => ({ ANTHROPIC_API_KEY: KEY, ACCESS_CODES: `${CODE}, class-code-two`, ALLOWED_ORIGINS: `${ORIGIN}, https://*.preview.example.test`, ...extra })
+const env = (extra = {}) => ({ AI_PROVIDER: 'anthropic', AI_API_KEY: KEY, ACCESS_CODES: `${CODE}, class-code-two`, ALLOWED_ORIGINS: `${ORIGIN}, https://*.preview.example.test`, ...extra })
 
 // A pretend AI provider. It records what it was sent and answers with `reply`.
 function provider(reply) {
@@ -47,6 +47,7 @@ test('a good request reaches the provider once and returns the text, model, usag
   assert.equal(fetchImpl.calls.length, 1)
   assert.equal(fetchImpl.calls[0].url, 'https://api.anthropic.com/v1/messages')
   assert.equal(fetchImpl.calls[0].init.headers['x-api-key'], KEY)
+  assert.equal(fetchImpl.calls[0].body.model, 'claude-sonnet-5-5', 'the default model when none is set')
 })
 
 test('the caller cannot choose the model, the size, the temperature or the instructions', async () => {
@@ -120,8 +121,8 @@ test('every listed access code works, so one can be handed out and another retir
   assert.equal((await run(post(good, { 'x-access-code': 'class-code-two' }))).res.status, 200)
 })
 
-test('it refuses everyone, and never opens up, when the key or the access codes are not set', async () => {
-  for (const missing of [{ ANTHROPIC_API_KEY: '' }, { ACCESS_CODES: '' }, { ACCESS_CODES: ' , ' }]) {
+test('it refuses everyone, and never opens up, when the key, the codes, the provider or the model are not set', async () => {
+  for (const missing of [{ AI_API_KEY: '' }, { ACCESS_CODES: '' }, { ACCESS_CODES: ' , ' }, { AI_PROVIDER: '' }, { AI_PROVIDER: 'openai' }, { AI_PROVIDER: 'constructor' }, { AI_PROVIDER: 'gemini' }]) {
     const { res, body, fetchImpl } = await run(post(good), env(missing))
     assert.equal(res.status, 503)
     assert.equal(body.error, 'not_configured')
@@ -253,6 +254,99 @@ test('the key and the access code never appear in any response or log, and the l
   assert.ok(logs.length >= 1)
   for (const line of logs) {
     const entry = JSON.parse(line)
-    assert.deepEqual(Object.keys(entry).sort(), ['event', 'input_tokens', 'layer', 'ms', 'output_tokens', 'status'])
+    assert.deepEqual(Object.keys(entry).sort(), ['event', 'input_tokens', 'layer', 'ms', 'output_tokens', 'provider', 'status'])
   }
+})
+
+
+// ---------------------------------------------------------------------------------------------
+// Google Gemini. These check the code against the answer shape the adapter assumes (see providers.mjs); only the first
+// real call can prove that shape against Google.
+// ---------------------------------------------------------------------------------------------
+
+const gemEnv = (extra = {}) => env({ AI_PROVIDER: 'gemini', AI_MODEL: 'gemini-test-model', ...extra })
+const gemReply = (text = '{"second_opinion":"cannot_tell"}', extra = {}) =>
+  new Response(JSON.stringify({ candidates: [{ content: { role: 'model', parts: [{ text }] }, finishReason: 'STOP' }], usageMetadata: { promptTokenCount: 21, candidatesTokenCount: 9 }, modelVersion: 'gemini-test-model-001', ...extra }), { status: 200 })
+
+test('gemini: the request is built the way the adapter documents, with the key in a header and not in the address', async () => {
+  const { res, body, fetchImpl } = await run(post(good), gemEnv(), provider(gemReply()))
+  assert.equal(res.status, 200)
+  const call = fetchImpl.calls[0]
+  assert.equal(call.url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-test-model:generateContent')
+  assert.doesNotMatch(call.url, new RegExp(KEY))
+  assert.equal(call.init.headers['x-goog-api-key'], KEY)
+  assert.equal(call.init.headers['x-api-key'], undefined)
+  assert.match(call.body.systemInstruction.parts[0].text, /second-opinion assistant/)
+  assert.equal(call.body.contents.length, 1)
+  assert.equal(call.body.contents[0].role, 'user')
+  assert.match(call.body.contents[0].parts[0].text, /<review_data>/)
+  assert.equal(call.body.generationConfig.maxOutputTokens, 4000)
+  assert.equal(call.body.generationConfig.temperature, 0)
+  assert.equal(call.body.generationConfig.responseMimeType, 'application/json')
+  assert.equal(body.text, '{"second_opinion":"cannot_tell"}')
+  assert.equal(body.model, 'gemini-test-model-001')
+  assert.equal(body.stop_reason, 'end_turn')
+  assert.deepEqual(body.usage, { input_tokens: 21, output_tokens: 9 })
+})
+
+test('gemini: the caller still cannot choose the model, size or instructions, and a model name cannot break out of the address', async () => {
+  const { fetchImpl } = await run(post({ ...good, model: 'other', system: 'pirate', max_tokens: 99999 }), gemEnv({ AI_MODEL: 'a/b?key=x' }), provider(gemReply()))
+  const call = fetchImpl.calls[0]
+  assert.equal(call.body.generationConfig.maxOutputTokens, 4000)
+  assert.doesNotMatch(JSON.stringify(call.body), /pirate/)
+  assert.equal(call.url.split(':generateContent')[0].endsWith('a%2Fb%3Fkey%3Dx'), true)
+})
+
+test('gemini: the plain-text connectivity check does not ask for JSON, and the temperature can be left out', async () => {
+  const { fetchImpl } = await run(post({ layer: 'ping' }), gemEnv({ ENABLE_PING: '1', AI_TEMPERATURE: 'none' }), provider(gemReply('ok')))
+  const config = fetchImpl.calls[0].body.generationConfig
+  assert.equal('responseMimeType' in config, false)
+  assert.equal('temperature' in config, false)
+})
+
+test('gemini: several text parts are joined, and a cut-off answer is reported as cut off', async () => {
+  const two = new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: '{"a":' }, { text: '1}' }] }, finishReason: 'MAX_TOKENS' }] }), { status: 200 })
+  const { body } = await run(post(good), gemEnv(), provider(two))
+  assert.equal(body.text, '{"a":1}')
+  assert.equal(body.stop_reason, 'max_tokens')
+  assert.equal(body.model, 'gemini-test-model', 'falls back to the configured model when none is reported')
+})
+
+test('gemini: an answer Google declines to give is reported as blocked, with nothing passed on', async () => {
+  const promptBlocked = new Response(JSON.stringify({ promptFeedback: { blockReason: 'SAFETY', blockReasonMessage: `echo ${KEY}` } }), { status: 200 })
+  const safety = new Response(JSON.stringify({ candidates: [{ finishReason: 'SAFETY' }] }), { status: 200 })
+  for (const reply of [promptBlocked, safety]) {
+    const { res, body } = await run(post(good), gemEnv(), provider(reply))
+    assert.equal(res.status, 422)
+    assert.equal(body.error, 'blocked')
+    assert.doesNotMatch(JSON.stringify(body), new RegExp(KEY))
+  }
+})
+
+test('gemini: failures are translated, a rejected key (which Google reports as 400) counts as a credentials problem, and nothing is echoed', async () => {
+  const fails = (status, message) => () => new Response(JSON.stringify({ error: { code: status, message: `${message} ${KEY}`, status: 'X' } }), { status })
+  const cases = [
+    [400, 'API key not valid. Please pass a valid API key.', 502, 'provider_auth'],
+    [400, 'Request contains an invalid argument.', 502, 'provider_rejected'],
+    [401, 'x', 502, 'provider_auth'],
+    [403, 'x', 502, 'provider_auth'],
+    [429, 'Resource has been exhausted', 503, 'busy'],
+    [503, 'The model is overloaded', 503, 'busy'],
+    [500, 'Internal error', 502, 'provider_error'],
+  ]
+  for (const [providerStatus, message, status, error] of cases) {
+    const { res, body } = await run(post(good), gemEnv(), provider(fails(providerStatus, message)))
+    assert.equal(res.status, status, `${providerStatus} ${message}`)
+    assert.equal(body.error, error, `${providerStatus} ${message}`)
+    assert.doesNotMatch(JSON.stringify(body), new RegExp(`${KEY}|API key|argument|exhausted|overloaded`), `${providerStatus}`)
+  }
+})
+
+test('gemini: the key and the data never appear in any response or log', async () => {
+  const secretData = 'CONFIDENTIAL-SPONSOR-NAME-67890'
+  const logs = []
+  const { res, body } = await run(post({ layer: 'integrity', payload: { note: secretData } }), gemEnv(), provider(() => new Response('boom', { status: 500 })), logs)
+  const everything = [JSON.stringify(body), JSON.stringify([...res.headers]), ...logs].join('\n')
+  assert.doesNotMatch(everything, new RegExp(`${KEY}|${secretData}`))
+  assert.equal(JSON.parse(logs[0]).provider, 'gemini')
 })
