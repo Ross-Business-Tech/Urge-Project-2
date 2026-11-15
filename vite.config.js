@@ -1,10 +1,12 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { AI_CONFIG, gatewayOrigin } from './src/aiConfig.js'
 
-// The built page only ever needs its own files, so tell the browser to refuse everything else. `connect-src 'none'`
-// means the page cannot make any network request at all, which turns "your workbook is never uploaded" from a promise
-// into a rule the browser enforces, even if some library were compromised. Only added to the built page (the
-// development server needs extra connections).
+// The built page only ever needs its own files, so tell the browser to refuse everything else. `connect-src` names the ONE
+// address the page may talk to: the AI gateway (src/aiConfig.js), used only when a reviewer presses the button on the AI screen.
+// If the AI screen is switched off there, it is `'none'` again: the page cannot make any network request at all, so "your
+// workbook is never uploaded" is a rule the browser enforces, even if some library were compromised. Only added to the built
+// page (the development server needs extra connections).
 const POLICY = [
   "default-src 'self'",
   "script-src 'self'",
@@ -12,7 +14,7 @@ const POLICY = [
   "style-src-attr 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self'",
-  "connect-src 'none'",
+  `connect-src ${AI_CONFIG.enabled ? gatewayOrigin() : "'none'"}`,
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",

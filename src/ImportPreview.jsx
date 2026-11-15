@@ -180,7 +180,7 @@ function Report({ result, saved, reopenedAt, onSave, onReset, onProjectChange, o
           </li>
         </ul>
         {reopenedAt && <p className="note">Reopened from a review saved on {new Date(reopenedAt).toLocaleDateString()}.</p>}
-        <p className="note">Read on this device only. Nothing was uploaded.</p>
+        <p className="note">Read on this device only. Nothing was uploaded. (The optional AI screen sends a reduced copy only if you press its button.)</p>
       </section>
 
       <h2>Things to look at</h2>
@@ -396,7 +396,7 @@ export default function ImportPreview({ onReview, onContinue }) {
         </div>
         <p className="note">Samples use made-up data.</p>
       </div>
-      <p className="privacy">Files are read on this device only. Nothing is uploaded, and macros are never run.</p>
+      <p className="privacy">Files are read on this device only. Nothing is uploaded unless you press the button on the optional AI screen, which sends a reduced copy with names replaced. Macros are never run.</p>
     </>
   )
 }

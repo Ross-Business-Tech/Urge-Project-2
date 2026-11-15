@@ -25,7 +25,7 @@ Claude: if the student hasn't named a module, show them the `OPEN` rows in plain
 | M4 | Scenario engine (downside / base / upside) | 4 | Shared mechanics, stage-specific levers | M0 | DONE | NS |
 | M5-a | Sponsor firm health (global DSCR, liquidity cover, fee dependence, firm health score) | 5 | Cross-project | M0 | DONE | NS |
 | M5-b | Sponsor track record and credibility score (projected vs. delivered, from completed projects with a T-12; budget and schedule need a later data source) | 5 | Cross-project | M0 | DONE | NS |
-| M6 | Synthesis (ranked flags, cell references, sponsor follow-up questions) | 6 | Shared | M0, plus any flags the other modules produce | OPEN | |
+| M6 | Synthesis (ranked flags, cell references, sponsor follow-up questions) | 6 | Shared | M0, plus any flags the other modules produce | CLAIMED | NS |
 
 Big modules can be split between two people. If you want half of one, add a row such as `M3D-a` and `M3D-b` (copy the parent row, say which half each covers, and do it in the claim pull request). Suggested splits are noted in each spec.
 
