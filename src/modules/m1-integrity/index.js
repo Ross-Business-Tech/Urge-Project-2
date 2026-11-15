@@ -6,7 +6,7 @@
 // context: { firm, facts, report, projects }. `facts` and `report` come from M0's importWorkbook (or a reopened review).
 // M1 never changes the stage or any value: it only reports.
 
-import { createFlagMaker, guardModule, missingDataFlag, isValidDate } from '../shared/index.js'
+import { createFlagMaker, guardModule, missingDataFlag, isValidDate, sanitizeSettings, DEFAULT_SETTINGS } from '../shared/index.js'
 import { CHECKS, projectTabs, monthOf } from './checks.js'
 
 export const MODULE_ID = 'M1'
@@ -21,6 +21,7 @@ function prepare(project, context = {}) {
     firm: context.firm ?? null,
     facts: context.facts ?? null,
     report: context.report ?? null,
+    settings: sanitizeSettings(context.settings ?? DEFAULT_SETTINGS), // only used to say whether a finding is what pushes coverage under the minimum
     tabs: projectTabs(project),
     asOf: isValidDate(asOfDate) ? monthOf(asOfDate, false) : null,
   }
