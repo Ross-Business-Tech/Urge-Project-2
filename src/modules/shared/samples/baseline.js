@@ -36,7 +36,14 @@ export function healthyProject({ name = 'Harbor View Lofts' } = {}) {
   const p = blankProject()
   const d = p.data
   Object.assign(d.identity, { name, address: '1 Harbor Road', constructionType: 'New construction', propertyType: 'Multifamily', confidential: false })
-  d.team.lines = d.team.lines ?? {}
+  // A complete, made-up team. The property manager and the guarantor have no row of their own in the workbook, so (as the
+  // team check expects) they are named under "Other".
+  const team = d.team.lines
+  team.generalContractor = { firmName: 'Keystone Builders', principal: 'Alex Example', ownershipPct: null }
+  team.architect = { firmName: 'Lakeline Architects', principal: 'Riley Example', ownershipPct: null }
+  team.devPartner1 = { firmName: 'Harbor Development Partners', principal: 'Sam Example', ownershipPct: 0.5 }
+  team.other1 = { firmName: 'Brightside Management Co', principal: 'Property manager', ownershipPct: null }
+  team.other2 = { firmName: 'Pat Sample', principal: 'Personal guarantor', ownershipPct: null }
   Object.assign(d.timeline, { constructionStart: '2026-03', constructionCompletion: '2027-06', stabilization: '2028-03' })
   d.sources.rows = [
     { lienPriority: 1, name: 'Example Bank', type: 'hard_debt', amount: 3000000, termMonths: 360, interestRate: 0.06, paymentOverride: null },
@@ -59,8 +66,18 @@ export function healthyProject({ name = 'Harbor View Lofts' } = {}) {
   d.otherIncome.rows = [{ description: 'Parking', monthlyIncome: 1000 }]
   const E = d.operatingExpenses.lines
   E.propertyManagement.amount = 50000
-  E.propertyTaxes.amount = 120000
+  // Taxes and insurance together are still 120,000 a year, so income, NOI and every ratio are unchanged; the split only
+  // means the expense list is complete (an insurance line was missing, which made two checks raise noise on every sample).
+  E.propertyTaxes.amount = 84000
+  E.propertyLiabilityInsurance.amount = 36000
   E.replacementReserves.amount = 20000
-  d.otherExpenses.rows = [{ description: 'Security', amount: 10000 }]
+  // The remaining 10,000 a year is spread over the utility and maintenance lines (it used to be one "Security" line), so the
+  // expense list is complete and the total is unchanged.
+  E.electricHeatCommon.amount = 3000
+  E.waterSewer.amount = 3000
+  E.garbage.amount = 1000
+  E.contractRepairs.amount = 2000
+  E.groundsMaintenance.amount = 1000
+  d.otherExpenses.rows = []
   return p
 }

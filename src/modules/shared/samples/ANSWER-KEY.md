@@ -34,7 +34,7 @@ The healthy baseline: total cost 5,550,000; one loan of 3,000,000 at 6% over 360
 - **Modules should:**
   - M1 should not flag `M1-sources-uses`. Sources 5,550,000 equal uses 5,550,000. No flag.
   - M3D should not flag `M3D-contingency-low`. Construction contingency 400,000 on 3,500,000 hard cost (11.4%). No flag.
-- **Overall:** A clean pass. No high or medium flags from any module. This is the control case: a module that flags this project is too noisy.
+- **Overall:** A clean pass. M1, M2, M3T and M4 raise nothing. M3D (low) and M5 (medium) each note that the sponsor has no completed projects, which is one real fact seen by two modules: a single-project workbook shows no delivery history. This is the control case: any other flag on this project is noise.
 
 ## s02-sources-not-equal-uses: Sources do not equal uses
 
@@ -108,7 +108,7 @@ The healthy baseline: total cost 5,550,000; one loan of 3,000,000 at 6% over 360
 
 ## s09-passes-dscr-low-occupancy-high-rent: Passes DSCR but low occupancy and high rent
 
-- **Stage chosen:** lease_up. **As of:** 2026-01-15.
+- **Stage chosen:** lease_up. **As of:** 2025-06-15.
 - **Planted:** The last 3 months of NOI beat underwriting and DSCR passes, but occupancy is 82% while rents run 30% above the market sample.
 - **T-12:** 6 months, from 2024-12 to 2025-05.
 - **Calculators:** dscr = 2.71; trailing = see T-12.

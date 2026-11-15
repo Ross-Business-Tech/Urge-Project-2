@@ -31,9 +31,14 @@ function t12(units, rent, { occupancy = 0.95, rentFactor = 1, poorMonths = 0, po
       concessions: 0,
       occupancy,
       propertyManagement: 4167,
-      propertyTaxes: 10000,
+      propertyTaxes: 7000,
+      propertyLiabilityInsurance: 3000,
       replacementReserves: 1667,
-      otherExpenses: 833,
+      electricHeatCommon: 250,
+      waterSewer: 250,
+      garbage: 83,
+      contractRepairs: 167,
+      groundsMaintenance: 83,
     }
   })
 }

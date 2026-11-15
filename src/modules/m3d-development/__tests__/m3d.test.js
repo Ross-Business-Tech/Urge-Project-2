@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { scenarios } from '../../shared/samples/scenarios.js'
+import { scenarios, t12Rows } from '../../shared/samples/scenarios.js'
 import { recordsToWorkbook } from '../../shared/samples/toWorkbook.js'
 import { healthyProject } from '../../shared/samples/baseline.js'
 import { importWorkbook } from '../../shared/import/importWorkbook.js'
@@ -128,6 +128,24 @@ test('schedule: a development project past its completion date is flagged, and i
   assert.equal(flagOf(veryLate, 'M3D-completion-slipped').severity, 'high')
 })
 
+test('schedule: a development project with collected rent loaded is probably built, so "construction is late" is only medium and asks about the stage', () => {
+  const dates = (d) => Object.assign(d.timeline, { constructionStart: '2024-01', constructionCompletion: '2024-12', stabilization: '2025-09' })
+  const built = project('development', (d) => { dates(d); d.t12.rows = t12Rows({ year: 2025, months: 12 }) })
+  const f = flagOf(built, 'M3D-completion-slipped')
+  assert.equal(f.severity, 'medium', 'a very late project with real rent history is no longer a high alarm')
+  assert.match(f.title, /long overdue, or the project is no longer in development/)
+  assert.match(f.evidence, /T-12 with collected rent is loaded/)
+  assert.match(f.follow_up, /Has the project been delivered\?/)
+  assert.equal(f.transition, 'T1')
+  // Without rent history, the same dates stay a high flag, and say the stabilization date has also passed.
+  const veryLate = project('development', dates)
+  const g = flagOf(veryLate, 'M3D-completion-slipped')
+  assert.equal(g.severity, 'high')
+  assert.match(g.title, /still going past its planned completion date/)
+  assert.match(g.evidence, /stabilization date \(2025-09\) has also passed/)
+  assert.match(g.follow_up, /Why is construction late\?/)
+})
+
 test('schedule: missing dates give a low "could not be checked" flag', () => {
   const p = project('development', (d) => Object.assign(d.timeline, { stabilization: null }))
   const f = flagOf(p, 'M3D-schedule-order-missing')
@@ -197,7 +215,7 @@ test('capital stack: a loan due before stabilization is high and names the loan'
   const f = flagOf(p, 'M3D-loan-matures-early')
   assert.equal(f.severity, 'high')
   assert.match(f.evidence, /"Example Bank" term 12 months vs\. 24 months/)
-  assert.ok(f.cell_refs.some((c) => c.includes('G28') || c.includes('termMonths')), f.cell_refs.join())
+  assert.ok(f.cell_refs.some((c) => c.includes('G28') || c.includes('Term (months)')), f.cell_refs.join())
   const lease = project('lease_up', (d) => (d.sources.rows[0].termMonths = 12)) // as of 2026-01, stabilizes 2028-03: 26 months
   assert.equal(flagOf(lease, 'M3D-loan-matures-early').severity, 'high')
 })

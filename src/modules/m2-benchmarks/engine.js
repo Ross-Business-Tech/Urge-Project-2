@@ -205,7 +205,10 @@ function expenseRow(record, set, stage) {
     rangeBasis: `${fmt.usd(yearly)} a year over ${plural(units, 'unit')}`,
     cells: citeCells(record, [...lines.map((k) => `operatingExpenses.lines.${k}.amount`), ...other.map(({ i }) => `otherExpenses.rows.${i}.amount`)]),
   })
-  if (blank.length) row.detail += ` Note: no amount for ${blank.join(', ')}, so the total may be understated.`
+  if (blank.length) {
+    row.detail += ` Note: no amount for ${blank.join(', ')}, so the total may be understated.`
+    row.incompleteLines = blank // the flag below uses this: a total with a key line missing cannot be judged against the market
+  }
   return row
 }
 
@@ -259,16 +262,22 @@ function flagsFor(rows, flag, ctx) {
       const groups = all.length ? [all] : []
       for (const hits of groups) {
       const worst = hits.reduce((a, b) => (b.past > a.past ? b : a))
-      const severity = severityFor(metric, position, worst.past)
+      // Expenses that look low because a key line (property taxes, insurance, management) has no amount cannot be judged:
+      // the gap may be a broken cell, not a thin budget, and the cause is reported by the integrity checks. So that case is
+      // only a low note asking for the missing lines, however far below the range the incomplete total falls.
+      const missing = metric === 'expense' && position === 'below' ? [...new Set(hits.flatMap((h) => h.incompleteLines ?? []))] : []
+      const severity = missing.length ? 'low' : severityFor(metric, position, worst.past)
       const id = `M2-${{ rent: 'rent', expense: 'expenses', cost: 'cost' }[metric]}-${position}-comps`
       flags.push(
         flag({
           id,
           severity,
-          title: `The project's ${NOUN[metric]} are ${position} the comparable range${worst.past >= 0.2 ? ' by a wide margin' : ''}.`,
+          title: missing.length
+            ? `The operating expenses cannot be judged yet: ${missing.join(', ')} ${missing.length === 1 ? 'has' : 'have'} no amount.`
+            : `The project's ${NOUN[metric]} are ${position} the comparable range${worst.past >= 0.2 ? ' by a wide margin' : ''}.`,
           evidence: hits.map((h) => `${h.label}: ${h.detail}`).join(' ') + ` Benchmark: ${ctx.set.name}.`,
           cell_refs: [...new Set(hits.flatMap((h) => h.cells))].slice(0, 50),
-          follow_up: QUESTIONS[`${metric}-${position}`],
+          follow_up: missing.length ? `The expense total looks low, but it has no amount for ${missing.join(', ')}. Please send those lines, and the expense budget line by line.` : QUESTIONS[`${metric}-${position}`],
         }),
       )
       }

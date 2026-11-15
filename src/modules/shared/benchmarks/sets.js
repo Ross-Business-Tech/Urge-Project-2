@@ -1,6 +1,7 @@
 // The benchmark sets, one per stage. ALL NUMBERS ARE MADE UP, for building and testing M2. They are not market data.
 // To use real figures later, replace the numbers here (the loader checks them) without touching the code that reads them.
 //
+// The cost and expense ranges are centred on the made-up sample project (baseline.js), so the healthy control raises no noise.
 // Every range is { low, median, high }. Rents are dollars per unit per month. Expenses are dollars per unit per year.
 // Cost is dollars per square foot. Contingency is a share of hard cost (0.05 is 5%).
 // A metric that does not apply to a stage is null (completed projects have no cost benchmark).
@@ -31,8 +32,8 @@ export const BENCHMARK_SETS = {
     version: 1,
     madeUp: true,
     rents: scaled(1.0),
-    expensePerUnitYear: r(5200, 5900, 6800),
-    costPerSqft: { hard: r(160, 190, 230), soft: r(35, 45, 60), total: r(220, 270, 330) },
+    expensePerUnitYear: r(4800, 5900, 6800),
+    costPerSqft: { hard: r(100, 120, 140), soft: r(15, 20, 25), total: r(140, 170, 200) },
     contingencyShare: r(0.05, 0.075, 0.1),
   },
   lease_up: {
@@ -41,8 +42,8 @@ export const BENCHMARK_SETS = {
     version: 1,
     madeUp: true,
     rents: scaled(0.97),
-    expensePerUnitYear: r(5400, 6200, 7200),
-    costPerSqft: { hard: r(160, 190, 230), soft: r(35, 45, 60), total: r(220, 270, 330) }, // remaining cost to finish
+    expensePerUnitYear: r(4800, 6200, 7200),
+    costPerSqft: { hard: r(100, 120, 140), soft: r(15, 20, 25), total: r(140, 170, 200) }, // remaining cost to finish
     contingencyShare: r(0.05, 0.075, 0.1),
   },
   completed: {

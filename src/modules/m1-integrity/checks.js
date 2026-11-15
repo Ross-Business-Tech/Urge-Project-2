@@ -14,6 +14,7 @@ import {
   totalSources,
   totalUses,
   monthlyPayment,
+  dscr,
   missingDataFlag,
   citeCells,
   fmt,
@@ -423,7 +424,7 @@ function paymentOverrideLow(ctx) {
 }
 
 function equityWithTerms(ctx) {
-  const { record, flag } = ctx
+  const { record, flag, settings } = ctx
   const title = 'Equity, grants and "Other" sources have no loan terms'
   const odd = record.data.sources.rows
     .map((r, i) => ({ r, i }))
@@ -431,15 +432,34 @@ function equityWithTerms(ctx) {
   if (odd.length === 0) return row('equity-terms', title, 'pass', 'Only sources typed as debt carry a rate and a term.')
   const cells = citeCells(record, odd.flatMap(({ i }) => [`sources.rows.${i}.type`, `sources.rows.${i}.interestRate`, `sources.rows.${i}.termMonths`]))
   const text = odd.map(({ r, i }) => `"${sourceName(r, i)}" (${typeLabel(r.type)}, ${usd(r.amount)}) has a ${fmt.pct(r.interestRate, 2)} rate and a ${r.termMonths}-month term`).join('; ')
+
+  // What counting these sources as debt does to coverage. If it is what pushes coverage under the lender's minimum, then the
+  // coverage findings raised elsewhere (which are high) all trace back to this line, so this one has to be high too: a cause
+  // must never rank below its own symptoms. If coverage fails without it as well, this line is not the cause, so it stays medium.
+  // Only the base case is looked at here: M1 does not run stress tests, so a symptom that appears only in a downside case is not seen.
+  const counted = dscr(record)
+  const withoutTerms = structuredClone(record)
+  for (const { i } of odd) {
+    withoutTerms.data.sources.rows[i].interestRate = null
+    withoutTerms.data.sources.rows[i].termMonths = null
+  }
+  const uncounted = dscr(withoutTerms)
+  const known = counted.ok && uncounted.ok
+  const min = settings.minDscr
+  const causesFailure = known && counted.value < min && uncounted.value >= min
+  const effect = known ? ` Counting it as debt changes coverage from ${fmt.times(uncounted.value)} to ${fmt.times(counted.value)}${causesFailure ? `, which is under the lender's minimum of ${fmt.times(min)}, so the coverage findings elsewhere in this review trace back to this one line` : ''}.` : ''
+
   const f = flag({
     id: 'M1-equity-with-payment-terms',
-    severity: 'medium',
+    severity: causesFailure ? 'high' : 'medium',
     title: 'A source that is not typed as debt has a rate and a term, so it is being counted as a loan.',
-    evidence: `${text}. Its payments are included in debt service.`,
+    evidence: `${text}. Its payments are included in debt service.${effect}`,
     cell_refs: cells,
-    follow_up: 'Is this money a loan that must be repaid, or true equity or a grant? Please confirm its type and terms.',
+    follow_up: causesFailure
+      ? `Is this money a loan that must be repaid, or true equity or a grant? Please confirm its type and terms. If it is not a loan, coverage is ${fmt.times(uncounted.value)}; if it is, coverage is ${fmt.times(counted.value)}, under the lender's minimum.`
+      : 'Is this money a loan that must be repaid, or true equity or a grant? Please confirm its type and terms.',
   })
-  return row('equity-terms', title, 'fail', `${text}. It is counted in debt service; confirm it is not a loan under the wrong label.`, { cells, flags: [f] })
+  return row('equity-terms', title, 'fail', `${text}. It is counted in debt service; confirm it is not a loan under the wrong label.${effect}`, { cells, flags: [f] })
 }
 
 // ---------------------------------------------------------------------------------------------

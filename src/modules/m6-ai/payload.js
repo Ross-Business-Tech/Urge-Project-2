@@ -4,7 +4,7 @@
 // What is NOT sent: names and addresses (replaced by neutral labels first), free text such as descriptions, the file name,
 // and any value the workbook did not provide. Nothing is sent until the reviewer presses the button.
 
-import { fmt, keyRatios, firmSchema, projectSchema, getValue } from '../shared/index.js'
+import { fmt, keyRatios, firmSchema, projectSchema, getValue, describePath } from '../shared/index.js'
 import { firmHealth, trackRecord } from '../m5-sponsor/index.js'
 import { buildNameMap, deidentify } from './deidentify.js'
 
@@ -21,28 +21,6 @@ const safe = (fn) => {
   } catch {
     return null
   }
-}
-
-function describePath(schema, path) {
-  const parts = path.split('.')
-  const group = schema.find((g) => g.id === parts[0])
-  if (!group) return null
-  if (parts[1] === 'rows' && parts.length === 4) {
-    const col = (group.columns ?? []).find((c) => c.key === parts[3])
-    return col ? { label: `${group.title}, row ${Number(parts[2]) + 1}: ${col.label}`, type: col.type, key: col.key } : null
-  }
-  if (parts[1] === 'lines' && parts.length === 4) {
-    const row = (group.rows ?? []).find((r) => r.key === parts[2])
-    const col = (group.columns ?? []).find((c) => c.key === parts[3])
-    if (!row || !col) return null
-    const extra = (group.columns ?? []).length > 1 ? ` (${col.label})` : ''
-    return { label: `${group.title}: ${row.label}${extra}`, type: col.type, key: col.key }
-  }
-  if (parts.length === 2) {
-    const field = (group.fields ?? []).find((f) => f.key === parts[1])
-    return field ? { label: `${group.title}: ${field.label}`, type: field.type, key: field.key } : null
-  }
-  return null
 }
 
 function shown(type, value) {

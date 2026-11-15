@@ -4,7 +4,7 @@ import { scenarios } from '../../shared/samples/scenarios.js'
 import { recordsToWorkbook } from '../../shared/samples/toWorkbook.js'
 import { importWorkbook } from '../../shared/import/importWorkbook.js'
 import { buildT12Template, parseT12Template } from '../../shared/import/t12Template.js'
-import { replaceT12Rows, applyStageAndDate, compareSeverity, validateFlag } from '../../shared/index.js'
+import { replaceT12Rows, applyStageAndDate, compareSeverity, validateFlag, DEFAULT_SETTINGS } from '../../shared/index.js'
 import { run, checklist } from '../index.js'
 import { looksLikePlaceholder, monthOf } from '../checks.js'
 
@@ -97,4 +97,59 @@ test('placeholder text and dates are recognised', () => {
   assert.equal(monthOf(2027, false), 2027 * 12)
   assert.equal(monthOf('12/31/2025', true), 2025 * 12 + 11)
   assert.equal(monthOf('soon', true), null)
+})
+
+// ---------------------------------------------------------------- a cause ranks at least as high as the symptoms it makes
+const s15 = () => scenarios.find((x) => x.id === 's15-equity-with-rate-and-term')
+const equityFlag = (record, context) => run(record, context).flags.find((f) => f.id === 'M1-equity-with-payment-terms')
+
+test('an equity line that is counted as debt is HIGH when that is what pushes coverage under the lender’s minimum', async () => {
+  const { record, context } = await load(s15()) // coverage 2.71x without the line, 1.16x with it; minimum 1.20x
+  const f = equityFlag(record, context)
+  assert.equal(f.severity, 'high')
+  assert.match(f.evidence, /Counting it as debt changes coverage from 2\.71× to 1\.16×, which is under the lender's minimum of 1\.20×/)
+  assert.match(f.evidence, /trace back to this one line/)
+  assert.match(f.follow_up, /If it is not a loan, coverage is 2\.71×; if it is, coverage is 1\.16×, under the lender's minimum/)
+  assert.deepEqual(validateFlag(f), [])
+  const checklistRow = checklist(record, context).find((r) => r.id === 'equity-terms')
+  assert.equal(checklistRow.status, 'fail')
+  assert.match(checklistRow.detail, /2\.71× to 1\.16×/)
+})
+
+test('the same line stays MEDIUM when counting it does not push coverage under the minimum, and still says what it does to coverage', async () => {
+  const { record, context } = await load(s15())
+  const smaller = structuredClone(record)
+  smaller.data.sources.rows[1].amount = 200000 // a small "equity" line: coverage falls from 2.71x to about 2.4x
+  const f = equityFlag(smaller, context)
+  assert.equal(f.severity, 'medium')
+  assert.match(f.evidence, /Counting it as debt changes coverage from 2\.71× to 2\.\d\d×\./)
+  assert.doesNotMatch(f.evidence, /lender's minimum/)
+  assert.doesNotMatch(f.follow_up, /coverage is/)
+})
+
+test('it stays MEDIUM when coverage already fails without the line, because the line is then not the cause', async () => {
+  const { record, context } = await load(s15())
+  const weak = structuredClone(record)
+  weak.data.sources.rows[0] = { ...weak.data.sources.rows[0], amount: 5550000, interestRate: 0.09 } // the loan alone gives 1.09x
+  const f = equityFlag(weak, context)
+  assert.equal(f.severity, 'medium')
+  assert.doesNotMatch(f.evidence, /trace back/)
+})
+
+test('the lender’s own minimum decides it: a lower minimum makes the same line medium, a higher one makes it high', async () => {
+  const { record, context } = await load(s15())
+  assert.equal(equityFlag(record, { ...context, settings: { ...DEFAULT_SETTINGS, minDscr: 1.0 } }).severity, 'medium', '1.16x is fine against a 1.00x minimum')
+  assert.equal(equityFlag(record, { ...context, settings: { ...DEFAULT_SETTINGS, minDscr: 2.0 } }).severity, 'high', '2.71x without the line is fine against 2.00x; 1.16x with it is not')
+  assert.equal(equityFlag(record, { ...context, settings: { ...DEFAULT_SETTINGS, minDscr: 3.0 } }).severity, 'medium', 'coverage fails against 3.00x even without the line')
+})
+
+test('when coverage cannot be worked out the line stays MEDIUM and makes no claim about coverage', async () => {
+  const { record, context } = await load(s15())
+  const noIncome = structuredClone(record)
+  noIncome.data.residentialIncome.rows = []
+  noIncome.data.commercialIncome.rows = []
+  noIncome.data.otherIncome.rows = []
+  const f = equityFlag(noIncome, context)
+  assert.equal(f.severity, 'medium')
+  assert.doesNotMatch(f.evidence, /Counting it as debt/)
 })
