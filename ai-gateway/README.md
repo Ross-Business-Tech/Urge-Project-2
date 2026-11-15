@@ -21,7 +21,27 @@ Website (here.now)  --- data + access code --->  this gateway (Vercel)  --- adds
 - Passes on only the *kind* of provider failure (busy, rejected, unreachable, timeout), never the provider's own message, which could repeat the request.
 - Logs one line per call with counts and timing only: never the data, the answer, the access code or the key.
 
-It does **not** store anything, and it does **not** limit how often someone calls it. That is done by the firewall rule below and by the spending limit at the provider.
+It does **not** store anything, and it does **not** limit how often someone calls it. **On Vercel** a firewall rule does that (below). **On Render there is no equivalent set up**, so the limits are the access code and the spending limit at the provider. Anyone who gets the access code could run up a bill up to that limit, so keep the code private, change it when someone leaves, and keep the provider's spending limit low. A per-code limit inside the server is a sensible next addition.
+
+## Hosting on Render (this is the **start command**)
+
+Render runs a program that stays on and listens for requests, so it uses `server.mjs` (a thin wrapper; the logic is the same). Render's own documentation says a web service must listen on `0.0.0.0` on the `PORT` Render provides (default 10000); `server.mjs` does exactly that.
+
+Create a **Web Service** from the repository and fill in:
+
+| Render field | Value |
+|---|---|
+| Language / runtime | Node |
+| Root Directory | blank if the repo holds only this folder's contents (recommended). `ai-gateway` if you point Render at the students' repository instead (weaker: see the repository note below). |
+| Build Command | `npm install` |
+| **Start Command** | **`npm start`** (the same as `node server.mjs`) |
+| Health Check Path | `/health` |
+| Environment variables | The table below. **Do not set `PORT`**: Render sets it. |
+
+- The address Render gives you ends in `.onrender.com`. The endpoint is `https://YOUR-SERVICE.onrender.com/api/ai`.
+- **Node version:** Render checks the `NODE_VERSION` setting, then a `.node-version` file, then `engines` in `package.json` (this folder's is `>=22 <26`, with an upper bound, as Render's docs advise). Its current default is Node 24, which works. Nothing to set unless you want to pin one.
+- **Free instances sleep** when idle, so the first request after a quiet spell can take a long while (I believe about a minute, but I could not read Render's page on this: check "Free instances" in their docs). The app will need to show "waking up" for that case. A paid instance stays awake.
+- Render's `Secret Files` and encrypted settings are fine for the key; whichever you use, it must never go in the repository.
 
 ## Setting it up (the instructor)
 
@@ -32,7 +52,7 @@ It does **not** store anything, and it does **not** limit how often someone call
    - **Anthropic:** create a workspace or project just for this app, and a key just for this gateway.
    - Either way, set a **monthly spending limit** and a billing alert. This is the only hard stop on cost.
    - Choose the **model name** on purpose (see `AI_MODEL` below). Gemini has no built-in default, because model names change and a stale one would fail.
-2. **At Vercel**
+2. **At Vercel** (skip this step if you host on Render: use the section above and then the environment variables table)
    - Create a team (check Vercel's plan terms: the free Hobby plan is for non-commercial personal use and has no team features).
    - Create a project from the new repository. If you use the students' repository, set the project's **Root Directory** to `ai-gateway`.
    - Add the environment variables below, each as type **Secret** (write-only after saving).
@@ -55,7 +75,7 @@ It does **not** store anything, and it does **not** limit how often someone call
 | `MAX_BODY_BYTES` | no | Largest request. Default 200000, never more than 1000000. |
 | `ENABLE_PING` | no | Set to `1` only while testing, to allow the `ping` layer (a cheap "reply ok" check). Turn it off afterwards. |
 
-Changing a variable at Vercel affects **new deployments only**, so redeploy after any change. That includes rotating the key.
+Changing a variable at Vercel affects **new deployments only**, so redeploy after any change. That includes rotating the key. (On Render, saving a changed variable redeploys the service, as I understand it; check it picked up the change.)
 
 ## Check it works (first deployment)
 
@@ -98,7 +118,7 @@ Everything sent here goes on to the AI provider, so both Vercel and the provider
 
 ```bash
 cd ai-gateway
-npm test      # 29 tests, no key and no network needed
+npm test      # 37 tests, no key and no network needed
 ```
 
-The logic is in `lib/handler.mjs`; `api/ai.mjs` only connects it to Vercel. The instructions the AI receives are in `lib/prompts.mjs` and are **drafts**: the answer shapes will change when the app side is built, and every answer carries a `prompt_version` so quality tests can tell which wording produced it.
+The logic is in `lib/handler.mjs`. `api/ai.mjs` connects it to Vercel and `server.mjs` (the Render start command) connects it to a normal web server. The instructions the AI receives are in `lib/prompts.mjs` and are **drafts**: the answer shapes will change when the app side is built, and every answer carries a `prompt_version` so quality tests can tell which wording produced it.
