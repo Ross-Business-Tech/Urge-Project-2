@@ -12,7 +12,7 @@ Website (here.now)  --- data + access code --->  this gateway (Vercel)  --- adds
 
 ## What it does, and what it refuses
 
-- Accepts only `POST /api/ai` with `{ "layer": "integrity" | "synthesis" | "scenarios", "payload": { ... } }`.
+- Accepts only `POST /api/ai` with `{ "layer": "review", "payload": { ... } }`. There is exactly one job. The AI is asked for two short things in one answer: (1) a synthesis that connects the **biggest** findings of the fixed checks, and (2) a **light** integrity screen for clear data problems the fixed checks missed. It is a second opinion and never a decision. (The earlier plan had a third job, suggested scenarios from market outlook; it was dropped, and the service refuses it.)
 - Needs the **access code** (header `x-access-code`). A wrong or missing code gets a 401 and no AI call is made.
 - Answers only the websites you list in `ALLOWED_ORIGINS`.
 - The caller sends only the data. The **model, the size cap, the temperature and the instructions are fixed here**; anything the caller sends for those is ignored. This is also why it cannot be used as a free general-purpose AI.
@@ -79,7 +79,7 @@ Changing a variable at Vercel affects **new deployments only**, so redeploy afte
 
 ## Check it works (first deployment)
 
-Do this with no real data. Replace the three capitalised parts. Set `ENABLE_PING=1` first.
+Do this with no real data. Replace the capitalised parts. Set `ENABLE_PING=1` first.
 
 ```bash
 curl -sS -X POST "https://YOUR-PROJECT.vercel.app/api/ai" \
@@ -118,7 +118,7 @@ Everything sent here goes on to the AI provider, so both Vercel and the provider
 
 ```bash
 cd ai-gateway
-npm test      # 39 tests, no key and no network needed
+npm test      # 40 tests, no key and no network needed
 ```
 
 The logic is in `lib/handler.mjs`. `api/ai.mjs` connects it to Vercel and `server.mjs` (the Render start command) connects it to a normal web server. The instructions the AI receives are in `lib/prompts.mjs` and are **drafts**: the answer shapes will change when the app side is built, and every answer carries a `prompt_version` so quality tests can tell which wording produced it.

@@ -79,7 +79,7 @@ test('other addresses are not found, and other methods are refused', async () =>
 
 test('a huge request is refused and never reaches the provider', async () => {
   await withServer(async (base, calls) => {
-    const big = JSON.stringify({ layer: 'integrity', payload: { text: 'x'.repeat(2_000_000) } })
+    const big = JSON.stringify({ layer: 'review', payload: { text: 'x'.repeat(2_000_000) } })
     let status
     try {
       status = (await call(base, { body: big })).status
