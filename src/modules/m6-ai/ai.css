@@ -1,0 +1,21 @@
+/* The AI second opinion screen. Uses the app's own colour variables so light and dark both work. */
+.ai-panel { display: grid; gap: 14px; }
+.ai-panel .card.plain .body { padding: 16px; }
+.ai-notice p { margin: 0; }
+.ai-sent { margin: 12px 0; }
+.ai-sent summary { cursor: pointer; font-weight: 600; }
+.ai-sent pre { max-height: 280px; overflow: auto; background: var(--chip-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ai-check { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0; line-height: 1.4; }
+.ai-check input { margin-top: 3px; width: 18px; height: 18px; flex: none; }
+.ai-answer section { margin-top: 16px; }
+.ai-label { margin: 0 0 4px; }
+.ai-summary { font-size: 1.05em; line-height: 1.5; }
+.ai-list { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 12px; }
+.ai-list p { margin: 4px 0; }
+.ai-head { font-weight: 650; }
+.ai-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.ai-unverified { margin: 4px 0; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--amber-bg); color: var(--amber); font-size: 0.9em; }
+.chip.good { background: var(--good-bg); color: var(--good); }
+@media (max-width: 560px) { .ai-panel .card.plain .body { padding: 12px; } .ai-list { padding-left: 16px; } }
+.ai-panel .field input[type='password'] { width: 100%; box-sizing: border-box; min-height: 44px; padding: 10px 12px; font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.ai-panel .field input[type='password']:focus { outline: 2px solid var(--accent); outline-offset: 1px; }

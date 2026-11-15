@@ -93,6 +93,14 @@ export const VIEWS = [
     lede: 'The record structure, grouped the way the applicant workbook groups it. Tap a group to see its fields. Blue "new" tags mark things the workbook does not have.',
   },
   {
+    id: 'ai',
+    label: 'AI second opinion',
+    needsReview: true,
+    icon: <Icon d={['M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z', 'M18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z']} />,
+    heading: 'AI second opinion',
+    lede: 'An optional second opinion that connects the biggest findings and screens the data lightly. The checks decide; the AI only advises, and nothing is sent until you press the button.',
+  },
+  {
     id: 'flags',
     label: 'Flag format',
     icon: <Icon d={['M5 21V4', 'M5 4h12l-2 4 2 4H5']} />,
@@ -106,5 +114,6 @@ export const NAV_GROUPS = [
   { title: 'Start', ids: ['import'] },
   { title: 'Analysis', ids: ['keynumbers', 'datachecks', 'scenarios'] },
   { title: 'Risk', ids: ['devrisk', 'completedrisk', 'transitions', 'sponsor'] },
+  { title: 'Optional', ids: ['ai'] },
   { title: 'Reference', ids: ['firm', 'project', 'flags'] },
 ]

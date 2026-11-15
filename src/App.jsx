@@ -8,6 +8,7 @@ import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
 import BenchmarkTable from './modules/m2-benchmarks/BenchmarkTable.jsx'
 import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
 import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
+import AiPanel from './modules/m6-ai/AiPanel.jsx'
 import './App.css'
 import './shell.css'
 import { NAV_GROUPS, VIEWS } from './views.jsx'
@@ -192,7 +193,7 @@ export default function App() {
   const heading = current.id === 'import' && !hasReview ? 'Review a loan application in minutes' : current.heading
   const lede =
     current.id === 'import' && !hasReview
-      ? 'Load the applicant\u2019s spreadsheet and get the key numbers, data checks, stress tests and risk flags on one page. Everything stays on your device.'
+      ? 'Load the applicant\u2019s spreadsheet and get the key numbers, data checks, stress tests and risk flags on one page. Your workbook is read on your device and never uploaded. The optional AI screen sends a reduced copy only when you ask.'
       : current.lede
   const fileName = review?.result?.report?.fileName
 
@@ -316,6 +317,11 @@ export default function App() {
             ) : (
               <EmptyState onGoLoad={goLoad} />
             ))}
+          {current.id === 'ai' && (
+            <LoadedProject review={review} onGoLoad={goLoad}>
+              {(record, firm, settings, result) => <AiPanel key={record.meta?.projectId} record={record} firm={firm} settings={settings} result={result} />}
+            </LoadedProject>
+          )}
           {current.id === 'flags' && <FlagFormat />}
           {current.schema && (
             <>
