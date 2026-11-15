@@ -33,9 +33,15 @@ export function t12Rows({ year = 2025, months = 12, occupancy = 0.95, rentFactor
         concessions: 0,
         occupancy,
         propertyManagement: Math.round(4167 * expenseFactor),
-        propertyTaxes: Math.round(10000 * expenseFactor),
+        propertyTaxes: Math.round(7000 * expenseFactor),
+        propertyLiabilityInsurance: Math.round(3000 * expenseFactor),
         replacementReserves: Math.round(1667 * expenseFactor),
-        otherExpenses: 833,
+        // These five add up to the 833 a month that used to be one fixed "other" line, so they stay fixed too.
+        electricHeatCommon: 250,
+        waterSewer: 250,
+        garbage: 83,
+        contractRepairs: 167,
+        groundsMaintenance: 83,
       }
     })
 }
@@ -59,7 +65,7 @@ export const scenarios = [
         { module: 'M1', id: 'M1-sources-uses', must: false, about: 'Sources 5,550,000 equal uses 5,550,000. No flag.' },
         { module: 'M3D', id: 'M3D-contingency-low', must: false, about: 'Construction contingency 400,000 on 3,500,000 hard cost (11.4%). No flag.' },
       ],
-      summary: 'A clean pass. No high or medium flags from any module. This is the control case: a module that flags this project is too noisy.',
+      summary: 'A clean pass. M1, M2, M3T and M4 raise nothing. M3D (low) and M5 (medium) each note that the sponsor has no completed projects, which is one real fact seen by two modules: a single-project workbook shows no delivery history. This is the control case: any other flag on this project is noise.',
     },
   },
   {
@@ -199,9 +205,14 @@ export const scenarios = [
     id: 's09-passes-dscr-low-occupancy-high-rent',
     title: 'Passes DSCR but low occupancy and high rent',
     stage: 'lease_up',
-    asOf: '2026-01-15',
+    asOf: '2025-06-15',
     what: 'The last 3 months of NOI beat underwriting and DSCR passes, but occupancy is 82% while rents run 30% above the market sample.',
-    build: () => ({ firm: healthyFirm(), projects: [{ record: healthyProject() }] }),
+    build: () => {
+      // A believable lease-up: built in 2024, leasing since, stabilization still ahead, and a T-12 that ends the month before "as of".
+      const record = healthyProject()
+      record.data.timeline = { constructionStart: '2023-06', constructionCompletion: '2024-09', stabilization: '2025-09' }
+      return { firm: healthyFirm(), projects: [{ record }] }
+    },
     t12: { rows: t12Rows({ year: 2025, months: 6, occupancy: 0.82, rentFactor: 1.3 }) },
     key: {
       ratios: { dscr: 2.71, trailing: 'see T-12' },

@@ -99,12 +99,13 @@ test('expenses over underwriting', async () => {
   assert.equal(f.severity, 'high')
 })
 
-test('expense lines: key lines missing is medium; the sample (only insurance missing) is low', async () => {
+test('expense lines: the complete sample raises nothing; a gap in a minor line is low; key lines missing is medium', async () => {
   const { record, context } = await healthy()
-  const f = run(record, context).flags.find((x) => x.id === 'M3C-expense-lines-missing')
-  assert.equal(f.severity, 'low')
+  const flag = (r) => run(r, context).flags.find((x) => x.id === 'M3C-expense-lines-missing')
+  assert.equal(flag(record), undefined, 'the sample T-12 has every expense line')
+  assert.equal(flag(editT12(record, { propertyLiabilityInsurance: null })).severity, 'low')
   const bare = editT12(record, { propertyManagement: null, propertyTaxes: null, replacementReserves: null })
-  assert.equal(run(bare, context).flags.find((x) => x.id === 'M3C-expense-lines-missing').severity, 'medium')
+  assert.equal(flag(bare).severity, 'medium')
 })
 
 test('low reserves and low property taxes are medium and explain the effect', async () => {
