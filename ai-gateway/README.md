@@ -121,6 +121,12 @@ If the ping call returns `provider_auth`, the key was not accepted: check that i
 
 Then set `ENABLE_PING` back to nothing and redeploy.
 
+## Reading the log when something fails
+
+Every call writes one line to the host's log (on Render: the service's **Logs** tab), for example `{"event":"ai_call","provider":"openai","layer":"review","status":502,"ms":812,...}`. It holds counts and timing, never the data, the answer, the access code or the key. When the AI provider refuses a request the line also carries the provider's **short status and error code** (for example `"provider_status":400,"provider_error_code":"unsupported_parameter","provider_error_param":"text.format"`), which usually says exactly what it objected to. The provider's own message is never kept, because it can repeat what was sent. If a reviewer sees "The AI provider could not accept this request", find the matching `ai_call` line and read those fields.
+
+**Strict-JSON fallback.** The gateway asks the provider for a strict JSON answer. If a service refuses that setting (a 400 or 422), the gateway tries once more without it and writes `"json_mode_dropped":true` in the log line. The answer is checked before it is shown either way, so a plain answer that is not valid JSON is refused later, never trusted.
+
 ## Switching it off, rotating, ending
 
 - **Switch off now:** revoke the key at the provider (instant), or delete `AI_API_KEY` at Vercel and redeploy.
@@ -138,7 +144,7 @@ Everything sent here goes on to the AI provider, so both Vercel and the provider
 
 ```bash
 cd ai-gateway
-npm test      # 51 tests, no key and no network needed
+npm test      # 58 tests, no key and no network needed
 ```
 
 The logic is in `lib/handler.mjs`. `api/ai.mjs` connects it to Vercel and `server.mjs` (the Render start command) connects it to a normal web server. The instructions the AI receives are in `lib/prompts.mjs` and are **drafts**: the answer shapes will change when the app side is built, and every answer carries a `prompt_version` so quality tests can tell which wording produced it.

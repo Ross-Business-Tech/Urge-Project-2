@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { handle, originAllowed, readBaseUrl } from '../lib/handler.mjs'
+import { handle, originAllowed, readBaseUrl, safeDetail } from '../lib/handler.mjs'
 import { LAYERS, PROMPT_VERSION } from '../lib/prompts.mjs'
 
 // A made-up key. It is deliberately not in any real key format.
@@ -260,7 +260,14 @@ test('the key and the access code never appear in any response or log, and the l
   assert.ok(logs.length >= 1)
   for (const line of logs) {
     const entry = JSON.parse(line)
-    assert.deepEqual(Object.keys(entry).sort(), ['event', 'input_tokens', 'layer', 'ms', 'output_tokens', 'provider', 'status'])
+    const base = ['event', 'input_tokens', 'layer', 'ms', 'output_tokens', 'provider', 'status']
+    const allowedExtra = ['json_mode_dropped', 'provider_status', 'provider_error_code', 'provider_error_type', 'provider_error_param']
+    assert.deepEqual(base.filter((k) => !(k in entry)), [], 'the base fields are always there')
+    for (const [k, v] of Object.entries(entry)) {
+      if (base.includes(k)) continue
+      assert.ok(allowedExtra.includes(k), `unexpected log field ${k}`)
+      assert.ok(typeof v === 'boolean' || typeof v === 'number' || /^[A-Za-z0-9_.:-]{1,60}$/.test(v), `${k} must be a short safe token`)
+    }
   }
 })
 
@@ -533,4 +540,114 @@ test('reading the address: good ones are cleaned, unset is null, unusable is und
   assert.equal(readBaseUrl('https://example.test'), 'https://example.test')
   assert.equal(readBaseUrl('http://example.test/v1'), undefined)
   assert.equal(readBaseUrl('https://example.test:8443/v1'), 'https://example.test:8443/v1')
+})
+
+
+// ---------------------------------------------------------------------------------------------
+// A service that refuses the strict-JSON setting: try once without it. And the provider's short error code is logged.
+// ---------------------------------------------------------------------------------------------
+
+const rejects = (status = 400, error = { message: `echo ${KEY} and the review data`, type: 'invalid_request_error', code: 'unsupported_parameter', param: 'text.format' }) => () => new Response(JSON.stringify({ error }), { status })
+
+// A pretend provider that answers a list of replies in order, and records every call.
+function sequence(...replies) {
+  const calls = []
+  const impl = async (url, init) => {
+    calls.push({ url, body: JSON.parse(init.body) })
+    const next = replies[Math.min(calls.length - 1, replies.length - 1)]
+    return typeof next === 'function' ? next() : next
+  }
+  impl.calls = calls
+  return impl
+}
+
+test('the message itself says JSON, outside the data block, which some services require before they allow a strict JSON answer', async () => {
+  for (const [name, environment, reply] of [['openai', oaEnv(), oaReply()], ['gemini', gemEnv(), gemReply()], ['anthropic', env(), okReply()]]) {
+    const { fetchImpl } = await run(post(good), environment, provider(reply))
+    const sent = fetchImpl.calls[0].body
+    const message = sent.input ?? sent.contents?.[0]?.parts?.[0]?.text ?? sent.messages?.[0]?.content
+    assert.match(message.split('</review_data>')[1], /JSON object/, name)
+    assert.equal(message.match(/<\/review_data>/g).length, 1, `${name}: the data still cannot close its own block`)
+  }
+})
+
+test('when a service refuses the strict-JSON setting (400), the request is retried once without it, and the answer is returned', async () => {
+  const logs = []
+  const calls = sequence(rejects(400), oaReply())
+  const { res, body } = await run(post(good), oaEnv(), calls, logs)
+  assert.equal(res.status, 200)
+  assert.equal(body.text, '{"second_opinion":"cannot_tell"}')
+  assert.equal(calls.calls.length, 2)
+  assert.deepEqual(calls.calls[0].body.text, { format: { type: 'json_object' } })
+  assert.equal('text' in calls.calls[1].body, false, 'the second try has no JSON setting')
+  assert.equal(calls.calls[1].body.model, calls.calls[0].body.model)
+  assert.equal(JSON.parse(logs[0]).json_mode_dropped, true)
+})
+
+test('the same fallback works for Gemini, and 422 counts as a refusal of the setting too', async () => {
+  const g = sequence(rejects(400, { message: 'Invalid JSON mode', status: 'INVALID_ARGUMENT' }), gemReply())
+  assert.equal((await run(post(good), gemEnv(), g)).res.status, 200)
+  assert.equal(g.calls[0].body.generationConfig.responseMimeType, 'application/json')
+  assert.equal('responseMimeType' in g.calls[1].body.generationConfig, false)
+  const o = sequence(rejects(422), oaReply())
+  assert.equal((await run(post(good), oaEnv(), o)).res.status, 200)
+})
+
+test('if the retry is refused too, the failure is reported once, after exactly two tries, with the provider’s code logged and nothing echoed', async () => {
+  const logs = []
+  const calls = sequence(rejects(400), rejects(400))
+  const { res, body } = await run(post(good), oaEnv(), calls, logs)
+  assert.equal(res.status, 502)
+  assert.equal(body.error, 'provider_rejected')
+  assert.equal(calls.calls.length, 2, 'never more than two tries')
+  assert.doesNotMatch(JSON.stringify(body), new RegExp(`${KEY}|review data|unsupported_parameter|text.format`), 'nothing from the provider reaches the caller')
+  const entry = JSON.parse(logs[0])
+  assert.equal(entry.provider_status, 400)
+  assert.equal(entry.provider_error_code, 'unsupported_parameter')
+  assert.equal(entry.provider_error_param, 'text.format')
+  assert.equal(entry.provider_error_type, 'invalid_request_error')
+  assert.equal(entry.json_mode_dropped, true)
+  assert.doesNotMatch(logs.join('\n'), new RegExp(`${KEY}|review data|echo`), 'the provider’s message is never logged')
+})
+
+test('only a refused JSON setting is retried: never a plain check, a wrong key, a busy service, an unknown model or a server error', async () => {
+  const count = async (environment, reply, request = post(good)) => {
+    const calls = sequence(reply)
+    await run(request, environment, calls)
+    return calls.calls.length
+  }
+  assert.equal(await count(oaEnv({ ENABLE_PING: '1' }), rejects(400), post({ layer: 'ping' })), 1, 'the connectivity check asks for no JSON, so there is nothing to drop')
+  assert.equal(await count(oaEnv(), rejects(401)), 1)
+  assert.equal(await count(oaEnv(), rejects(429)), 1)
+  assert.equal(await count(oaEnv(), rejects(404)), 1, 'an unknown model is not fixed by dropping JSON mode')
+  assert.equal(await count(oaEnv(), rejects(500)), 1)
+  assert.equal(await count(gemEnv(), rejects(400, { message: 'API key not valid', status: 'INVALID_ARGUMENT' })), 1, 'a rejected key is a credentials problem, not a JSON problem')
+})
+
+test('a retry that times out or cannot connect is reported as that, not as a rejected request', async () => {
+  const hang = (url, init) => new Promise((_, reject) => init.signal.addEventListener('abort', () => reject(Object.assign(new Error('aborted'), { name: 'AbortError' }))))
+  let n = 0
+  const rejectThenHang = async (url, init) => (++n === 1 ? rejects(400)() : hang(url, init))
+  const { res, body } = await run(post(good), oaEnv({ AI_TIMEOUT_MS: '60' }), rejectThenHang)
+  assert.equal(res.status, 504)
+  assert.equal(body.error, 'timeout')
+  let m = 0
+  const rejectThenFail = async () => { if (++m === 1) return rejects(400)(); throw new Error(`connect failed ${KEY}`) }
+  const unreachable = await run(post(good), oaEnv(), rejectThenFail)
+  assert.equal(unreachable.body.error, 'unreachable')
+  assert.doesNotMatch(JSON.stringify(unreachable.body), new RegExp(KEY))
+})
+
+test('the provider’s error code is logged for any provider, but only as a short safe token and never a secret', async () => {
+  const logs = []
+  await run(post(good), env(), provider(rejects(500, { type: 'overloaded_error', message: `secret ${KEY}` })), logs)
+  assert.equal(JSON.parse(logs[0]).provider_error_type, 'overloaded_error')
+  const sneaky = []
+  await run(post(good), oaEnv(), provider(rejects(500, { code: KEY, type: 'has spaces and <tags>', param: 'x'.repeat(200), message: 'm' })), sneaky)
+  const entry = JSON.parse(sneaky[0])
+  assert.equal(entry.provider_status, 500)
+  assert.deepEqual(['provider_error_code', 'provider_error_type', 'provider_error_param'].filter((k) => k in entry), [], 'a token holding the key, spaces, tags, or runaway length is dropped')
+  assert.doesNotMatch(sneaky.join('\n'), new RegExp(KEY))
+  assert.deepEqual(safeDetail({ error: { code: 429, status: 'RESOURCE_EXHAUSTED' } }), { provider_error_code: '429' })
+  assert.deepEqual(safeDetail(null), {})
 })

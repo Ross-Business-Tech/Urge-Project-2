@@ -70,6 +70,21 @@ function respond(status, body, extra = {}) {
 
 const fail = (status, error, message, headers) => respond(status, { ok: false, error, message }, headers)
 
+// The short, machine-style parts of a provider's error (its code, type and which parameter it objected to), for the server log
+// only. They name what was wrong ("unsupported_parameter", "text.format") without repeating anything that was sent. The
+// provider's free-text message is never kept, and a token that contains a secret is dropped.
+export function safeDetail(errorBody, secrets = []) {
+  const e = errorBody?.error ?? errorBody
+  const out = {}
+  for (const [key, from] of [['provider_error_code', e?.code ?? e?.status], ['provider_error_type', e?.type], ['provider_error_param', e?.param]]) {
+    const token = typeof from === 'number' ? String(from) : from
+    if (typeof token !== 'string' || !/^[A-Za-z0-9_.:-]{1,60}$/.test(token)) continue
+    if (secrets.some((x) => x && token.includes(x))) continue
+    out[key] = token
+  }
+  return out
+}
+
 export async function handle(request, env = process.env, fetchImpl = fetch, log = console.log) {
   const started = Date.now()
   const origin = request.headers.get('origin')
@@ -159,52 +174,76 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
     if (Number.isFinite(t)) temperature = Math.min(Math.max(t, 0), 1)
     else temperature = provider.defaultTemperature === undefined ? DEFAULTS.temperature : provider.defaultTemperature // null: send none
   }
-  const call = provider.request({
-    apiKey,
-    model,
-    maxTokens: clampInt(env.AI_MAX_TOKENS, DEFAULTS.maxTokens, HARD.maxTokens),
-    temperature,
-    system: systemPromptFor(layer),
-    user: userMessageFor(layer, body.payload),
-    json: layer !== 'ping',
-    baseUrl,
-  })
+  const maxTokens = clampInt(env.AI_MAX_TOKENS, DEFAULTS.maxTokens, HARD.maxTokens)
+  const system = systemPromptFor(layer)
+  const user = userMessageFor(layer, body.payload)
+  const buildCall = (json) => provider.request({ apiKey, model, maxTokens, temperature, system, user, json, baseUrl })
+  let jsonMode = layer !== 'ping' // ask for a strict JSON answer; dropped once if the service refuses it (see below)
+  let dropped = false
+  let failure = {} // short codes about a provider failure, for the server log only (never the provider's message)
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), clampInt(env.AI_TIMEOUT_MS, DEFAULTS.timeoutMs, HARD.timeoutMs))
   let status = 502
   let usage = {}
-  try {
-    let res
+  // One call to the provider. A failure to get any answer comes back as a ready response instead of being thrown.
+  const attempt = async (c) => {
     try {
-      res = await fetchImpl(call.url, { method: 'POST', headers: call.headers, body: JSON.stringify(call.body), signal: controller.signal })
+      return { res: await fetchImpl(c.url, { method: 'POST', headers: c.headers, body: JSON.stringify(c.body), signal: controller.signal }) }
     } catch (err) {
-      if (controller.signal.aborted || err?.name === 'AbortError') {
-        status = 504
-        return fail(504, 'timeout', 'The AI service took too long to answer. Try again.', cors)
-      }
-      return fail(502, 'unreachable', 'The AI service could not be reached.', cors)
+      if (controller.signal.aborted || err?.name === 'AbortError') return { early: fail(504, 'timeout', 'The AI service took too long to answer. Try again.', cors), status: 504 }
+      return { early: fail(502, 'unreachable', 'The AI service could not be reached.', cors), status: 502 }
     }
+  }
+  const readJson = async (r) => {
+    try {
+      return await r.json()
+    } catch {
+      return null /* no readable body: the status alone decides */
+    }
+  }
+
+  try {
+    const first = await attempt(buildCall(jsonMode))
+    if (first.early) {
+      status = first.status
+      return first.early
+    }
+    let res = first.res
 
     // Whatever the provider says when it refuses can repeat the request, so only the kind of failure is passed on.
     if (!res.ok) {
-      let errorBody = null
-      try {
-        errorBody = await res.json()
-      } catch {
-        /* no readable body: the status alone decides */
+      let errorBody = await readJson(res)
+      let kind = provider.classify(res.status, errorBody)
+      // Some services refuse the strict-JSON setting (a 400 or 422). Try once more without it: the answer is checked
+      // before it is shown anyway, so a plain answer that is not valid JSON is simply refused later, never trusted.
+      if (kind === 'rejected' && jsonMode && (res.status === 400 || res.status === 422)) {
+        dropped = true
+        jsonMode = false
+        const again = await attempt(buildCall(false))
+        if (again.early) {
+          status = again.status
+          return again.early
+        }
+        res = again.res
+        if (!res.ok) {
+          errorBody = await readJson(res)
+          kind = provider.classify(res.status, errorBody)
+        }
       }
-      const kind = provider.classify(res.status, errorBody)
-      if (kind === 'auth') {
+      if (!res.ok) {
+        failure = { provider_status: res.status, ...safeDetail(errorBody, [apiKey, ...codes]) }
+        if (kind === 'auth') {
+          status = 502
+          return fail(502, 'provider_auth', "The AI provider did not accept this service's credentials. Tell the instructor.", cors)
+        }
+        if (kind === 'busy') {
+          status = 503
+          return fail(503, 'busy', 'The AI service is busy or over its limit. Try again in a minute.', { ...cors, 'retry-after': '60' })
+        }
         status = 502
-        return fail(502, 'provider_auth', "The AI provider did not accept this service's credentials. Tell the instructor.", cors)
+        return fail(502, kind === 'rejected' ? 'provider_rejected' : 'provider_error', 'The AI provider could not complete the request.', cors)
       }
-      if (kind === 'busy') {
-        status = 503
-        return fail(503, 'busy', 'The AI service is busy or over its limit. Try again in a minute.', { ...cors, 'retry-after': '60' })
-      }
-      status = 502
-      return fail(502, kind === 'rejected' ? 'provider_rejected' : 'provider_error', 'The AI provider could not complete the request.', cors)
     }
 
     let answer
@@ -234,9 +273,10 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
     }, cors)
   } finally {
     clearTimeout(timer)
-    // One line of counts and timing. Never the data sent, the answer, the access code or the key.
+    // One line of counts and timing, plus (on a failure) the provider's short status and error code. Never the data sent, the
+    // answer, the provider's message, the access code or the key.
     try {
-      log(JSON.stringify({ event: 'ai_call', provider: provider.id, layer, status, ms: Date.now() - started, input_tokens: usage.input_tokens ?? null, output_tokens: usage.output_tokens ?? null }))
+      log(JSON.stringify({ event: 'ai_call', provider: provider.id, layer, status, ms: Date.now() - started, input_tokens: usage.input_tokens ?? null, output_tokens: usage.output_tokens ?? null, ...(dropped ? { json_mode_dropped: true } : {}), ...failure }))
     } catch {
       /* logging must never break a response */
     }
