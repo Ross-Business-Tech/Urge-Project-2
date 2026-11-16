@@ -8,7 +8,7 @@ Website (here.now)  --- data + access code --->  this gateway (Vercel)  --- adds
 
 **This folder is set up but not deployed.** It was written and tested without a Vercel account, so the first real deployment is the first time it runs on Vercel. See "Check it works" below. No real API key has ever been in this folder and none should be.
 
-**Which AI provider.** It works with **Google Gemini** or **Anthropic**, chosen by the `AI_PROVIDER` setting. You can tell which kind of key you hold from its first characters (look, but do not paste it anywhere): a Google AI Studio key starts with `AIza`, an Anthropic key with `sk-ant-`. **The Gemini side was written without being able to read Google's current documentation**, so it is proven only by the first real call (the ping check). If that call fails, only `lib/providers.mjs` needs to change.
+**Which AI provider.** It works with **Google Gemini**, **Anthropic** or **OpenAI**, chosen by the `AI_PROVIDER` setting (`gemini`, `anthropic` or `openai`). You can often tell which kind of key you hold from its first characters (look, but do not paste it anywhere): a Google AI Studio key starts with `AIza`, an Anthropic key with `sk-ant-`, an OpenAI key with `sk-`. **A key that starts differently belongs to a service this gateway does not know yet**: do not guess, find out which service issued it. **The Gemini and OpenAI sides were written without being able to read those companies' current documentation**, so each is proven only by the first real call (the ping check). If that call fails, only `lib/providers.mjs` needs to change.
 
 ## What it does, and what it refuses
 
@@ -22,6 +22,25 @@ Website (here.now)  --- data + access code --->  this gateway (Vercel)  --- adds
 - Logs one line per call with counts and timing only: never the data, the answer, the access code or the key.
 
 It does **not** store anything, and it does **not** limit how often someone calls it. **On Vercel** a firewall rule does that (below). **On Render there is no equivalent set up**, so the limits are the access code and the spending limit at the provider. Anyone who gets the access code could run up a bill up to that limit, so keep the code private, change it when someone leaves, and keep the provider's spending limit low. A per-code limit inside the server is a sensible next addition.
+
+**OpenAI notes.** The gateway uses OpenAI's "Responses" endpoint (I believe the Codex models are only served there). It tells OpenAI not to keep the request or the answer (`store: false`), and it sends no temperature unless you set `AI_TEMPERATURE`, because many newer OpenAI models refuse one. `AI_MODEL` has no default: copy the exact model name from OpenAI's dashboard. A key meant for a different tool (for example a coding assistant) may be limited to certain models or endpoints, and if so the ping will fail with `provider_auth` or `provider_rejected`. Create a key just for this app, with a spending limit.
+
+### Using the University of Michigan GPT Toolkit key (Codex)
+
+U-M's own setup instructions for Codex give the service's address and model name, which is what the gateway needs. On Render, set:
+
+| Name | Value |
+|---|---|
+| `AI_PROVIDER` | `openai` |
+| `AI_BASE_URL` | `https://api.toolkit.umgpt.umich.edu/v1` |
+| `AI_MODEL` | `gpt-5.6-terra` |
+| `AI_API_KEY` | the Toolkit key (never in code, chat or GitHub) |
+
+Four things to settle before relying on it, none of which can be tested without the real key:
+1. **Can Render reach it?** Render's servers are outside U-M's network. If the ping returns `unreachable` or `timeout`, the service may only accept calls from the campus network or VPN. Ask the ITS AI Services team whether the API accepts calls from the internet. If not, this key cannot be used from Render.
+2. **Is this the right endpoint?** The gateway calls `<AI_BASE_URL>/responses`, which is what I expect Codex to use. If the ping returns `provider_rejected`, ask ITS which endpoint and model name the service wants.
+3. **Whose key is it?** "Codex for the Classroom" creates one key per person, tied to that person and their allowance. Check with the instructor or ITS that a shared web service may use one person's key, and consider asking for a key issued for the app.
+4. **What data is allowed?** It is a university-run service, which may mean different data terms from a public one. I cannot say which data classifications are approved: ask ITS before any real data goes through. Until then, made-up data only.
 
 ## Hosting on Render (this is the **start command**)
 
@@ -64,11 +83,12 @@ Create a **Web Service** from the repository and fill in:
 
 | Name | Required | What it is |
 |---|---|---|
-| `AI_PROVIDER` | yes | `gemini` or `anthropic`. Anything else, or empty, and the service refuses everyone. |
+| `AI_PROVIDER` | yes | `gemini`, `anthropic` or `openai`. Anything else, or empty, and the service refuses everyone. |
+| `AI_BASE_URL` | no | Only for `openai`: the web address of an OpenAI-style service that is not OpenAI itself, such as a university's AI service. Must start with `https://` and have no password, query or `#`. The key is sent **to this address**, so only set one you trust. Ignored for the other providers. |
 | `AI_API_KEY` | yes | The provider key (whichever provider `AI_PROVIDER` names). Secret. Never in code, chat, or GitHub. |
 | `ACCESS_CODES` | yes | One or more access codes, separated by commas. To change the code, add the new one, tell people, then remove the old one. |
 | `ALLOWED_ORIGINS` | yes | The websites allowed to call this, separated by commas. Exact (`https://my-team-dev.here.now`) or one wildcard subdomain (`https://*.here.now`). A bare `*` is ignored. Without this, every browser call is refused. |
-| `AI_MODEL` | Gemini: yes. Anthropic: no | The model name, exactly as the provider lists it (for Gemini, the model code shown in Google AI Studio; pick a current text model that supports JSON answers). Anthropic defaults to `claude-sonnet-5-5`. |
+| `AI_MODEL` | Gemini and OpenAI: yes. Anthropic: no | The model name, exactly as the provider lists it (for Gemini, the model code shown in Google AI Studio; pick a current text model that supports JSON answers). Anthropic defaults to `claude-sonnet-5-5`. |
 | `AI_MAX_TOKENS` | no | Longest answer. Default 4000, never more than 8000. |
 | `AI_TEMPERATURE` | no | 0 to 1, default 0 (steadier answers). Set to `none` if the chosen model refuses a temperature. |
 | `AI_TIMEOUT_MS` | no | How long to wait for the provider. Default 120000, never more than 250000. |
@@ -118,7 +138,7 @@ Everything sent here goes on to the AI provider, so both Vercel and the provider
 
 ```bash
 cd ai-gateway
-npm test      # 40 tests, no key and no network needed
+npm test      # 51 tests, no key and no network needed
 ```
 
 The logic is in `lib/handler.mjs`. `api/ai.mjs` connects it to Vercel and `server.mjs` (the Render start command) connects it to a normal web server. The instructions the AI receives are in `lib/prompts.mjs` and are **drafts**: the answer shapes will change when the app side is built, and every answer carries a `prompt_version` so quality tests can tell which wording produced it.

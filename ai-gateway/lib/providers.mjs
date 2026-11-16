@@ -3,10 +3,10 @@
 //
 // The key always goes in a request HEADER, never in the web address, because web addresses end up in logs.
 //
-// NOTE ON ACCURACY. The Anthropic adapter follows its published messages API. The Gemini adapter was written from
-// knowledge of Google's generateContent API WITHOUT being able to read Google's current documentation from the build
-// environment, so its request and answer shapes have only been tested against the shape described here, not against
-// Google. The first real call (the "ping" check in the README) is what proves it. If that fails, only this file changes.
+// NOTE ON ACCURACY. The Anthropic adapter follows its published messages API. The Gemini and OpenAI adapters were written from
+// knowledge of those APIs WITHOUT being able to read their current documentation from the build environment, so their request
+// and answer shapes have only been tested against the shapes described here, not against Google or OpenAI. The first real call
+// (the "ping" check in the README) is what proves it. If that fails, only this file changes.
 
 const ANTHROPIC = {
   id: 'anthropic',
@@ -88,4 +88,60 @@ const GEMINI = {
   },
 }
 
-export const PROVIDERS = { anthropic: ANTHROPIC, gemini: GEMINI }
+// OpenAI, through its "Responses" endpoint rather than the older chat endpoint: I believe the Codex models are served only
+// there, and it accepts the other models too. The key goes in an Authorization header.
+//
+// It also serves any service that copies OpenAI's interface (a university's AI service, for example): set AI_BASE_URL to
+// that service's address and the same request goes there instead. The key is then sent to THAT address, so the address is
+// the instructor's to set, never the caller's.
+const OPENAI = {
+  id: 'openai',
+  label: 'OpenAI',
+  defaultModel: null, // model names change; the instructor must choose one on purpose (see the README)
+  // Many newer OpenAI models refuse a temperature, so none is sent unless the instructor sets one (AI_TEMPERATURE).
+  defaultTemperature: null,
+
+  request({ apiKey, model, maxTokens, temperature, system, user, json, baseUrl }) {
+    const body = {
+      model,
+      instructions: system,
+      input: user,
+      max_output_tokens: maxTokens,
+      store: false, // do not keep the request or the answer on OpenAI's side
+    }
+    if (temperature !== null) body.temperature = temperature
+    if (json) body.text = { format: { type: 'json_object' } }
+    return {
+      url: `${baseUrl ?? 'https://api.openai.com/v1'}/responses`,
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
+      body,
+    }
+  },
+
+  // 404 is how an unknown model name is reported.
+  classify(status) {
+    if (status === 401 || status === 403) return 'auth'
+    if (status === 429) return 'busy' // a rate limit, or the account being out of credit: either way, "over its limit"
+    if (status === 400 || status === 404 || status === 422) return 'rejected'
+    return 'error'
+  },
+
+  parse(answer, fallbackModel) {
+    const items = Array.isArray(answer?.output) ? answer.output : []
+    // Other items (such as the model's own reasoning) are not part of the answer.
+    const parts = items.filter((i) => i?.type === 'message').flatMap((i) => (Array.isArray(i.content) ? i.content : []))
+    const text = parts.filter((p) => p?.type === 'output_text').map((p) => (typeof p.text === 'string' ? p.text : '')).join('')
+    const reason = answer?.status === 'incomplete' ? (answer?.incomplete_details?.reason ?? 'incomplete') : null
+    return {
+      text,
+      model: typeof answer?.model === 'string' ? answer.model : fallbackModel,
+      stopReason: reason === 'max_output_tokens' ? 'max_tokens' : reason === null ? 'end_turn' : reason,
+      usage: { input_tokens: answer?.usage?.input_tokens ?? null, output_tokens: answer?.usage?.output_tokens ?? null },
+      // The model declined (a refusal), or a content filter stopped it.
+      blocked: parts.some((p) => p?.type === 'refusal') || reason === 'content_filter',
+      failed: answer?.status === 'failed',
+    }
+  },
+}
+
+export const PROVIDERS = { anthropic: ANTHROPIC, gemini: GEMINI, openai: OPENAI }

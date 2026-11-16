@@ -21,6 +21,20 @@ const clampInt = (value, fallback, max) => {
   return Number.isFinite(n) && n > 0 ? Math.min(n, max) : fallback
 }
 
+// The address of an OpenAI-style service (AI_BASE_URL): https only, no password in it, no query or fragment, and no trailing
+// slash. Returns null when it is not set, the cleaned address when it is good, and undefined when it is set but not usable.
+export function readBaseUrl(raw) {
+  const text = String(raw ?? '').trim()
+  if (!text) return null
+  try {
+    const u = new URL(text)
+    if (u.protocol !== 'https:' || u.username || u.password || u.search || u.hash || !u.hostname.includes('.')) return undefined
+    return `${u.origin}${u.pathname.replace(/\/+$/, '')}`
+  } catch {
+    return undefined
+  }
+}
+
 const list = (text) => String(text ?? '').split(',').map((s) => s.trim()).filter(Boolean)
 
 // An allowed website address is either exact ("https://app.example.com") or one wildcard subdomain
@@ -94,13 +108,17 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
   const providerId = String(env.AI_PROVIDER ?? '').trim().toLowerCase()
   const provider = Object.hasOwn(PROVIDERS, providerId) ? PROVIDERS[providerId] : null
   const model = provider ? String(env.AI_MODEL ?? '').trim() || provider.defaultModel : null
-  if (!apiKey || codes.length === 0 || !provider || !model) {
+  // Only an OpenAI-style provider can be pointed at another address; for the others the setting is ignored, so a stray value
+  // can never redirect their key.
+  const baseUrl = provider?.id === 'openai' ? readBaseUrl(env.AI_BASE_URL) : null
+  if (!apiKey || codes.length === 0 || !provider || !model || baseUrl === undefined) {
     // Say which settings are missing, by NAME only (the names are in the public README). Never a value.
     const missing = []
     if (!apiKey) missing.push('AI_API_KEY')
     if (codes.length === 0) missing.push('ACCESS_CODES')
-    if (!provider) missing.push('AI_PROVIDER (must be gemini or anthropic)')
+    if (!provider) missing.push('AI_PROVIDER (must be gemini, anthropic or openai)')
     else if (!model) missing.push('AI_MODEL')
+    if (baseUrl === undefined) missing.push('AI_BASE_URL (must be a web address starting with https://, with no password, query or #)')
     return respond(503, { ok: false, error: 'not_configured', message: 'The AI service is not set up yet.', missing }, cors)
   }
 
@@ -136,9 +154,10 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
   // 6. The provider request. The caller supplies only the data. The model, the size cap, the temperature and the
   //    instructions are all fixed here: anything the caller sends for them is ignored.
   let temperature = null
-  if (String(env.AI_TEMPERATURE ?? '').toLowerCase() !== 'none') {
+  if (String(env.AI_TEMPERATURE ?? '').trim().toLowerCase() !== 'none') {
     const t = Number.parseFloat(env.AI_TEMPERATURE)
-    temperature = Number.isFinite(t) ? Math.min(Math.max(t, 0), 1) : DEFAULTS.temperature
+    if (Number.isFinite(t)) temperature = Math.min(Math.max(t, 0), 1)
+    else temperature = provider.defaultTemperature === undefined ? DEFAULTS.temperature : provider.defaultTemperature // null: send none
   }
   const call = provider.request({
     apiKey,
@@ -148,6 +167,7 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
     system: systemPromptFor(layer),
     user: userMessageFor(layer, body.payload),
     json: layer !== 'ping',
+    baseUrl,
   })
 
   const controller = new AbortController()
@@ -195,6 +215,9 @@ export async function handle(request, env = process.env, fetchImpl = fetch, log 
     }
     const parsed = provider.parse(answer, model)
     usage = parsed.usage
+    if (parsed.failed) {
+      return fail(502, 'provider_error', 'The AI provider could not complete the request.', cors)
+    }
     if (parsed.blocked) {
       status = 422
       return fail(422, 'blocked', 'The AI provider declined to answer this request.', cors)

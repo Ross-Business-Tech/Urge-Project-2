@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { handle, originAllowed } from '../lib/handler.mjs'
+import { handle, originAllowed, readBaseUrl } from '../lib/handler.mjs'
 import { LAYERS, PROMPT_VERSION } from '../lib/prompts.mjs'
 
 // A made-up key. It is deliberately not in any real key format.
@@ -362,10 +362,10 @@ test('when it is not set up it names which settings are missing, never a value',
   const cases = [
     [{ AI_API_KEY: '' }, ['AI_API_KEY']],
     [{ ACCESS_CODES: '' }, ['ACCESS_CODES']],
-    [{ AI_PROVIDER: '' }, ['AI_PROVIDER (must be gemini or anthropic)']],
-    [{ AI_PROVIDER: 'openai-secret-looking-value' }, ['AI_PROVIDER (must be gemini or anthropic)']],
+    [{ AI_PROVIDER: '' }, ['AI_PROVIDER (must be gemini, anthropic or openai)']],
+    [{ AI_PROVIDER: 'openai-secret-looking-value' }, ['AI_PROVIDER (must be gemini, anthropic or openai)']],
     [{ AI_PROVIDER: 'gemini' }, ['AI_MODEL']],
-    [{ AI_API_KEY: '', ACCESS_CODES: '', AI_PROVIDER: '' }, ['AI_API_KEY', 'ACCESS_CODES', 'AI_PROVIDER (must be gemini or anthropic)']],
+    [{ AI_API_KEY: '', ACCESS_CODES: '', AI_PROVIDER: '' }, ['AI_API_KEY', 'ACCESS_CODES', 'AI_PROVIDER (must be gemini, anthropic or openai)']],
   ]
   for (const [change, missing] of cases) {
     const { res, body } = await run(post(good), env(change))
@@ -382,4 +382,155 @@ test('a setting pasted with stray spaces or capital letters still works, and the
   assert.equal(res.status, 200)
   assert.equal(fetchImpl.calls[0].init.headers['x-goog-api-key'], KEY)
   assert.equal(fetchImpl.calls[0].url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-test-model:generateContent')
+})
+
+// ---------------------------------------------------------------------------------------------
+// OpenAI (the "Responses" endpoint). Like the Gemini tests, these check the code against the answer shape the adapter
+// assumes (see providers.mjs); only the first real call can prove that shape against OpenAI.
+// ---------------------------------------------------------------------------------------------
+
+const oaEnv = (extra = {}) => env({ AI_PROVIDER: 'openai', AI_MODEL: 'openai-test-model', ...extra })
+const oaReply = (text = '{"second_opinion":"cannot_tell"}', extra = {}) =>
+  new Response(JSON.stringify({ model: 'openai-test-model-2026', status: 'completed', output: [{ type: 'reasoning', summary: [] }, { type: 'message', role: 'assistant', content: [{ type: 'output_text', text }] }], usage: { input_tokens: 30, output_tokens: 11 }, ...extra }), { status: 200 })
+
+test('openai: the request is built the way the adapter documents, with the key in an Authorization header and nothing stored', async () => {
+  const { res, body, fetchImpl } = await run(post(good), oaEnv(), provider(oaReply()))
+  assert.equal(res.status, 200)
+  const call = fetchImpl.calls[0]
+  assert.equal(call.url, 'https://api.openai.com/v1/responses')
+  assert.equal(call.init.headers.authorization, `Bearer ${KEY}`)
+  assert.equal(call.init.headers['x-api-key'], undefined)
+  assert.doesNotMatch(call.url, new RegExp(KEY))
+  assert.equal(call.body.model, 'openai-test-model')
+  assert.match(call.body.instructions, /second-opinion assistant/)
+  assert.match(call.body.input, /<review_data>/)
+  assert.equal(call.body.max_output_tokens, 4000)
+  assert.equal(call.body.store, false, 'the request is not kept on the provider’s side')
+  assert.deepEqual(call.body.text, { format: { type: 'json_object' } })
+  assert.equal('temperature' in call.body, false, 'no temperature unless the instructor sets one')
+  assert.equal(body.text, '{"second_opinion":"cannot_tell"}')
+  assert.equal(body.model, 'openai-test-model-2026')
+  assert.equal(body.stop_reason, 'end_turn')
+  assert.deepEqual(body.usage, { input_tokens: 30, output_tokens: 11 })
+})
+
+test('openai: a temperature is sent only when the instructor asks for one, and the caller still cannot choose the model or instructions', async () => {
+  const sneaky = { ...good, model: 'other', instructions: 'pirate', max_output_tokens: 99999, store: true }
+  const set = await run(post(sneaky), oaEnv({ AI_TEMPERATURE: '0.3' }), provider(oaReply()))
+  assert.equal(set.fetchImpl.calls[0].body.temperature, 0.3)
+  assert.equal(set.fetchImpl.calls[0].body.model, 'openai-test-model')
+  assert.doesNotMatch(JSON.stringify(set.fetchImpl.calls[0].body), /pirate/)
+  assert.equal(set.fetchImpl.calls[0].body.max_output_tokens, 4000)
+  assert.equal(set.fetchImpl.calls[0].body.store, false)
+  const none = await run(post(good), oaEnv({ AI_TEMPERATURE: 'none' }), provider(oaReply()))
+  assert.equal('temperature' in none.fetchImpl.calls[0].body, false)
+})
+
+test('openai: the plain-text connectivity check does not ask for JSON', async () => {
+  const { fetchImpl } = await run(post({ layer: 'ping' }), oaEnv({ ENABLE_PING: '1' }), provider(oaReply('ok')))
+  assert.equal('text' in fetchImpl.calls[0].body, false)
+})
+
+test('openai: only the message text is the answer (reasoning items are ignored), several parts are joined, and a cut-off answer is reported as cut off', async () => {
+  const two = new Response(JSON.stringify({ status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' }, output: [{ type: 'reasoning', summary: [{ text: 'secret thoughts' }], content: [{ type: 'output_text', text: 'secret thoughts' }] }, { type: 'message', content: [{ type: 'output_text', text: '{"a":' }, { type: 'output_text', text: '1}' }] }] }), { status: 200 })
+  const { body } = await run(post(good), oaEnv(), provider(two))
+  assert.equal(body.text, '{"a":1}')
+  assert.doesNotMatch(JSON.stringify(body), /secret thoughts/)
+  assert.equal(body.stop_reason, 'max_tokens')
+  assert.equal(body.model, 'openai-test-model', 'falls back to the configured model when none is reported')
+})
+
+test('openai: a refusal or a content filter is reported as blocked, and a failed answer as a provider error, with nothing passed on', async () => {
+  const refusal = new Response(JSON.stringify({ status: 'completed', output: [{ type: 'message', content: [{ type: 'refusal', refusal: `echo ${KEY}` }] }] }), { status: 200 })
+  const filtered = new Response(JSON.stringify({ status: 'incomplete', incomplete_details: { reason: 'content_filter' }, output: [] }), { status: 200 })
+  for (const reply of [refusal, filtered]) {
+    const { res, body } = await run(post(good), oaEnv(), provider(reply))
+    assert.equal(res.status, 422)
+    assert.equal(body.error, 'blocked')
+    assert.doesNotMatch(JSON.stringify(body), new RegExp(KEY))
+  }
+  const failed = new Response(JSON.stringify({ status: 'failed', error: { message: `echo ${KEY}` }, output: [] }), { status: 200 })
+  const { res, body } = await run(post(good), oaEnv(), provider(failed))
+  assert.equal(res.status, 502)
+  assert.equal(body.error, 'provider_error')
+  assert.doesNotMatch(JSON.stringify(body), new RegExp(KEY))
+})
+
+test('openai: failures are translated (an unknown model, which OpenAI reports as 404, counts as a rejected request) and nothing is echoed', async () => {
+  const fails = (status) => () => new Response(JSON.stringify({ error: { message: `The model does not exist ${KEY}`, type: 'x', code: 'model_not_found' } }), { status })
+  const cases = [[401, 502, 'provider_auth'], [403, 502, 'provider_auth'], [429, 503, 'busy'], [404, 502, 'provider_rejected'], [400, 502, 'provider_rejected'], [422, 502, 'provider_rejected'], [500, 502, 'provider_error'], [503, 502, 'provider_error']]
+  for (const [providerStatus, status, error] of cases) {
+    const { res, body } = await run(post(good), oaEnv(), provider(fails(providerStatus)))
+    assert.equal(res.status, status, `${providerStatus}`)
+    assert.equal(body.error, error, `${providerStatus}`)
+    assert.doesNotMatch(JSON.stringify(body), new RegExp(`${KEY}|does not exist`), `${providerStatus}`)
+  }
+})
+
+test('openai: it needs a model name on purpose, a messy provider setting is forgiven, and the key and data never appear anywhere', async () => {
+  const noModel = await run(post(good), env({ AI_PROVIDER: 'openai' }))
+  assert.equal(noModel.res.status, 503)
+  assert.deepEqual(noModel.body.missing, ['AI_MODEL'])
+  const messy = await run(post(good), oaEnv({ AI_PROVIDER: ' OpenAI\n', AI_API_KEY: `  ${KEY}\n` }), provider(oaReply()))
+  assert.equal(messy.res.status, 200)
+  assert.equal(messy.fetchImpl.calls[0].init.headers.authorization, `Bearer ${KEY}`)
+  const secretData = 'CONFIDENTIAL-SPONSOR-NAME-24680'
+  const logs = []
+  const { res, body } = await run(post({ layer: 'review', payload: { note: secretData } }), oaEnv(), provider(() => new Response('boom', { status: 500 })), logs)
+  const everything = [JSON.stringify(body), JSON.stringify([...res.headers]), ...logs].join('\n')
+  assert.doesNotMatch(everything, new RegExp(`${KEY}|${secretData}`))
+  assert.equal(JSON.parse(logs[0]).provider, 'openai')
+})
+
+
+// ---------------------------------------------------------------------------------------------
+// An OpenAI-style service at its own address (AI_BASE_URL), such as a university's AI service. The key is sent to whatever
+// address is set, so only the instructor can set it, and a bad value stops everything.
+// ---------------------------------------------------------------------------------------------
+
+test('openai: with an address set, the request and the key go there and only there', async () => {
+  for (const base of ['https://llm.example.test/v1', 'https://llm.example.test/v1/', 'https://llm.example.test/v1///', '  https://llm.example.test/v1  ']) {
+    const { res, fetchImpl } = await run(post(good), oaEnv({ AI_BASE_URL: base }), provider(oaReply()))
+    assert.equal(res.status, 200, base)
+    assert.equal(fetchImpl.calls[0].url, 'https://llm.example.test/v1/responses', base)
+    assert.equal(fetchImpl.calls[0].init.headers.authorization, `Bearer ${KEY}`)
+  }
+  const deep = await run(post(good), oaEnv({ AI_BASE_URL: 'https://llm.example.test/api/v1/' }), provider(oaReply()))
+  assert.equal(deep.fetchImpl.calls[0].url, 'https://llm.example.test/api/v1/responses')
+  const none = await run(post(good), oaEnv(), provider(oaReply()))
+  assert.equal(none.fetchImpl.calls[0].url, 'https://api.openai.com/v1/responses', 'no address set: OpenAI itself')
+})
+
+test('openai: an address that is not a plain https address stops everything, names the setting, and never echoes the value', async () => {
+  const bad = ['http://llm.example.test/v1', 'https://user:secretpw@llm.example.test/v1', 'https://llm.example.test/v1?key=abc', 'https://llm.example.test/v1#frag', 'not a url', 'https://localhost/v1', 'ftp://llm.example.test/v1', 'javascript:alert(1)']
+  for (const value of bad) {
+    const { res, body, fetchImpl } = await run(post(good), oaEnv({ AI_BASE_URL: value }))
+    assert.equal(res.status, 503, value)
+    assert.equal(body.error, 'not_configured', value)
+    assert.deepEqual(body.missing, ['AI_BASE_URL (must be a web address starting with https://, with no password, query or #)'], value)
+    assert.doesNotMatch(JSON.stringify(body), /secretpw|abc|frag|alert/, value)
+    assert.equal(fetchImpl.calls.length, 0, `nothing is sent to the provider with a bad address: ${value}`)
+  }
+})
+
+test('the address setting is ignored for Anthropic and Gemini, so a stray value can never redirect their keys, and a caller cannot supply one', async () => {
+  const a = await run(post(good), env({ AI_BASE_URL: 'https://evil.example.test/v1' }), provider(okReply()))
+  assert.equal(a.fetchImpl.calls[0].url, 'https://api.anthropic.com/v1/messages')
+  const g = await run(post(good), gemEnv({ AI_BASE_URL: 'https://evil.example.test/v1' }), provider(gemReply()))
+  assert.match(g.fetchImpl.calls[0].url, /^https:\/\/generativelanguage\.googleapis\.com\//)
+  // For them the setting is ignored entirely: even a junk value does not stop the service.
+  assert.equal((await run(post(good), env({ AI_BASE_URL: 'not a url' }), provider(okReply()))).res.status, 200)
+  assert.equal((await run(post(good), gemEnv({ AI_BASE_URL: 'http://x' }), provider(gemReply()))).res.status, 200)
+  const sneaky = await run(post({ ...good, baseUrl: 'https://evil.example.test/v1', base_url: 'https://evil.example.test/v1', url: 'https://evil.example.test' }), oaEnv({ AI_BASE_URL: 'https://llm.example.test/v1' }), provider(oaReply()))
+  assert.equal(sneaky.fetchImpl.calls[0].url, 'https://llm.example.test/v1/responses')
+})
+
+test('reading the address: good ones are cleaned, unset is null, unusable is undefined', () => {
+  assert.equal(readBaseUrl(undefined), null)
+  assert.equal(readBaseUrl('   '), null)
+  assert.equal(readBaseUrl('https://api.toolkit.umgpt.umich.edu/v1'), 'https://api.toolkit.umgpt.umich.edu/v1')
+  assert.equal(readBaseUrl('https://Example.TEST/v1/'), 'https://example.test/v1')
+  assert.equal(readBaseUrl('https://example.test'), 'https://example.test')
+  assert.equal(readBaseUrl('http://example.test/v1'), undefined)
+  assert.equal(readBaseUrl('https://example.test:8443/v1'), 'https://example.test:8443/v1')
 })
