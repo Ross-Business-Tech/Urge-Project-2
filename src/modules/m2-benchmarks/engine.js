@@ -150,6 +150,7 @@ function achievedRentRow(record, set) {
 }
 
 function rentRows(record, set, stage) {
+  if (set.custom && set.rents.length === 0) return [] // no rent benchmark entered: rents are not compared, and that is not a finding
   if (!record.data.residentialIncome.rows.some((r) => pos(r.monthlyRent))) {
     return [unavailable('rent', 'rent', 'Rents', 'not_available', 'No residential rents entered, so there is nothing to compare.', citeCells(record, ['residentialIncome.rows']))]
   }
@@ -165,7 +166,9 @@ function rentRows(record, set, stage) {
 function expenseRow(record, set, stage) {
   const label = 'Operating expenses per unit'
   const units = residentialUnits(record)
-  const range = expenseBenchmark(set).range
+  const bench = expenseBenchmark(set)
+  if (!bench.ok) return null // no expense benchmark entered: not compared
+  const range = bench.range
   if (!units) return unavailable('expenses', 'expense', label, 'not_available', 'No residential units entered, so expenses per unit cannot be worked out.', citeCells(record, ['residentialIncome.rows']))
 
   const monthExpense = (m) => {
@@ -216,6 +219,7 @@ function expenseRow(record, set, stage) {
 function costRows(record, set, stage, budgetTab) {
   const titles = { hard: 'Hard cost per sq ft', soft: 'Soft cost per sq ft', total: 'Total cost per sq ft' }
   if (stage === 'completed' || !set.costPerSqft) return [unavailable('cost', 'cost', 'Cost per sq ft', 'not_applicable', 'Not compared for completed projects: the cost is already spent.')]
+  if (set.custom && !Object.values(set.costPerSqft).some(Boolean)) return [] // no cost benchmark entered: not compared
   if (stage === 'lease_up') {
     return [unavailable('cost', 'cost', 'Remaining cost per sq ft', 'not_available', 'The workbook does not record how much of the budget is already spent, so the remaining cost cannot be compared. Ask the sponsor for the latest draw report.')]
   }
@@ -233,10 +237,11 @@ function costRows(record, set, stage, budgetTab) {
   const cellsFor = { hard: budgetTab ? [`${budgetTab}!G44`] : [], soft: budgetTab ? [`${budgetTab}!G99`] : [], total: budgetTab ? [`${budgetTab}!G102`] : [] }
   return ['hard', 'soft', 'total'].map((k) => {
     const b = costBenchmark(set, k)
+    if (!b.ok && b.kind === 'not-entered') return null // this cost figure has no benchmark entered: not compared
     if (!b.ok) return unavailable(`cost-${k}`, 'cost', titles[k], 'no_benchmark', b.reason)
     if (!totals[k]) return unavailable(`cost-${k}`, 'cost', titles[k], 'not_available', `No ${k} costs entered in the budget.`, cellsFor[k])
     return compared({ id: `cost-${k}`, metric: 'cost', label: titles[k], basis: 'Development budget', value: totals[k] / sqft, range: b.range, rangeBasis: `${fmt.usd(totals[k])} over ${sqftText}`, cells: cellsFor[k] })
-  })
+  }).filter(Boolean)
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -283,7 +288,7 @@ function flagsFor(rows, flag, ctx) {
       }
     }
   }
-  const noBench = rows.filter((r) => r.status === 'no_benchmark')
+  const noBench = ctx.set.custom ? [] : rows.filter((r) => r.status === 'no_benchmark') // with your own benchmarks, "not entered" is not a finding
   if (noBench.length) {
     flags.push(
       flag({
@@ -314,6 +319,6 @@ export function compareProject(project, context = {}) {
   const set = loaded.set
   const details = project.meta?.sourceTab
   const budgetTab = details && /^Development /.test(details) ? details.replace(/ Details$/, ' Budget') : null
-  const rows = [...rentRows(project, set, stage), expenseRow(project, set, stage), ...costRows(project, set, stage, budgetTab)]
+  const rows = [...rentRows(project, set, stage), expenseRow(project, set, stage), ...costRows(project, set, stage, budgetTab)].filter(Boolean)
   return { ok: true, stage, set, rows, flags: flagsFor(rows, maker.flag, { set, stage }) }
 }

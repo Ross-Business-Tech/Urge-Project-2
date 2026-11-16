@@ -296,6 +296,7 @@ function rentVsOccupancy(ctx) {
     covered += r.units
     marketTotal += r.units * b.range.median
   }
+  if (covered === 0 && bench.set.custom && bench.set.rents.length === 0) return c.na('No rent benchmark has been entered, so rents were not compared with a benchmark. Enter one under Benchmarks to check this.')
   if (covered === 0) return c.missing(['a market rent benchmark for these unit types'], citeCells(record, ['residentialIncome.rows.0.unitType']))
   const market = marketTotal / covered
   const actual = sum(rev.map((m) => m.residentialRevenue)) / rev.length / units
@@ -311,7 +312,7 @@ function rentVsOccupancy(ctx) {
     severity: 'high',
     transition: 'T2',
     title: 'Occupancy is low and rents are well above the market, so the units may not fill at these rents.',
-    evidence: `Occupancy ${share(occupancy)} (below the ${share(settings.occupancyFloor)} floor) with rents ${share(premium)} above the market median (${usd(actual)} vs. ${usd(market)}; limit ${share(settings.rentPremium)}). The loan coverage test can still pass.${partial} The market figures are made-up sample data.`,
+    evidence: `Occupancy ${share(occupancy)} (below the ${share(settings.occupancyFloor)} floor) with rents ${share(premium)} above the market median (${usd(actual)} vs. ${usd(market)}; limit ${share(settings.rentPremium)}). The loan coverage test can still pass.${partial} ${bench.set.madeUp ? 'The market figures are made-up sample data.' : 'The rent benchmark is the one entered in this tool.'}`,
     cell_refs: cells,
     follow_up: 'Why are units sitting empty at these rents? Will rents come down, and what does that do to income and the loan?',
   })

@@ -4,7 +4,7 @@ import { scenarios, t12Rows } from '../../shared/samples/scenarios.js'
 import { recordsToWorkbook } from '../../shared/samples/toWorkbook.js'
 import { healthyProject } from '../../shared/samples/baseline.js'
 import { importWorkbook } from '../../shared/import/importWorkbook.js'
-import { applyStageAndDate, compareSeverity, validateFlag, blankProject } from '../../shared/index.js'
+import { applyStageAndDate, compareSeverity, validateFlag, blankProject, toBenchmarkSets } from '../../shared/index.js'
 import { run, checklist } from '../index.js'
 import { readPeriod } from '../checks.js'
 
@@ -380,4 +380,26 @@ test('fees: a developer fee mostly paid in cash is flagged low with a question; 
     d.sources.rows[2].amount = 150000 // 150,000 deferred of 200,000
   })
   assert.equal(ids(deferred).includes('M3D-fee-mostly-cash'), false)
+})
+
+// --- the benchmarks the team types in ---------------------------------------------------------------------------------
+
+test('with no benchmarks entered, contingency is not compared and says how to enter one', () => {
+  const p = project('development', (d) => (d.budget.lines.constructionContingency.amount = 40000))
+  const context = { benchmarkSets: toBenchmarkSets([]) }
+  assert.ok(!ids(p, context).includes('M3D-contingency-low'), 'no benchmark, so nothing to be thin against')
+  assert.ok(!ids(p, context).includes('M3D-contingency-missing'), 'and it is not a missing-data finding either')
+  const row = checklist(p, context).find((c) => c.id === 'contingency')
+  assert.ok(row, 'the contingency row is still listed')
+  assert.equal(row.status, 'not_applicable')
+  assert.match(row.detail, /Enter one under Benchmarks/)
+})
+
+test('a contingency range the team entered is the one used, with the same grading as before', () => {
+  const sets = toBenchmarkSets([{ id: 'c', metric: 'contingency', low: 0.05, high: 0.1, typical: null }])
+  const thin = (amount) => project('development', (d) => (d.budget.lines.constructionContingency.amount = amount))
+  assert.equal(flagOf(thin(150000), 'M3D-contingency-low', { benchmarkSets: sets }).severity, 'medium')
+  assert.equal(flagOf(thin(40000), 'M3D-contingency-low', { benchmarkSets: sets }).severity, 'high')
+  assert.equal(flagOf(thin(175000), 'M3D-contingency-low', { benchmarkSets: sets }), undefined)
+  assert.ok(!JSON.stringify(run(thin(40000), { benchmarkSets: sets }).flags).match(/made-up|placeholder.*benchmark/))
 })

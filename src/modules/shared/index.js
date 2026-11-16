@@ -53,3 +53,4 @@ export {
   compareToRange,
 } from './benchmarks/index.js'
 export { BENCHMARK_SETS } from './benchmarks/sets.js'
+export { METRICS, metricOf, keyOf, checkEntry, usableEntries, problemsByEntry, toBenchmarkSets, middleOf, serializeEntries, parseEntries, newEntry, FILE_KIND, FILE_VERSION } from './benchmarks/yours.js'

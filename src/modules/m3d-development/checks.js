@@ -92,6 +92,7 @@ function contingency(ctx) {
   if (base <= 0) return notChecked(ctx, id, 'budget', title, 'The hard costs before contingency add up to zero.', cells)
   const loaded = loadBenchmarks(stage, ctx.benchmarkSets)
   const bench = loaded.ok ? contingencyBenchmark(loaded.set) : loaded
+  if (!bench.ok && bench.kind === 'not-entered') return row(id, 'budget', title, 'not_applicable', `${bench.reason} Enter one under Benchmarks to check it.`, { cells })
   if (!bench.ok) return notChecked(ctx, id, 'budget', title, bench.reason, cells)
   const { low, high } = bench.range
   const share = amount / base

@@ -4,7 +4,7 @@ import { scenarios, t12Rows } from '../../shared/samples/scenarios.js'
 import { recordsToWorkbook } from '../../shared/samples/toWorkbook.js'
 import { importWorkbook } from '../../shared/import/importWorkbook.js'
 import { buildT12Template, parseT12Template } from '../../shared/import/t12Template.js'
-import { applyStageAndDate, replaceT12Rows, compareSeverity, validateFlag, blankProject } from '../../shared/index.js'
+import { applyStageAndDate, replaceT12Rows, compareSeverity, validateFlag, blankProject, toBenchmarkSets } from '../../shared/index.js'
 import { run, checklist, summary } from '../index.js'
 import { parseMonth } from '../checks.js'
 
@@ -253,4 +253,24 @@ test('parseMonth reads years and months and refuses anything else', () => {
   assert.equal(parseMonth('2027-06').idx, 2027 * 12 + 5)
   assert.equal(parseMonth(2027).yearOnly, true)
   assert.equal(parseMonth('soon'), null)
+})
+
+// --- the benchmarks the team types in ---------------------------------------------------------------------------------
+
+test('high rent with low occupancy: with no rent benchmark entered it is "not compared", never a finding and never a guess', async () => {
+  const { record, context } = await load(byId('s09-passes-dscr-low-occupancy-high-rent'))
+  const none = run(record, { ...context, benchmarkSets: toBenchmarkSets([]) })
+  assert.ok(!ids(none.flags).includes('M3T-high-rent-low-occupancy'))
+  assert.ok(!ids(none.flags).includes('M3T-check-failed'))
+  assert.ok(!ids(none.flags).some((id) => /rent.*missing|missing.*rent/.test(id)), 'and not a missing-data finding')
+})
+
+test('high rent with low occupancy against a rent range the team entered: the same finding, and it says the benchmark is theirs', async () => {
+  const { record, context } = await load(byId('s09-passes-dscr-low-occupancy-high-rent'))
+  const entries = record.data.residentialIncome.rows.map((r, i) => ({ id: `r${i}`, metric: 'rent', unitType: r.unitType, ami: r.amiLevel === null ? '' : String(r.amiLevel), low: 1000, high: 1200, typical: null }))
+  const f = run(record, { ...context, benchmarkSets: toBenchmarkSets(entries) }).flags.find((x) => x.id === 'M3T-high-rent-low-occupancy')
+  assert.ok(f, 'rents far above the entered range with low occupancy')
+  assert.equal(f.severity, 'high')
+  assert.match(f.evidence, /The rent benchmark is the one entered in this tool\./)
+  assert.ok(!/made-up/.test(f.evidence))
 })
