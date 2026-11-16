@@ -212,3 +212,16 @@ test('the module still works with no entries given at all (the built-in sets, as
   assert.ok(r.notes[0].includes('made-up'), 'only the built-in numbers are described as made-up')
   assert.ok(!r.flags.some((f) => f.id.startsWith('M2-yours')))
 })
+
+test('a finding about loans points only at sources that have an amount, not at blank cells', () => {
+  let blank
+  const p = project('development', (d) => {
+    d.sources.rows.push({ lienPriority: 9, name: 'Unfilled loan', type: 'hard_debt', amount: null, termMonths: null, interestRate: null, paymentOverride: null })
+    blank = d.sources.rows.length - 1
+  })
+  for (const metric of ['dscr', 'interestRate', 'debtToCost']) {
+    const res = compareYours(p, [entry(metric, 0.001, 0.002)])
+    assert.ok(res.rows[0].cells.length > 0, metric)
+    assert.ok(!res.rows[0].cells.some((c) => c.includes(`row ${blank + 1}`)), `${metric}: no cell from the empty source row`)
+  }
+})

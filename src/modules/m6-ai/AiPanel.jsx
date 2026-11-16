@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { projectReadiness } from '../shared/index.js'
 import { AI_CONFIG } from '../../aiConfig.js'
 import { collectFlags } from './collect.js'
+import { useBenchmarkContext } from '../../useBenchmarks.js'
 import { buildPayload, fitPayload } from './payload.js'
 import { restore } from './deidentify.js'
 import { askGateway } from './client.js'
@@ -213,15 +214,16 @@ export function AnswerView({ outcome, flags, map, data = [] }) {
 }
 
 export default function AiPanel({ record, firm, settings, result }) {
+  const bm = useBenchmarkContext()
   const ready = projectReadiness(record).ready
   const gathered = useMemo(() => {
     try {
-      const { flags, notes } = collectFlags(record, { firm, settings, result })
+      const { flags, notes } = collectFlags(record, { firm, settings, result, bm })
       return { ok: true, flags, ...buildPayload({ record, firm, settings, result, flags, notes }) }
     } catch {
       return { ok: false, flags: [], payload: null, map: [] }
     }
-  }, [record, firm, settings, result])
+  }, [record, firm, settings, result, bm])
 
   const [code, setCode] = useState('')
   const [phase, setPhase] = useState('idle')

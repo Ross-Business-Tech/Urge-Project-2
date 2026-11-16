@@ -114,3 +114,13 @@ test('an answer with nothing to point at has no Evidence box', async () => {
   assert.ok(!html.includes('Evidence behind this opinion'))
   assert.match(html, /Nothing clear found beyond what the checks already flag/)
 })
+
+test('the AI review sees the same benchmark findings as the screens: the team’s ranges are passed through', async () => {
+  const { collectFlags } = await import('../collect.js')
+  const loaded = await loadScenario(scenarios[0])
+  const entries = [{ id: 'v', metric: 'vacancy', low: 0.2, high: 0.3, typical: null }]
+  const without = collectFlags(loaded.record, { firm: loaded.firm, settings: loaded.settings, result: loaded.result })
+  const withIt = collectFlags(loaded.record, { firm: loaded.firm, settings: loaded.settings, result: loaded.result, bm: { benchmarks: entries } })
+  assert.ok(!without.flags.some((f) => f.id.startsWith('M2-yours')))
+  assert.ok(withIt.flags.some((f) => f.id.startsWith('M2-yours-vacancy')), 'a range the team entered produces its finding in the AI input')
+})

@@ -41,7 +41,12 @@ function valueOf(metric, record, ratios) {
     const r = ratios.find((x) => x.id === metric.id)
     if (!r) return { ok: false, reason: 'That figure is not worked out for this project.' }
     if (!r.ok || !isNum(r.value)) return { ok: false, reason: r.reason ?? 'It cannot be worked out from what is entered.' }
-    const paths = record.data.sources.rows.flatMap((_, i) => (metric.id === 'equityShare' ? [`sources.rows.${i}.amount`] : [`sources.rows.${i}.amount`, `sources.rows.${i}.interestRate`, `sources.rows.${i}.termMonths`]))
+    // Only the sources with an amount, and for the loan-based figures the rate and term of the loans themselves.
+    const paths = record.data.sources.rows.flatMap((row, i) => {
+      if (!isNum(row.amount) || row.amount <= 0) return []
+      if (metric.id === 'equityShare' || !DEBT_SOURCE_TYPES.includes(row.type)) return [`sources.rows.${i}.amount`]
+      return [`sources.rows.${i}.amount`, `sources.rows.${i}.interestRate`, `sources.rows.${i}.termMonths`]
+    })
     return { ok: true, value: r.value, paths }
   }
   return { ok: false, reason: 'Unknown figure.' }

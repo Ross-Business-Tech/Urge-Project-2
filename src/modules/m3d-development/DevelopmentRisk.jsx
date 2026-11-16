@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { checklist, GROUPS } from './index.js'
 import { cutoffRows } from './thresholds.js'
 import { BENCHMARK_SETS } from '../shared/index.js'
+import { useBenchmarkContext, useBenchmarks } from '../../useBenchmarks.js'
 import './development.css'
 
 const STATUS = {
@@ -15,16 +16,17 @@ const SEVERITY = { high: 'warn', medium: 'amber', low: '' }
 // M3D's development risk checks for one project, grouped as budget, schedule, money and takeout, and team.
 // Shown for development and lease-up projects once a stage and date are chosen.
 export default function DevelopmentRisk({ record, firm, settings }) {
+  const bm = useBenchmarkContext()
   const stage = record.data.stage.stage
   const ready = Boolean(stage && record.data.stage.asOfDate)
   const rows = useMemo(() => {
     if (!ready || (stage !== 'development' && stage !== 'lease_up')) return null
     try {
-      return checklist(record, { firm, settings })
+      return checklist(record, { firm, settings, ...bm })
     } catch {
       return 'error'
     }
-  }, [ready, stage, record, firm, settings])
+  }, [ready, stage, record, firm, settings, bm])
 
   if (!ready) {
     return (
@@ -99,14 +101,15 @@ export default function DevelopmentRisk({ record, firm, settings }) {
   )
 }
 
-// The numbers behind high / medium / low, in plain words, so a reviewer can see (and question) them. They are placeholders.
+// The numbers behind high / medium / low, in plain words, so a reviewer can see (and question) them.
 function Cutoffs({ settings, stage }) {
-  const range = BENCHMARK_SETS[stage]?.contingencyShare
-  const rows = cutoffRows(undefined, { minDscr: settings?.minDscr ?? 1.2, contingencyLow: range?.low ?? 0.05, contingencyHigh: range?.high ?? 0.1 })
+  const { sets } = useBenchmarks()
+  const range = (sets ?? BENCHMARK_SETS)[stage]?.contingencyShare
+  const rows = cutoffRows(undefined, { minDscr: settings?.minDscr ?? 1.2, contingencyLow: range ? range.low : null, contingencyHigh: range ? range.high : null })
   return (
     <details className="dev-cutoffs">
       <summary>Cutoffs used for high / medium / low</summary>
-      <p className="note">These numbers are made-up placeholders, waiting for the real ranges. They are all in one file (thresholds.js) and easy to change.</p>
+      <p className="note">These are the cutoffs the checks use, shown so you can question them. The contingency range is the one you enter under Benchmarks.</p>
       <div className="dev-cutoff-scroll">
         <table>
           <thead>

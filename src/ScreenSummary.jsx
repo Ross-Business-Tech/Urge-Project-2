@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { fmt, keyRatios, compareSeverity } from './modules/shared/index.js'
+import { useBenchmarkContext } from './useBenchmarks.js'
 import { checklist as integrityChecklist } from './modules/m1-integrity/index.js'
 import { run as benchmarkRun } from './modules/m2-benchmarks/index.js'
 import { checklist as devChecklist, appliesTo as devApplies } from './modules/m3d-development/index.js'
@@ -59,14 +60,14 @@ const display = (r) => (r.unit === 'times' ? fmt.times(r.value) : r.unit === 'pe
 
 // ---- one builder per screen: returns the props for <Summary />, or null when there is nothing to summarize ----
 
-function keyNumbers({ record, settings }) {
+function keyNumbers({ record, settings, bm }) {
   if (!record.data.stage.stage) return null
   const ratios = keyRatios(record, settings).filter((r) => r.ok)
   if (ratios.length === 0) return null
   const count = (s) => ratios.filter((r) => r.status === s).length
   const concern = count('concern')
   const watch = count('watch')
-  const market = benchmarkRun(record, { settings })
+  const market = benchmarkRun(record, { settings, ...bm })
   const flags = market.flags.filter((f) => f.severity !== 'low')
   const tone = concern ? 'bad' : watch || flags.length ? 'amber' : 'good'
   const headline = concern
@@ -78,10 +79,10 @@ function keyNumbers({ record, settings }) {
   return {
     tone,
     headline,
-    sub: flags.length ? `${plural(flags.length, 'figure')} also sit outside the market range.` : 'Rents, expenses and costs are in line with the market comparison.',
+    sub: flags.length ? `${plural(flags.length, 'figure')} also sit outside ${bm.benchmarks ? 'your benchmark' : 'the market'} range.` : bm.benchmarks ? 'Everything compared is within your benchmarks.' : 'Rents, expenses and costs are in line with the market comparison.',
     tiles,
     flags,
-    flagsTitle: 'Market figures to question',
+    flagsTitle: bm.benchmarks ? 'Figures outside your benchmarks' : 'Market figures to question',
   }
 }
 
@@ -112,13 +113,13 @@ function dataChecks({ record, firm, result }) {
   return checkList(integrityChecklist(record, { firm, facts: result.facts, report: result.report }), { noun: 'check', allGood: 'The numbers agree with each other.' })
 }
 
-function devRisk({ record, firm, settings }) {
+function devRisk({ record, firm, settings, bm }) {
   if (!devApplies(record)) return null
-  return checkList(devChecklist(record, { firm, settings }), { noun: 'risk', allGood: 'No development risks raised.' })
+  return checkList(devChecklist(record, { firm, settings, ...bm }), { noun: 'risk', allGood: 'No development risks raised.' })
 }
 
-function completedRisk({ record, firm, settings }) {
-  return checkList(completedChecklist(record, { firm, settings }), { noun: 'risk', allGood: 'The property is performing as promised.' })
+function completedRisk({ record, firm, settings, bm }) {
+  return checkList(completedChecklist(record, { firm, settings, ...bm }), { noun: 'risk', allGood: 'The property is performing as promised.' })
 }
 
 function scenarios({ record, settings }) {
@@ -150,9 +151,9 @@ function scenarios({ record, settings }) {
 const NEXT_TONE = { on_track: 'good', watch: 'amber', at_risk: 'bad', unknown: 'neutral' }
 const NEXT_TEXT = { on_track: 'is on track', watch: 'is worth watching', at_risk: 'is at risk', unknown: 'cannot be judged yet' }
 
-function stageChanges({ record, firm, settings }) {
+function stageChanges({ record, firm, settings, bm }) {
   if (!record.data.stage.stage || !record.data.stage.asOfDate) return null
-  const s = transitionSummary(record, { firm, settings })
+  const s = transitionSummary(record, { firm, settings, ...bm })
   if (!s?.next) return null
   const { next, rows } = s
   const failed = rows.filter((r) => r.status === 'fail')
@@ -175,13 +176,14 @@ const BUILDERS = { keynumbers: keyNumbers, datachecks: dataChecks, scenarios, de
 // The summary for one screen, then a heading that introduces the detail below it. Draws nothing if the screen has no summary
 // yet (for example no stage chosen) or if working it out fails: the details underneath still show.
 export default function ScreenSummary({ kind, record, firm, settings, result }) {
+  const bm = useBenchmarkContext()
   const props = useMemo(() => {
     try {
-      return BUILDERS[kind]?.({ record, firm, settings, result }) ?? null
+      return BUILDERS[kind]?.({ record, firm, settings, result, bm }) ?? null
     } catch {
       return null
     }
-  }, [kind, record, firm, settings, result])
+  }, [kind, record, firm, settings, result, bm])
   if (!props) return null
   return (
     <>

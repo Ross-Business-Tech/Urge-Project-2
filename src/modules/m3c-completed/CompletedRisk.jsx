@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { checklist } from './index.js'
+import { useBenchmarkContext } from '../../useBenchmarks.js'
 import './completed-risk.css'
 
 const STATUS = {
@@ -11,17 +12,18 @@ const STATUS = {
 const SEVERITY_CHIP = { high: 'warn', medium: 'amber', low: '' }
 
 // M3D's development risk checks for one project, grouped as the spec groups them. Shown once a stage and date are chosen.
-export default function CompletedRisk({ record, firm, settings, benchmarkSets }) {
+export default function CompletedRisk({ record, firm, settings }) {
+  const bm = useBenchmarkContext()
   const stage = record.data.stage.stage
   const ready = Boolean(stage && record.data.stage.asOfDate)
   const rows = useMemo(() => {
     if (!ready) return null
     try {
-      return checklist(record, { firm, settings, benchmarkSets })
+      return checklist(record, { firm, settings, ...bm })
     } catch {
       return 'error'
     }
-  }, [ready, record, firm, settings, benchmarkSets])
+  }, [ready, record, firm, settings, bm])
 
   const heading = <p className="section-label">Completed risk: is it performing as promised, and what happens when the loan comes due?</p>
   if (!ready) {

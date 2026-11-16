@@ -122,7 +122,7 @@ function rentRollRows(record, set, basis) {
       const cells = citeCells(record, [`residentialIncome.rows.${i}.monthlyRent`, `residentialIncome.rows.${i}.unitType`, ...(r.amiLevel !== null && r.amiLevel !== undefined ? [`residentialIncome.rows.${i}.amiLevel`] : [])])
       const b = rentBenchmark(set, r.unitType, r.amiLevel)
       if (!b.ok) return { ...unavailable(`rent-${i}`, 'rent', label, 'no_benchmark', `${fmt.usd(r.monthlyRent)}/unit/month. ${b.reason}`, cells), value: r.monthlyRent }
-      return compared({ id: `rent-${i}`, metric: 'rent', label, basis, value: r.monthlyRent, range: b.range, rangeBasis: b.basis === 'market' ? 'market comps' : `${b.basis} comps`, cells })
+      return compared({ id: `rent-${i}`, metric: 'rent', label, basis, value: r.monthlyRent, range: b.range, rangeBasis: set.custom ? 'your benchmark' : b.basis === 'market' ? 'market comps' : `${b.basis} comps`, cells })
     })
 }
 

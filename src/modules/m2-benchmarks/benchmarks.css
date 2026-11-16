@@ -151,3 +151,14 @@
   white-space: normal;
   overflow-wrap: anywhere;
 }
+
+.link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--accent, #2563eb);
+  text-decoration: underline;
+  cursor: pointer;
+  min-height: 24px;
+}

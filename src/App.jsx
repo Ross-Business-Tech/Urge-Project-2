@@ -6,6 +6,8 @@ import CompletedRisk from './modules/m3c-completed/CompletedRisk.jsx'
 import TransitionChecks from './modules/m3t-transitions/TransitionChecks.jsx'
 import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
 import BenchmarkTable from './modules/m2-benchmarks/BenchmarkTable.jsx'
+import BenchmarksEditor from './modules/m2-benchmarks/BenchmarksEditor.jsx'
+import { BenchmarksProvider } from './BenchmarksProvider.jsx'
 import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
 import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
 import AiPanel from './modules/m6-ai/AiPanel.jsx'
@@ -179,6 +181,14 @@ function NavButton({ view, active, hasReview, onPick }) {
 }
 
 export default function App() {
+  return (
+    <BenchmarksProvider>
+      <Shell />
+    </BenchmarksProvider>
+  )
+}
+
+function Shell() {
   const [view, setView] = useState('import')
   const [review, setReview] = useState(null) // what "Load workbook" has on screen; the other tabs show it
   const [attempt, setAttempt] = useState(0) // changing this starts the review screen over after a crash
@@ -256,11 +266,12 @@ export default function App() {
                   <ScreenSummary kind="keynumbers" record={record} firm={firm} settings={settings} result={result} />
                   <SettingsPanel settings={settings} onChange={review.changeSettings} />
                   <KeyRatios key={record.meta?.projectId} record={record} settings={settings} onOpenGroup={goLoad} />
-                  <BenchmarkTable record={record} />
+                  <BenchmarkTable record={record} settings={settings} onOpenBenchmarks={() => goTo('benchmarks')} />
                 </>
               )}
             </LoadedProject>
           )}
+          {current.id === 'benchmarks' && <BenchmarksEditor />}
           {current.id === 'datachecks' && (
             <LoadedProject review={review} onGoLoad={goLoad}>
               {(record, firm, settings, result) => (

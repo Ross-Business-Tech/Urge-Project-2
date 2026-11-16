@@ -80,8 +80,13 @@ const pct = (n) => `${Math.round(n * 1000) / 10}%`
 // The same cutoffs in plain words, built from the numbers above so the screen can never disagree with the checks.
 // Each row: { topic, high, medium, low } where a blank means "no flag at this level".
 export function cutoffRows(t = THRESHOLDS, { minDscr = 1.2, contingencyLow = 0.05, contingencyHigh = 0.1 } = {}) {
+  // null means no contingency benchmark has been entered, so there is nothing to compare with.
+  const contingency =
+    contingencyLow === null
+      ? { topic: 'Contingency (cushion for cost overruns), share of hard cost', high: '', medium: 'not compared until a benchmark is entered', low: '' }
+      : { topic: 'Contingency (cushion for cost overruns), share of hard cost', high: `under ${pct(contingencyLow * t.contingencyHighBelowFractionOfLow)}`, medium: `under ${pct(contingencyLow)} (benchmark ${pct(contingencyLow)} to ${pct(contingencyHigh)})`, low: '' }
   return [
-    { topic: 'Contingency (cushion for cost overruns), share of hard cost', high: `under ${pct(contingencyLow * t.contingencyHighBelowFractionOfLow)}`, medium: `under ${pct(contingencyLow)} (benchmark ${pct(contingencyLow)} to ${pct(contingencyHigh)})`, low: '' },
+    contingency,
     { topic: 'Contingency above a program cap', high: '', medium: `over ${pct(t.contingencyProgramCap)} of hard cost`, low: '' },
     { topic: 'Permits, tap fees and bonds, share of hard cost', high: '', medium: `over ${pct(t.permitsShareOfHard.medium)}`, low: `over ${pct(t.permitsShareOfHard.low)}` },
     { topic: 'Developer and related-party fees, share of total cost', high: '', medium: `over ${pct(t.developerFeesShareOfCost.medium)}`, low: `over ${pct(t.developerFeesShareOfCost.low)}` },

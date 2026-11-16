@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
-import { compareProject, UNITS } from './index.js'
+import { compareProject, compareYours, UNITS } from './index.js'
+import { usableEntries, DEFAULT_SETTINGS } from '../shared/index.js'
+import { useBenchmarkContext } from '../../useBenchmarks.js'
 import './benchmarks.css'
 
 const STATUS = {
@@ -30,22 +32,50 @@ function RangeStrip({ row }) {
 }
 
 // M2's comparison table for one project: each figure, the market range, and whether it falls outside.
-export default function BenchmarkTable({ record }) {
+export default function BenchmarkTable({ record, settings = DEFAULT_SETTINGS, onOpenBenchmarks }) {
   const stage = record.data.stage.stage
+  const bm = useBenchmarkContext()
   const result = useMemo(() => {
     if (!stage) return null
     try {
-      return compareProject(record, {})
+      return compareProject(record, bm)
     } catch {
       return { ok: false, reason: 'The comparison could not be completed for this project. Review it by hand for now.' }
     }
-  }, [stage, record])
+  }, [stage, record, bm])
+  // The loan and return figures (interest rate, coverage, and so on) the team entered ranges for.
+  const yours = useMemo(() => {
+    if (!stage || !bm.benchmarks) return { rows: [], flags: [] }
+    try {
+      return compareYours(record, bm.benchmarks, { settings })
+    } catch {
+      return { rows: [], flags: [] }
+    }
+  }, [stage, record, bm, settings])
+  const entered = bm.benchmarks ? usableEntries(bm.benchmarks).length : null
 
   if (!result) {
     return (
       <section className="benchmarks">
         <p className="section-label">Market comparison</p>
         <p className="note">Choose a stage above to compare this project with the market.</p>
+      </section>
+    )
+  }
+  if (entered === 0) {
+    return (
+      <section className="benchmarks">
+        <p className="section-label">Comparison with your benchmarks</p>
+        <p className="note">
+          You have not entered any benchmarks, so nothing here is compared. Enter the ranges you trust, such as rents, interest rates or coverage, and this project will be compared with them.
+        </p>
+        {onOpenBenchmarks && (
+          <div className="actions">
+            <button type="button" className="button primary" onClick={onOpenBenchmarks}>
+              Enter your benchmarks
+            </button>
+          </div>
+        )}
       </section>
     )
   }
@@ -59,16 +89,25 @@ export default function BenchmarkTable({ record }) {
   }
 
   const flagFor = (row) => result.flags.find((fl) => fl.id.includes(`-${row.status}-comps`) && fl.id.startsWith(`M2-${{ rent: 'rent', expense: 'expenses', cost: 'cost' }[row.metric]}-`))
-  const outside = result.rows.filter((r) => r.status === 'above' || r.status === 'below').length
-  const compared = result.rows.filter((r) => r.range).length
+  const isOut = (r) => r.status === 'above' || r.status === 'below'
+  const outside = result.rows.filter(isOut).length + yours.rows.filter(isOut).length
+  const compared = result.rows.filter((r) => r.range).length + yours.rows.filter((r) => r.status === 'within' || isOut(r)).length
   return (
     <section className="benchmarks">
-      <p className="section-label">Market comparison: are rents, expenses and costs reasonable?</p>
+      <p className="section-label">{bm.benchmarks ? 'Comparison with your benchmarks' : 'Market comparison: are rents, expenses and costs reasonable?'}</p>
       <p className={outside ? 'banner warn' : 'ok'} role="status">
-        {compared === 0 ? 'Nothing could be compared yet.' : `${compared - outside} of ${compared} figures are within the market range${outside ? `. ${outside} ${outside === 1 ? 'is' : 'are'} outside.` : '.'}`}
+        {compared === 0 ? 'Nothing could be compared yet.' : `${compared - outside} of ${compared} figures are within ${bm.benchmarks ? 'your' : 'the market'} range${outside ? `. ${outside} ${outside === 1 ? 'is' : 'are'} outside.` : '.'}`}
       </p>
       <p className="note">
         Compared with: {result.set.name}.{result.set.madeUp && <strong> Sample numbers only, not real market data.</strong>}
+        {onOpenBenchmarks && (
+          <>
+            {' '}
+            <button type="button" className="link-button" onClick={onOpenBenchmarks}>
+              Change your benchmarks
+            </button>
+          </>
+        )}
       </p>
       <ul className="bm-list">
         {result.rows.map((row) => {
@@ -97,13 +136,13 @@ export default function BenchmarkTable({ record }) {
                       </dd>
                     </div>
                     <div>
-                      <dt>Market range</dt>
+                      <dt>{bm.benchmarks ? 'Your range' : 'Market range'}</dt>
                       <dd>
                         {f(row.range.low)} to {f(row.range.high)}
                       </dd>
                     </div>
                     <div>
-                      <dt>vs. median</dt>
+                      <dt>{bm.benchmarks ? 'vs. typical' : 'vs. median'}</dt>
                       <dd>{row.percentFromMedian === null ? 'n/a' : `${row.percentFromMedian > 0 ? '+' : ''}${(row.percentFromMedian * 100).toFixed(0)}%`}</dd>
                     </div>
                   </dl>
@@ -131,6 +170,39 @@ export default function BenchmarkTable({ record }) {
           )
         })}
       </ul>
+      {yours.rows.length > 0 && (
+        <ul className="bm-list">
+          {yours.rows.map((row) => {
+            const st = STATUS[row.status]
+            const flag = yours.flags.find((fl) => fl.id === `M2-yours-${row.slug}-${row.status}`)
+            return (
+              <li key={row.id} className={`bm-row ${row.status}`}>
+                <div className="bm-top">
+                  <span className="bm-label">{row.label}</span>
+                  <span className="chips">
+                    <span className={`chip ${flag ? SEVERITY_CHIP[flag.severity] || st.chip : st.chip}`}>
+                      {st.label}
+                      {flag ? ` · ${flag.severity}` : ''}
+                    </span>
+                  </span>
+                </div>
+                <p className="bm-detail">{row.detail}</p>
+                {flag && <p className="bm-detail ask">Ask the sponsor: {flag.follow_up}</p>}
+                {isOut(row) && row.cells?.length > 0 && (
+                  <p className="bm-cells">
+                    {row.cells.slice(0, 6).map((c) => (
+                      <span className="chip cell" key={c}>
+                        {c}
+                      </span>
+                    ))}
+                    {row.cells.length > 6 && <span className="chip">+{row.cells.length - 6} more</span>}
+                  </p>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </section>
   )
 }

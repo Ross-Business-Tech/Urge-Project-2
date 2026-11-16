@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { summary } from './index.js'
+import { useBenchmarkContext } from '../../useBenchmarks.js'
 import './transitions.css'
 
 const STAGES = [
@@ -28,17 +29,18 @@ const whenText = (when) => {
 
 // M3T's stage-change checks for one project: a timeline of where it is and which hand-off is next, then the checks for that
 // hand-off. Checks that belong to another stage are listed in one line instead of as empty cards.
-export default function TransitionChecks({ record, firm, settings, benchmarkSets }) {
+export default function TransitionChecks({ record, firm, settings }) {
+  const bm = useBenchmarkContext()
   const stage = record.data.stage.stage
   const ready = Boolean(stage && record.data.stage.asOfDate)
   const result = useMemo(() => {
     if (!ready) return null
     try {
-      return summary(record, { firm, settings, benchmarkSets })
+      return summary(record, { firm, settings, ...bm })
     } catch {
       return 'error'
     }
-  }, [ready, record, firm, settings, benchmarkSets])
+  }, [ready, record, firm, settings, bm])
 
   const heading = <p className="section-label">Stage changes: will it make the next jump?</p>
   if (!ready) {
