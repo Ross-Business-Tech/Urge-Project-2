@@ -117,3 +117,51 @@ test('the effect summary with nothing entered, or no stage, only says what to do
   const noStage = plain(renderToString(withProvider([{ id: 'a', metric: 'vacancy', low: 0.05, high: 0.08, typical: null }], createElement(Impact, { record: healthyProject() }))))
   assert.match(noStage, /Choose a stage above/)
 })
+
+// --- the unit type dropdown ---------------------------------------------------------------------------------------------
+
+const rentEntry = (unitType, id = 'r') => ({ id, metric: 'rent', unitType, ami: '', low: 1000, high: 1200, typical: null })
+const workbook = [{ type: '1br', units: 40, written: ['1-bdr'] }, { type: '2br', units: 20, written: [] }]
+
+test('the unit type is a dropdown: the workbook’s types with unit counts first, then the standard types it does not have', () => {
+  const html = renderToString(withProvider([rentEntry('1br')], createElement(Editor, { workbookTypes: workbook })))
+  assert.match(html, /<optgroup label="In this workbook">/)
+  assert.match(plain(html), /1 bedroom \(1br\): 40 units, written “1-bdr”/)
+  assert.match(plain(html), /2 bedroom \(2br\): 20 units/)
+  assert.match(html, /<optgroup label="Other standard types">/)
+  const standard = html.slice(html.indexOf('Other standard types'))
+  assert.match(standard, /Studio/)
+  assert.match(standard, /3 bedroom/)
+  assert.doesNotMatch(standard.slice(0, standard.indexOf('</optgroup>')), /2 bedroom/, 'a type the workbook has is not listed twice')
+  assert.doesNotMatch(html, /placeholder="for example 2br"/, 'no free-text box for a standard type')
+})
+
+test('the chosen type is selected however it was written, and the workbook is said to hold it', () => {
+  for (const written of ['1br', '1 BR', '1-bdr', 'one bedroom']) {
+    const html = renderToString(withProvider([rentEntry(written)], createElement(Editor, { workbookTypes: workbook })))
+    assert.match(html, /<option value="1br" selected="">/, written)
+    assert.match(plain(html), /The loaded workbook has 40 units of this type\./, written)
+  }
+})
+
+test('a type the workbook does not hold says so', () => {
+  const html = renderToString(withProvider([rentEntry('3br')], createElement(Editor, { workbookTypes: workbook })))
+  assert.match(plain(html), /The loaded workbook has no units of this type, so this range is not used on it\./)
+})
+
+test('an unusual type shows as "Other" with its name in a box, and a blank one asks to choose', () => {
+  const unusual = renderToString(withProvider([rentEntry('Penthouse')], createElement(Editor, { workbookTypes: workbook })))
+  assert.match(unusual, /<option value="__other" selected="">/)
+  assert.match(unusual, /value="Penthouse"/)
+  const blank = renderToString(withProvider([rentEntry('')], createElement(Editor, { workbookTypes: workbook })))
+  assert.match(blank, /<option value="" selected="">Choose a type<\/option>/)
+  assert.match(plain(blank), /Enter the unit type, such as studio, 1br or 2br\./)
+})
+
+test('with no workbook loaded the dropdown offers the standard types and makes no claim about a workbook', () => {
+  const html = renderToString(withProvider([rentEntry('2br')], createElement(Editor)))
+  assert.doesNotMatch(html, /In this workbook/)
+  assert.match(html, /<optgroup label="Standard types">/)
+  assert.match(html, /<option value="2br" selected="">/)
+  assert.doesNotMatch(plain(html), /loaded workbook/)
+})

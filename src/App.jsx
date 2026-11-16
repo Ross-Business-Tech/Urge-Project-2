@@ -8,6 +8,7 @@ import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
 import BenchmarkTable from './modules/m2-benchmarks/BenchmarkTable.jsx'
 import BenchmarksEditor from './modules/m2-benchmarks/BenchmarksEditor.jsx'
 import BenchmarkImpact from './BenchmarkImpact.jsx'
+import { unitTypesIn } from './modules/m2-benchmarks/unitTypes.js'
 import { BenchmarksProvider } from './BenchmarksProvider.jsx'
 import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
 import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
@@ -282,7 +283,7 @@ function Shell() {
                 <p className="note">Load a workbook to see what your benchmarks find in a project. You can enter them now.</p>
               )}
               <h2 className="details-heading">Your ranges</h2>
-              <BenchmarksEditor />
+              <BenchmarksEditor workbookTypes={review ? unitTypesIn(review.result.projects) : undefined} />
             </>
           )}
           {current.id === 'datachecks' && (

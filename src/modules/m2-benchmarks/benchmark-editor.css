@@ -112,3 +112,29 @@
   background: var(--card, rgba(39, 72, 214, 0.08));
   border: 1px solid var(--border);
 }
+
+.be-type {
+  display: grid;
+  gap: 8px;
+}
+
+.be-type .field {
+  margin: 0;
+}
+
+.be-type select,
+.be-type input[type='text'] {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 40px;
+  font: inherit;
+}
+
+.be-hint {
+  margin: 0;
+}
+
+/* The unit type and income level need room for their words, so they stack on a phone. */
+.be-row-wide {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}

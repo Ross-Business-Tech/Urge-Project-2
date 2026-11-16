@@ -1,8 +1,9 @@
 import { useId, useMemo, useRef, useState } from 'react'
-import { METRICS, metricOf, newEntry, problemsByEntry, usableEntries, parseEntries, serializeEntries } from '../shared/index.js'
+import { METRICS, metricOf, newEntry, problemsByEntry, usableEntries, parseEntries, serializeEntries, normalizeUnitType } from '../shared/index.js'
 import { useBenchmarks } from '../../useBenchmarks.js'
 import { downloadBytes } from '../../download.js'
 import { fromText, toText, ADORNMENT } from './fields.js'
+import { unitTypeChoices, STANDARD_TYPES } from './unitTypes.js'
 import './benchmark-editor.css'
 
 const GROUPS = [
@@ -47,7 +48,73 @@ function NumberBox({ label, unit, value, onChange, optional }) {
   )
 }
 
-function EntryCard({ entry, problems, onChange, onRemove }) {
+const OTHER = '__other'
+
+// The unit type, chosen from a list: the types the loaded workbook holds, then the usual ones, then "Other" for anything unusual.
+function UnitTypePicker({ value, workbookTypes, onChange }) {
+  const id = useId()
+  const choices = useMemo(() => unitTypeChoices(workbookTypes), [workbookTypes])
+  const known = new Set([...choices.inWorkbook.map((t) => t.type), ...STANDARD_TYPES])
+  const type = normalizeUnitType(value)
+  const [other, setOther] = useState(() => Boolean(type) && !known.has(type))
+  const shown = other ? OTHER : known.has(type) ? type : ''
+  return (
+    <div className="be-type">
+      <label className="field" htmlFor={id}>
+        <span>Unit type</span>
+        <select
+          id={id}
+          value={shown}
+          onChange={(e) => {
+            if (e.target.value === OTHER) {
+              setOther(true)
+              onChange('')
+            } else {
+              setOther(false)
+              onChange(e.target.value)
+            }
+          }}
+        >
+          <option value="">Choose a type</option>
+          {choices.inWorkbook.length > 0 && (
+            <optgroup label="In this workbook">
+              {choices.inWorkbook.map((t) => (
+                <option key={t.type} value={t.type}>
+                  {t.label}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          <optgroup label={choices.inWorkbook.length > 0 ? 'Other standard types' : 'Standard types'}>
+            {choices.standard.map((t) => (
+              <option key={t.type} value={t.type}>
+                {t.label}
+              </option>
+            ))}
+          </optgroup>
+          <option value={OTHER}>Other…</option>
+        </select>
+      </label>
+      {other && (
+        <label className="field">
+          <span>Type name</span>
+          <input type="text" value={value ?? ''} placeholder="for example penthouse" autoComplete="off" onChange={(e) => onChange(e.target.value)} />
+        </label>
+      )}
+    </div>
+  )
+}
+
+// Whether the loaded workbook holds the unit type of a rent benchmark.
+function workbookHint(entry, workbookTypes) {
+  if (!workbookTypes?.length) return null
+  const type = normalizeUnitType(entry.unitType)
+  if (!type) return null
+  const found = workbookTypes.find((t) => t.type === type)
+  return found ? `The loaded workbook has ${found.units} ${found.units === 1 ? 'unit' : 'units'} of this type.` : 'The loaded workbook has no units of this type, so this range is not used on it.'
+}
+
+function EntryCard({ entry, problems, workbookTypes, onChange, onRemove }) {
   const metric = metricOf(entry.metric)
   const help = metric && helpFor(metric)
   const set = (patch) => onChange({ ...entry, ...patch })
@@ -61,11 +128,8 @@ function EntryCard({ entry, problems, onChange, onRemove }) {
       </div>
       {help && <p className="note">{help}</p>}
       {entry.metric === 'rent' && (
-        <div className="be-row">
-          <label className="field">
-            <span>Unit type</span>
-            <input type="text" value={entry.unitType ?? ''} placeholder="for example 2br" autoComplete="off" onChange={(e) => set({ unitType: e.target.value })} />
-          </label>
+        <div className="be-row be-row-wide">
+          <UnitTypePicker value={entry.unitType} workbookTypes={workbookTypes} onChange={(unitType) => set({ unitType })} />
           <label className="field">
             <span>
               Income level <em>(optional)</em>
@@ -74,6 +138,7 @@ function EntryCard({ entry, problems, onChange, onRemove }) {
           </label>
         </div>
       )}
+      {entry.metric === 'rent' && workbookHint(entry, workbookTypes) && <p className="note be-hint">{workbookHint(entry, workbookTypes)}</p>}
       {metric && (
         <div className="be-row">
           <NumberBox label="Low" unit={metric.unit} value={entry.low} onChange={(low) => set({ low })} />
@@ -93,7 +158,7 @@ function EntryCard({ entry, problems, onChange, onRemove }) {
 }
 
 // The "Benchmarks" screen: the ranges the team trusts, typed in by them. Every comparison in the app is against these.
-export default function BenchmarksEditor() {
+export default function BenchmarksEditor({ workbookTypes }) {
   const { entries, kept, replace } = useBenchmarks()
   const [adding, setAdding] = useState('rent')
   const [message, setMessage] = useState(null)
@@ -154,7 +219,7 @@ export default function BenchmarksEditor() {
       {list.length > 0 && (
         <ul className="be-list" key={version}>
           {list.map((entry) => (
-            <EntryCard key={entry.id} entry={entry} problems={problems[entry.id]} onChange={change} onRemove={() => remove(entry.id)} />
+            <EntryCard key={entry.id} entry={entry} problems={problems[entry.id]} workbookTypes={workbookTypes} onChange={change} onRemove={() => remove(entry.id)} />
           ))}
         </ul>
       )}
