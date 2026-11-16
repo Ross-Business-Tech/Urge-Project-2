@@ -18,10 +18,21 @@ const MESSAGES = {
   server_error: 'Something went wrong on the AI service. Try again.',
 }
 
-const NETWORK = 'Could not reach the AI service. If it has been idle it may be waking up, which can take about a minute: try again shortly.'
+// The browser gives the same failure when the service is asleep, when it is down, and when it does not allow this website's address
+// (it then blocks the reply, so the clearer "not on the allowed list" message can never arrive). So the message names the address.
+const networkMessage = (origin) =>
+  `Could not reach the AI service. If it has been idle it may be waking up, which can take about a minute: try again shortly. If it keeps failing, the service may not allow this website's address${origin ? ` (${origin})` : ''}: ask whoever runs it to add it to its allowed list.`
+
+const pageOrigin = () => {
+  try {
+    return typeof location !== 'undefined' && /^https?:\/\//.test(location.origin) ? location.origin : null
+  } catch {
+    return null
+  }
+}
 
 // Ask for a review. Returns { ok: true, text, ... } or { ok: false, error, message }. Never throws.
-export async function askGateway({ url, code, payload, fetchImpl = fetch, signal, timeoutMs = 170_000 }) {
+export async function askGateway({ url, code, payload, fetchImpl = fetch, signal, timeoutMs = 170_000, origin = pageOrigin() }) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   const onAbort = () => controller.abort()
@@ -40,7 +51,7 @@ export async function askGateway({ url, code, payload, fetchImpl = fetch, signal
     } catch {
       if (signal?.aborted) return { ok: false, error: 'cancelled', message: 'Cancelled.' }
       if (controller.signal.aborted) return { ok: false, error: 'timeout', message: MESSAGES.timeout }
-      return { ok: false, error: 'network', message: NETWORK }
+      return { ok: false, error: 'network', message: networkMessage(origin) }
     }
     let body = null
     try {
