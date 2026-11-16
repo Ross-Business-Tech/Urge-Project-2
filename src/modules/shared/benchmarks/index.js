@@ -83,8 +83,10 @@ export function normalizeAmi(value) {
   if (t === '' || /^(market|market rate|mkt|none|n\/a|na|-)$/.test(t)) return null
   const m = t.match(/^(\d+(?:\.\d+)?)\s*%?\s*(ami)?$/)
   if (!m) return undefined
+  // Without a % sign, 0.6 is a share (60%), the same as a number cell holding 0.6. With one, "0.6%" is taken as written.
   const n = Number(m[1])
-  return n > 0 && n <= 200 ? Math.round(n) : undefined
+  const ami = !t.includes('%') && n <= 1 ? n * 100 : n
+  return ami > 0 && ami <= 200 ? Math.round(ami) : undefined
 }
 
 const NO_BENCHMARK = (reason) => ({ ok: false, kind: 'no-comparable-benchmark', reason })
