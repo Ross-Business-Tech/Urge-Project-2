@@ -162,3 +162,8 @@
   cursor: pointer;
   min-height: 24px;
 }
+
+.bm-notes {
+  margin: 0 0 8px;
+  padding-left: 18px;
+}

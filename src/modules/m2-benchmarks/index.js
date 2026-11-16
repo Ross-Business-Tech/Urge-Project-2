@@ -13,7 +13,7 @@ import { compareProject } from './engine.js'
 import { compareYours } from './yours.js'
 
 export { compareProject, UNITS } from './engine.js'
-export { compareYours } from './yours.js'
+export { compareYours, rangeText } from './yours.js'
 
 function runBenchmarks(project, context) {
   if (!project?.data?.stage?.stage) {

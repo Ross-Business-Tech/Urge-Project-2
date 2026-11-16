@@ -7,6 +7,7 @@ import TransitionChecks from './modules/m3t-transitions/TransitionChecks.jsx'
 import { KeyRatios, SettingsPanel } from './KeyRatios.jsx'
 import BenchmarkTable from './modules/m2-benchmarks/BenchmarkTable.jsx'
 import BenchmarksEditor from './modules/m2-benchmarks/BenchmarksEditor.jsx'
+import BenchmarkImpact from './BenchmarkImpact.jsx'
 import { BenchmarksProvider } from './BenchmarksProvider.jsx'
 import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
 import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
@@ -271,7 +272,19 @@ function Shell() {
               )}
             </LoadedProject>
           )}
-          {current.id === 'benchmarks' && <BenchmarksEditor />}
+          {current.id === 'benchmarks' && (
+            <>
+              {review ? (
+                <LoadedProject review={review} onGoLoad={goLoad}>
+                  {(record, firm, settings) => <BenchmarkImpact record={record} firm={firm} settings={settings} onGo={goTo} />}
+                </LoadedProject>
+              ) : (
+                <p className="note">Load a workbook to see what your benchmarks find in a project. You can enter them now.</p>
+              )}
+              <h2 className="details-heading">Your ranges</h2>
+              <BenchmarksEditor />
+            </>
+          )}
           {current.id === 'datachecks' && (
             <LoadedProject review={review} onGoLoad={goLoad}>
               {(record, firm, settings, result) => (

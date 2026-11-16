@@ -218,8 +218,8 @@ function expenseRow(record, set, stage) {
 // Cost per square foot: hard, soft and total, over residential plus commercial square feet.
 function costRows(record, set, stage, budgetTab) {
   const titles = { hard: 'Hard cost per sq ft', soft: 'Soft cost per sq ft', total: 'Total cost per sq ft' }
+  if (set.custom && !Object.values(set.costPerSqft ?? {}).some(Boolean)) return [] // no cost benchmark entered: not compared, and not mentioned
   if (stage === 'completed' || !set.costPerSqft) return [unavailable('cost', 'cost', 'Cost per sq ft', 'not_applicable', 'Not compared for completed projects: the cost is already spent.')]
-  if (set.custom && !Object.values(set.costPerSqft).some(Boolean)) return [] // no cost benchmark entered: not compared
   if (stage === 'lease_up') {
     return [unavailable('cost', 'cost', 'Remaining cost per sq ft', 'not_available', 'The workbook does not record how much of the budget is already spent, so the remaining cost cannot be compared. Ask the sponsor for the latest draw report.')]
   }

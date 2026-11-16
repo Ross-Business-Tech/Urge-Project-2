@@ -225,3 +225,17 @@ test('a finding about loans points only at sources that have an amount, not at b
     assert.ok(!res.rows[0].cells.some((c) => c.includes(`row ${blank + 1}`)), `${metric}: no cell from the empty source row`)
   }
 })
+
+test('a range for something else leaves the cost row out, for every stage, so no unrelated "not compared" row appears', async () => {
+  const { compareProject } = await import('../index.js')
+  const { toBenchmarkSets } = await import('../../shared/index.js')
+  const sets = toBenchmarkSets([entry('interestRate', 0.05, 0.07)])
+  for (const stage of ['development', 'lease_up', 'completed']) {
+    const res = compareProject(project(stage), { benchmarkSets: sets })
+    assert.deepEqual(res.rows, [], stage)
+  }
+  // A completed project has no cost benchmark at all: a cost range adds no row here (the Benchmarks screen says it was not used).
+  const withCost = compareProject(project('completed'), { benchmarkSets: toBenchmarkSets([entry('costTotal', 100, 200)]) })
+  assert.deepEqual(withCost.rows, [])
+  assert.equal(compareProject(project('development'), { benchmarkSets: toBenchmarkSets([entry('costTotal', 100, 200)]) }).rows.length, 1, 'a cost range on a project being built is compared')
+})

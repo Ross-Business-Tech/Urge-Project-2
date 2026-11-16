@@ -13,11 +13,13 @@ let server
 let Provider
 let Editor
 let Table
+let Impact
 before(async () => {
   server = await createServer({ configFile: new URL('../../../../vite.config.js', import.meta.url).pathname, server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom', logLevel: 'silent', optimizeDeps: { noDiscovery: true } })
   ;({ BenchmarksProvider: Provider } = await server.ssrLoadModule('/src/BenchmarksProvider.jsx'))
   ;({ default: Editor } = await server.ssrLoadModule('/src/modules/m2-benchmarks/BenchmarksEditor.jsx'))
   ;({ default: Table } = await server.ssrLoadModule('/src/modules/m2-benchmarks/BenchmarkTable.jsx'))
+  ;({ default: Impact } = await server.ssrLoadModule('/src/BenchmarkImpact.jsx'))
 })
 after(async () => {
   await server?.close()
@@ -88,4 +90,30 @@ test('a project with no stage chosen is not compared, whatever is entered', () =
   const saved = [{ id: 'a', metric: 'interestRate', low: 0.03, high: 0.04, typical: null }]
   const text = plain(renderToString(withProvider(saved, createElement(Table, { record: blank }))))
   assert.match(text, /Choose a stage above/)
+})
+
+test('the effect summary says what each range found, what was not compared, and where to see it', () => {
+  const p = record()
+  p.data.residentialIncome.rows.push({ amiLevel: null, unitType: '2 BR', units: 20, baths: 2, sqft: 950, monthlyRent: 1900 })
+  const saved = [
+    { id: 'a', metric: 'interestRate', low: 0.03, high: 0.04, typical: null },
+    { id: 'r', metric: 'rent', unitType: '1br', ami: '', low: 1000, high: 1200, typical: null },
+    { id: 'v', metric: 'vacancy', low: 0.05, high: 0.08, typical: null },
+  ]
+  const text = plain(renderToString(withProvider(saved, createElement(Impact, { record: p, firm: null, settings: undefined, onGo: () => {} }))))
+  assert.match(text, /What your benchmarks found/)
+  assert.match(text, /2 of 3 compared figures are outside your range\./)
+  assert.match(text, /Monthly rent per unit: 1br \(market rate\)/)
+  assert.match(text, /Your range: 3\.00% to 4\.00%/)
+  assert.match(text, /Above range · high/)
+  assert.match(text, /Rent for 2br \(market rate\): no range entered/)
+  assert.match(text, /See it on Key numbers/)
+  assert.doesNotMatch(text, MADE_UP)
+})
+
+test('the effect summary with nothing entered, or no stage, only says what to do', () => {
+  const none = plain(renderToString(withProvider(null, createElement(Impact, { record: record() }))))
+  assert.match(none, /Add a range below/)
+  const noStage = plain(renderToString(withProvider([{ id: 'a', metric: 'vacancy', low: 0.05, high: 0.08, typical: null }], createElement(Impact, { record: healthyProject() }))))
+  assert.match(noStage, /Choose a stage above/)
 })

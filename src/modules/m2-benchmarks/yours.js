@@ -21,6 +21,14 @@ function beyondEdge(value, range) {
 const show = (unit, v, digits) => (unit === 'percent' ? fmt.pct(v, digits) : unit === 'times' ? fmt.times(v) : fmt.usd(v))
 const digitsFor = (metric) => (metric.id === 'interestRate' || metric.id === 'vacancy' ? 2 : 1)
 
+// An entered range in words, such as "5.00% to 6.50%" or "$1,400 to $1,800".
+export function rangeText(entry) {
+  const metric = metricOf(entry?.metric)
+  if (!metric || !isNum(entry.low) || !isNum(entry.high)) return ''
+  const digits = digitsFor(metric)
+  return `${show(metric.unit, entry.low, digits)} to ${show(metric.unit, entry.high, digits)}`
+}
+
 // The value to compare, or why there is none. { ok: true, value, note?, paths } or { ok: false, reason }.
 function valueOf(metric, record, ratios) {
   if (metric.id === 'interestRate') {
