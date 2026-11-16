@@ -13,9 +13,18 @@
 .ai-list { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 12px; }
 .ai-list p { margin: 4px 0; }
 .ai-head { font-weight: 650; }
-.ai-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .ai-unverified { margin: 4px 0; padding: 6px 10px; border-radius: var(--radius-sm); background: var(--amber-bg); color: var(--amber); font-size: 0.9em; }
 .chip.good { background: var(--good-bg); color: var(--good); }
 @media (max-width: 560px) { .ai-panel .card.plain .body { padding: 12px; } .ai-list { padding-left: 16px; } }
 .ai-panel .field input[type='password'] { width: 100%; box-sizing: border-box; min-height: 44px; padding: 10px 12px; font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); }
 .ai-panel .field input[type='password']:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* The answer reads as prose; the evidence it relied on is numbered and kept in its own box after it. */
+.ai-ref { color: var(--muted); font-size: 0.82em; white-space: nowrap; }
+.ai-evidence.card.plain { background: var(--chip-bg); }
+.ai-evidence-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 14px; }
+.ai-evidence-list li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
+.ai-evidence-list p { margin: 3px 0; }
+.ai-ref-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); font-weight: 650; font-size: 0.85em; }
+.ai-ev-text { overflow-wrap: anywhere; }
+.ai-ev-id { font-family: var(--mono); font-size: 0.78em; overflow-wrap: anywhere; }
