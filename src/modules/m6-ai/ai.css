@@ -5,8 +5,6 @@
 .ai-sent { margin: 12px 0; }
 .ai-sent summary { cursor: pointer; font-weight: 600; }
 .ai-sent pre { max-height: 280px; overflow: auto; background: var(--chip-bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; font-family: var(--mono); font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.ai-check { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0; line-height: 1.4; }
-.ai-check input { margin-top: 3px; width: 18px; height: 18px; flex: none; }
 .ai-answer section { margin-top: 16px; }
 .ai-label { margin: 0 0 4px; }
 .ai-summary { font-size: 1.05em; line-height: 1.5; }
