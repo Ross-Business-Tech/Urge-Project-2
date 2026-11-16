@@ -18,7 +18,8 @@ export function checkBenchmarkSet(set, expectedStage) {
   if (typeof set.name !== 'string' || !set.name) problems.push('The set has no name.')
   if (!Number.isInteger(set.version) || set.version < 1) problems.push('The set has no version number.')
   if (typeof set.madeUp !== 'boolean') problems.push('The set does not say whether its numbers are made up.')
-  if (!Array.isArray(set.rents) || set.rents.length === 0) problems.push('The set has no rents.')
+  // A set made from the team's own entries (set.custom) may have any part missing: whatever was not entered is simply not compared.
+  if (!Array.isArray(set.rents) || (set.rents.length === 0 && !set.custom)) problems.push('The set has no rents.')
   else {
     const seen = new Set()
     for (const [i, row] of set.rents.entries()) {
@@ -32,8 +33,9 @@ export function checkBenchmarkSet(set, expectedStage) {
       seen.add(key)
     }
   }
-  if (!isRange(set.expensePerUnitYear)) problems.push('The expense range is not low <= median <= high.')
-  if (set.costPerSqft !== null && !(set.costPerSqft && ['hard', 'soft', 'total'].every((k) => isRange(set.costPerSqft[k])))) problems.push('The cost ranges (hard, soft, total) are not all low <= median <= high, or null.')
+  if (!(set.custom && set.expensePerUnitYear === null) && !isRange(set.expensePerUnitYear)) problems.push('The expense range is not low <= median <= high.')
+  const costOk = (c) => c !== null && typeof c === 'object' && ['hard', 'soft', 'total'].every((k) => (set.custom ? c[k] === null || isRange(c[k]) : isRange(c[k])))
+  if (set.costPerSqft !== null && !costOk(set.costPerSqft)) problems.push('The cost ranges (hard, soft, total) are not all low <= median <= high, or null.')
   if (set.contingencyShare !== null && !(isRange(set.contingencyShare) && set.contingencyShare.high <= 1)) problems.push('The contingency range is not a share between 0 and 1.')
   return problems
 }
@@ -81,14 +83,17 @@ export function normalizeAmi(value) {
   if (t === '' || /^(market|market rate|mkt|none|n\/a|na|-)$/.test(t)) return null
   const m = t.match(/^(\d+(?:\.\d+)?)\s*%?\s*(ami)?$/)
   if (!m) return undefined
+  // Without a % sign, 0.6 is a share (60%), the same as a number cell holding 0.6. With one, "0.6%" is taken as written.
   const n = Number(m[1])
-  return n > 0 && n <= 200 ? Math.round(n) : undefined
+  const ami = !t.includes('%') && n <= 1 ? n * 100 : n
+  return ami > 0 && ami <= 200 ? Math.round(ami) : undefined
 }
 
 const NO_BENCHMARK = (reason) => ({ ok: false, kind: 'no-comparable-benchmark', reason })
 
 // The rent range for one unit type. A unit with an AMI level is compared only against that AMI level, never against market rent.
 export function rentBenchmark(set, unitType, amiLevel) {
+  if (set.custom && set.rents.length === 0) return { ok: false, kind: 'not-entered', reason: 'No rent benchmark has been entered.' }
   const type = normalizeUnitType(unitType)
   if (!type) return NO_BENCHMARK('The unit type is blank, so there is nothing to compare.')
   const ami = normalizeAmi(amiLevel)
@@ -101,18 +106,22 @@ export function rentBenchmark(set, unitType, amiLevel) {
 }
 
 export function expenseBenchmark(set) {
+  if (!set.expensePerUnitYear) return { ok: false, kind: 'not-entered', reason: 'No expense benchmark has been entered.' }
   return { ok: true, range: set.expensePerUnitYear }
 }
 
 // metric: 'hard' | 'soft' | 'total'. Completed projects have no cost benchmark.
 export function costBenchmark(set, metric) {
   if (!set.costPerSqft) return { ok: false, kind: 'not-applicable', reason: `Cost per square foot is not compared for the "${set.stage}" stage.` }
-  const range = Object.hasOwn(set.costPerSqft, metric) ? set.costPerSqft[metric] : null
-  return range ? { ok: true, range } : { ok: false, kind: 'unknown-metric', reason: `"${metric}" is not a cost benchmark (use hard, soft or total).` }
+  if (!Object.hasOwn(set.costPerSqft, metric)) return { ok: false, kind: 'unknown-metric', reason: `"${metric}" is not a cost benchmark (use hard, soft or total).` }
+  const range = set.costPerSqft[metric]
+  return range ? { ok: true, range } : { ok: false, kind: 'not-entered', reason: `No ${metric} cost benchmark has been entered.` }
 }
 
 export function contingencyBenchmark(set) {
-  if (!set.contingencyShare) return { ok: false, kind: 'not-applicable', reason: `Contingency is not compared for the "${set.stage}" stage.` }
+  if (!set.contingencyShare) return set.custom && set.stage !== 'completed'
+    ? { ok: false, kind: 'not-entered', reason: 'No contingency benchmark has been entered.' }
+    : { ok: false, kind: 'not-applicable', reason: `Contingency is not compared for the "${set.stage}" stage.` }
   return { ok: true, range: set.contingencyShare }
 }
 

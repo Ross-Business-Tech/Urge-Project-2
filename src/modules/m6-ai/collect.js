@@ -22,8 +22,8 @@ const MODULES = [
 
 // Run every module on one project. A module that crashes is reported in the notes and does not stop the others
 // (each module is already guarded, so this is a second safety net).
-export function collectFlags(record, { firm, settings, result }) {
-  const context = { firm, settings, facts: result?.facts, report: result?.report, projects: result?.projects }
+export function collectFlags(record, { firm, settings, result, bm = {} }) {
+  const context = { firm, settings, facts: result?.facts, report: result?.report, projects: result?.projects, ...bm }
   const flags = []
   const notes = []
   for (const [id, run] of MODULES) {

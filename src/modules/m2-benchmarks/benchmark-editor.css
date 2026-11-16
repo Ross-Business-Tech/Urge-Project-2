@@ -1,0 +1,140 @@
+/* "Benchmarks" screen: the ranges the team types in */
+
+.benchmark-editor {
+  display: grid;
+  gap: 12px;
+}
+
+.be-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.be-card {
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.be-card.has-problem {
+  border-color: #c98a00;
+}
+
+.be-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.be-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.be-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.be-row .field,
+.be-add .field {
+  margin: 0;
+}
+
+.be-row input[type='text'],
+.be-add select {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 40px;
+  font: inherit;
+}
+
+.be-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.be-input input {
+  flex: 1;
+  min-width: 0;
+}
+
+.be-adorn {
+  color: var(--muted, #667085);
+}
+
+.be-number em,
+.be-row em {
+  font-style: normal;
+  color: var(--muted, #667085);
+  font-weight: normal;
+}
+
+.be-problems {
+  margin: 0;
+  padding-left: 18px;
+  color: #8a5a00;
+}
+
+.be-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.be-add .field {
+  flex: 1 1 240px;
+}
+
+.be-file label.button {
+  cursor: pointer;
+}
+
+.be-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.benchmark-editor .banner.info {
+  background: var(--card, rgba(39, 72, 214, 0.08));
+  border: 1px solid var(--border);
+}
+
+.be-type {
+  display: grid;
+  gap: 8px;
+}
+
+.be-type .field {
+  margin: 0;
+}
+
+.be-type select,
+.be-type input[type='text'] {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 40px;
+  font: inherit;
+}
+
+.be-hint {
+  margin: 0;
+}
+
+/* The unit type and income level need room for their words, so they stack on a phone. */
+.be-row-wide {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}

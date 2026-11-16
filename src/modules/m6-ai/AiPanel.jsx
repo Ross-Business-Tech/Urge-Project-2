@@ -2,11 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { projectReadiness } from '../shared/index.js'
 import { AI_CONFIG } from '../../aiConfig.js'
 import { collectFlags } from './collect.js'
+import { useBenchmarkContext } from '../../useBenchmarks.js'
 import { buildPayload, fitPayload } from './payload.js'
 import { restore } from './deidentify.js'
 import { askGateway } from './client.js'
 import { validateAnswer } from './validate.js'
-import { exampleAnswer } from './example.js'
 import { buildEvidence } from './evidence.js'
 import './ai.css'
 
@@ -32,7 +32,7 @@ function Unverified({ item }) {
 // together in the Evidence box that follows, each connected to the ideas it supports and the figures it explains (see
 // evidence.js). Two cards: the answer, then its evidence.
 export function AnswerView({ outcome, flags, map, data = [] }) {
-  const { answer, dropped, example, askedAt, truncated } = outcome
+  const { answer, dropped, askedAt, truncated } = outcome
   const rs = (t) => restore(t, map)
   const evidence = useMemo(() => buildEvidence(answer, flags, data), [answer, flags, data])
   const [copied, setCopied] = useState(false)
@@ -57,14 +57,10 @@ export function AnswerView({ outcome, flags, map, data = [] }) {
       <div className="card plain">
         <div className="body ai-answer">
           <p className="ai-label">
-            <strong>{example ? 'EXAMPLE LAYOUT' : 'AI second opinion'}</strong>
+            <strong>AI second opinion</strong>
             <span> · {askedAt}</span>
           </p>
-          {example ? (
-            <p className="banner warn">This is an example of the layout. It was not written by the AI, and the sentences are placeholders.</p>
-          ) : (
-            <p className="note">Advice only. The checks above decide, and nothing here changes them.</p>
-          )}
+          <p className="note">Advice only. The checks above decide, and nothing here changes them.</p>
           <p>
             <span className={`chip ${tone}`}>{label}</span> <span className="note">Confidence: {answer.confidence}{answer.confidence_reason ? `. ${rs(answer.confidence_reason)}` : ''}</span>
           </p>
@@ -218,17 +214,17 @@ export function AnswerView({ outcome, flags, map, data = [] }) {
 }
 
 export default function AiPanel({ record, firm, settings, result }) {
+  const bm = useBenchmarkContext()
   const ready = projectReadiness(record).ready
   const gathered = useMemo(() => {
     try {
-      const { flags, notes } = collectFlags(record, { firm, settings, result })
+      const { flags, notes } = collectFlags(record, { firm, settings, result, bm })
       return { ok: true, flags, ...buildPayload({ record, firm, settings, result, flags, notes }) }
     } catch {
       return { ok: false, flags: [], payload: null, map: [] }
     }
-  }, [record, firm, settings, result])
+  }, [record, firm, settings, result, bm])
 
-  const [attested, setAttested] = useState(false)
   const [code, setCode] = useState('')
   const [phase, setPhase] = useState('idle')
   const [error, setError] = useState('')
@@ -242,7 +238,7 @@ export default function AiPanel({ record, firm, settings, result }) {
   const fitted = useMemo(() => (gathered.ok ? fitPayload(gathered.payload) : null), [gathered])
   const sendText = useMemo(() => (fitted ? JSON.stringify(fitted.payload, null, 2) : ''), [fitted])
   const counts = ['high', 'medium', 'low'].map((s) => [s, gathered.flags.filter((f) => f.severity === s).length])
-  const canAsk = AI_CONFIG.enabled && ready && gathered.ok && attested && code.trim() !== '' && phase !== 'working' && !fitted?.tooLarge
+  const canAsk = AI_CONFIG.enabled && ready && gathered.ok && code.trim() !== '' && phase !== 'working' && !fitted?.tooLarge
 
   async function ask() {
     setError('')
@@ -261,13 +257,7 @@ export default function AiPanel({ record, firm, settings, result }) {
       setError(checked.reason)
       return
     }
-    setOutcome({ forRecord: record, answer: checked.answer, dropped: checked.dropped, askedAt: new Date().toLocaleString(), truncated: res.stopReason === 'max_tokens', example: false })
-    setPhase('done')
-  }
-
-  function showExample() {
-    setError('')
-    setOutcome({ forRecord: record, answer: exampleAnswer(gathered.flags), dropped: [], askedAt: new Date().toLocaleString(), truncated: false, example: true })
+    setOutcome({ forRecord: record, answer: checked.answer, dropped: checked.dropped, askedAt: new Date().toLocaleString(), truncated: res.stopReason === 'max_tokens' })
     setPhase('done')
   }
 
@@ -317,11 +307,6 @@ export default function AiPanel({ record, firm, settings, result }) {
 
           {!ready && <p className="banner warn">Choose a stage and an “as of” date for this project first (above).</p>}
 
-          <label className="ai-check">
-            <input type="checkbox" checked={attested} onChange={(e) => setAttested(e.target.checked)} />
-            <span>I confirm this review contains only made-up data, or my instructor has approved sending it.</span>
-          </label>
-
           <label className="field">
             <span>Access code (from whoever runs the AI service)</span>
             <input type="password" value={code} onChange={(e) => setCode(e.target.value)} autoComplete="off" spellCheck="false" />
@@ -337,9 +322,6 @@ export default function AiPanel({ record, firm, settings, result }) {
                 Cancel
               </button>
             )}
-            <button type="button" className="button small" onClick={showExample} disabled={phase === 'working'}>
-              Show an example layout (not AI)
-            </button>
           </div>
 
           <div aria-live="polite">

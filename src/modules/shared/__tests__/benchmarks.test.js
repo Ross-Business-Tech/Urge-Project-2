@@ -58,6 +58,9 @@ test('unit types and AMI levels are read the way applicants write them', () => {
   assert.equal(normalizeAmi('60% AMI'), 60)
   assert.equal(normalizeAmi(0.6), 60)
   assert.equal(normalizeAmi(60), 60)
+  // A workbook cell formatted as a percent reads back as the text "0.6", and that is 60%, not 1%.
+  for (const [text, want] of [['0.6', 60], [' 0.8 ', 80], ['0.5', 50], ['0.3', 30], ['1', 100], ['0.60', 60], ['80', 80], ['60.0', 60], ['0.6 AMI', 60]]) assert.equal(normalizeAmi(text), want, text)
+  assert.equal(normalizeAmi('0.6%'), 1, 'with a % sign the figure is taken as written')
   assert.equal(normalizeAmi(''), null)
   assert.equal(normalizeAmi('Market'), null)
   assert.equal(normalizeAmi(null), null)

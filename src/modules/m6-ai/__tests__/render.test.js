@@ -32,11 +32,14 @@ for (const scenario of scenarios) {
     assert.match(html, /AI second opinion/)
     assert.match(html, /What happens when you press the button/)
     assert.match(html, /See exactly what would be sent/)
-    assert.match(html, /only made-up data/)
+    // A client-facing screen: no test or demo wording, no confirmation box, no example button. (The data preview box can quote
+    // the checks' own labels, such as a benchmark's "made-up sample" name, so it is left out of this check: it is the data.)
+    const screenText = html.replace(/<pre>[\s\S]*?<\/pre>/, '')
+    assert.doesNotMatch(screenText, /made-up|made up|instructor|example layout|not AI|EXAMPLE/i)
+    assert.doesNotMatch(html, /type="checkbox"/)
     assert.match(html, /Get AI second opinion/)
-    // Off until the reviewer confirms and types a code: the button starts disabled, and no answer is shown.
+    // Off until the reviewer types the access code: the button starts disabled, and no answer is shown.
     assert.match(html, /<button[^>]*disabled=""[^>]*>Get AI second opinion/)
-    assert.doesNotMatch(html, /EXAMPLE LAYOUT/)
     assert.doesNotMatch(html, /Advice only/)
     // The data preview on screen holds labels, not real names.
     for (const word of ['Harbor View Lofts', 'Maple Ridge Partners', 'Pat Sample']) assert.ok(!html.includes(word), word)
@@ -76,7 +79,7 @@ test('an answer is plain prose with no sources in it, and every finding it used 
     confidence_reason: 'Test.',
   }
   const data = [{ cell: 'Balance Sheet!B9', label: 'Firm balance sheet: Cash (Current period)', value: '$900,000' }]
-  const outcome = { answer, dropped: [], askedAt: 'now', example: false, truncated: false }
+  const outcome = { answer, dropped: [], askedAt: 'now', truncated: false }
   const html = plain(renderToString(createElement(AnswerView, { outcome, flags: loaded.flags, map: loaded.map, data })))
   // Compare as reading text: no tags, no HTML escapes, single spaces.
   const text = (h) => h.replace(/<[^>]+>/g, ' ').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ')
@@ -106,8 +109,18 @@ test('an answer is plain prose with no sources in it, and every finding it used 
 
 test('an answer with nothing to point at has no Evidence box', async () => {
   const loaded = await loadScenario(scenarios[0])
-  const outcome = { answer: { second_opinion: 'cannot_tell', summary: 'Nothing.', connections: [], look_first: [], questions: [], integrity_screen: [], cannot_tell: [], confidence: 'low', confidence_reason: '' }, dropped: [], askedAt: 'now', example: false, truncated: false }
+  const outcome = { answer: { second_opinion: 'cannot_tell', summary: 'Nothing.', connections: [], look_first: [], questions: [], integrity_screen: [], cannot_tell: [], confidence: 'low', confidence_reason: '' }, dropped: [], askedAt: 'now', truncated: false }
   const html = plain(renderToString(createElement(AnswerView, { outcome, flags: loaded.flags, map: loaded.map })))
   assert.ok(!html.includes('Evidence behind this opinion'))
   assert.match(html, /Nothing clear found beyond what the checks already flag/)
+})
+
+test('the AI review sees the same benchmark findings as the screens: the team’s ranges are passed through', async () => {
+  const { collectFlags } = await import('../collect.js')
+  const loaded = await loadScenario(scenarios[0])
+  const entries = [{ id: 'v', metric: 'vacancy', low: 0.2, high: 0.3, typical: null }]
+  const without = collectFlags(loaded.record, { firm: loaded.firm, settings: loaded.settings, result: loaded.result })
+  const withIt = collectFlags(loaded.record, { firm: loaded.firm, settings: loaded.settings, result: loaded.result, bm: { benchmarks: entries } })
+  assert.ok(!without.flags.some((f) => f.id.startsWith('M2-yours')))
+  assert.ok(withIt.flags.some((f) => f.id.startsWith('M2-yours-vacancy')), 'a range the team entered produces its finding in the AI input')
 })

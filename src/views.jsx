@@ -29,6 +29,13 @@ export const VIEWS = [
     lede: 'The main ratios for each project, and how they compare with typical ranges. Shows the projects in the workbook you loaded.',
   },
   {
+    id: 'benchmarks',
+    label: 'Benchmarks',
+    icon: <Icon d={['M4 6h16M4 12h16M4 18h16', 'M8 4v4M15 10v4M10 16v4']} />,
+    heading: 'Your benchmarks',
+    lede: 'The ranges you trust for rents, interest rates, coverage and more. Every project is compared with these, and with nothing else. Change them whenever you like.',
+  },
+  {
     id: 'datachecks',
     label: 'Data checks',
     needsReview: true,
@@ -112,7 +119,7 @@ export const VIEWS = [
 // How the screens are grouped in the menu. The three "how it is stored" screens sit under Reference.
 export const NAV_GROUPS = [
   { title: 'Start', ids: ['import'] },
-  { title: 'Analysis', ids: ['keynumbers', 'datachecks', 'scenarios'] },
+  { title: 'Analysis', ids: ['keynumbers', 'benchmarks', 'datachecks', 'scenarios'] },
   { title: 'Risk', ids: ['devrisk', 'completedrisk', 'transitions', 'sponsor'] },
   { title: 'Optional', ids: ['ai'] },
   { title: 'Reference', ids: ['firm', 'project', 'flags'] },
