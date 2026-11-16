@@ -60,12 +60,13 @@ test('a project with no stage chosen is told to choose one, and cannot ask', asy
 })
 
 // ---------------------------------------------------------------- the answer reads as prose, with the evidence in its own box
-test('an answer is plain prose with small evidence numbers, and every finding it used is in a separate Evidence box after it', async () => {
+test('an answer is plain prose with no sources in it, and every finding it used is in a separate Evidence box that says what each supports', async () => {
   const loaded = await loadScenario(scenarios.find((x) => x.id.startsWith('s15')))
   const [a, b, c] = loaded.flags.map((f) => f.id)
   const answer = {
     second_opinion: 'agrees_with_caveats',
-    summary: 'The story in plain words.',
+    summary: 'The story in plain words, with cash of $900,000 mentioned.',
+    summary_pointers: [a, 'Balance Sheet!B9'],
     connections: [{ headline: 'One cause', explanation: 'These findings share a cause.', flag_ids: [b, a], check_first: b, cites: [] }],
     look_first: [{ flag_id: c, reason: 'This is worth reading first.' }],
     questions: [{ question: 'Please confirm the loan terms.', reason: '', flag_ids: [a] }],
@@ -74,8 +75,9 @@ test('an answer is plain prose with small evidence numbers, and every finding it
     confidence: 'medium',
     confidence_reason: 'Test.',
   }
+  const data = [{ cell: 'Balance Sheet!B9', label: 'Firm balance sheet: Cash (Current period)', value: '$900,000' }]
   const outcome = { answer, dropped: [], askedAt: 'now', example: false, truncated: false }
-  const html = plain(renderToString(createElement(AnswerView, { outcome, flags: loaded.flags, map: loaded.map })))
+  const html = plain(renderToString(createElement(AnswerView, { outcome, flags: loaded.flags, map: loaded.map, data })))
   // Compare as reading text: no tags, no HTML escapes, single spaces.
   const text = (h) => h.replace(/<[^>]+>/g, ' ').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ')
   const marker = 'Evidence behind this opinion'
@@ -83,21 +85,23 @@ test('an answer is plain prose with small evidence numbers, and every finding it
   const [proseHtml, boxHtml] = html.split(marker)
   const prose = text(proseHtml)
   const box = text(boxHtml)
-  // Nothing in the prose is a flag id or a cell: those live only in the box.
+  // The wording carries no sources: no ids, no cells, no markers, no brackets.
   for (const id of [a, b, c]) assert.ok(!prose.includes(id), `${id} is not in the prose`)
-  assert.ok(!prose.includes('Details!H28'))
-  assert.ok(!prose.includes('..'), 'no doubled full stops where a finding’s title meets the AI’s words')
-  // The prose says where to look instead: b (1), a (2), c (3), then the cell (4).
-  assert.match(prose, /These findings share a cause\. · evidence 1, 2/)
-  assert.match(prose, /This is worth reading first\. · evidence 3/)
-  assert.match(prose, /Please confirm the loan terms\. · evidence 2/)
-  assert.match(prose, /It does not fit\. · evidence 4/)
-  // The box holds every finding and the cell, numbered in that order, with the checks' own wording.
-  for (const id of [b, a, c]) assert.ok(box.includes(id), `${id} is in the box`)
-  assert.ok(box.includes('Details!H28'))
-  assert.ok(box.indexOf(b) < box.indexOf(a) && box.indexOf(a) < box.indexOf(c) && box.indexOf(c) < box.indexOf('Details!H28'))
+  assert.ok(!prose.includes('Details!H28') && !prose.includes('Balance Sheet!B9'))
+  assert.ok(!/evidence \d/i.test(prose), 'no "evidence 1" markers either')
+  assert.ok(!prose.includes('..'), 'no doubled full stops')
+  assert.match(prose, /cash of \$900,000 mentioned/, 'a figure may be stated plainly')
+  // The box holds every finding and cell, in reading order: summary first (a, then the cell), then b, c and the data cell.
+  const order = [a, 'Balance Sheet!B9', b, c, 'Details!H28'].map((x) => box.indexOf(x))
+  assert.ok(order.every((i) => i >= 0), 'everything is in the box')
+  assert.deepEqual([...order].sort((x, y) => x - y), order, 'in reading order')
   for (const id of [a, b, c]) assert.ok(box.includes(text(loaded.flags.find((f) => f.id === id).evidence)), `the checks' own evidence for ${id} is shown`)
-  assert.match(box, /They come from the rules, not from the AI/)
+  // Each piece of evidence says which ideas it supports, and which figures it explains.
+  assert.match(box, /Supports The summary · One cause · Question 1: Please confirm the loan terms\./, 'the first finding supports three ideas')
+  assert.match(box, /Spreadsheet cell Balance Sheet!B9 Firm balance sheet: Cash \(Current period\): \$900,000 Supports The summary Explains \$900,000/, 'the cell says what it holds, what it supports and the figure it explains')
+  assert.match(box, /Supports Look first: /)
+  assert.match(box, /Supports Data screen: A cell looks odd/)
+  assert.match(box, /They come from the rules and your workbook, not from the AI/)
 })
 
 test('an answer with nothing to point at has no Evidence box', async () => {

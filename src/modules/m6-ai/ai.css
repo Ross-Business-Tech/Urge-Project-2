@@ -20,7 +20,6 @@
 .ai-panel .field input[type='password']:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 /* The answer reads as prose; the evidence it relied on is numbered and kept in its own box after it. */
-.ai-ref { color: var(--muted); font-size: 0.82em; white-space: nowrap; }
 .ai-evidence.card.plain { background: var(--chip-bg); }
 .ai-evidence-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 14px; }
 .ai-evidence-list li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; }
@@ -28,3 +27,6 @@
 .ai-ref-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); font-weight: 650; font-size: 0.85em; }
 .ai-ev-text { overflow-wrap: anywhere; }
 .ai-ev-id { font-family: var(--mono); font-size: 0.78em; overflow-wrap: anywhere; }
+
+.ai-ev-link { margin: 4px 0 0; font-size: 0.92em; overflow-wrap: anywhere; }
+.ai-ev-key { display: inline-block; min-width: 4.6em; color: var(--muted); font-size: 0.8em; font-weight: 650; text-transform: uppercase; letter-spacing: 0.04em; }

@@ -651,3 +651,13 @@ test('the provider’s error code is logged for any provider, but only as a shor
   assert.deepEqual(safeDetail({ error: { code: 429, status: 'RESOURCE_EXHAUSTED' } }), { provider_error_code: '429' })
   assert.deepEqual(safeDetail(null), {})
 })
+
+test('the instructions forbid sources inside sentences, and ask for them in separate fields, including one for the summary', async () => {
+  const { fetchImpl, body } = await run(post(good))
+  const system = fetchImpl.calls[0].body.system
+  assert.match(system, /NEVER write a flag id, a cell reference, or a bracketed or parenthesised list of sources inside any sentence/)
+  assert.match(system, /List them ONLY in the flag_ids, cites and summary_evidence fields/)
+  assert.match(system, /"summary_evidence": \{ "flag_ids"/)
+  assert.match(system, /no flag ids, cell references or brackets/)
+  assert.equal(body.prompt_version, 'draft-3')
+})

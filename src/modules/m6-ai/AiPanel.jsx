@@ -28,18 +28,13 @@ function Unverified({ item }) {
   return <p className="ai-unverified">Contains a figure not found in the review data: {item.unverified.join(', ')}. Check it before relying on it.</p>
 }
 
-// The small "evidence 1, 3" at the end of a statement. It points at the Evidence box below the answer.
-function Ref({ nums }) {
-  if (!nums.length) return null
-  return <span className="ai-ref"> · evidence {nums.join(', ')}</span>
-}
-
-// The AI's answer, as plain prose. The findings and cells it relied on are not mixed into the sentences: they are numbered and
-// kept together in the Evidence box that follows (see evidence.js). Two cards: the answer, then its evidence.
-export function AnswerView({ outcome, flags, map }) {
+// The AI's answer, as plain prose. It carries no sources at all. The findings and cells it relied on are numbered and kept
+// together in the Evidence box that follows, each connected to the ideas it supports and the figures it explains (see
+// evidence.js). Two cards: the answer, then its evidence.
+export function AnswerView({ outcome, flags, map, data = [] }) {
   const { answer, dropped, example, askedAt, truncated } = outcome
   const rs = (t) => restore(t, map)
-  const evidence = useMemo(() => buildEvidence(answer, flags), [answer, flags])
+  const evidence = useMemo(() => buildEvidence(answer, flags, data), [answer, flags, data])
   const [copied, setCopied] = useState(false)
   const [label, tone] = OPINION[answer.second_opinion]
   const removed = dropped.filter((d) => !/only the first/.test(d.reason)).length
@@ -85,12 +80,10 @@ export function AnswerView({ outcome, flags, map }) {
                     <p className="ai-head">{rs(c.headline)}</p>
                     <p>
                       {rs(c.explanation)}
-                      <Ref nums={evidence.numbersFor(c.flag_ids, c.check_first, c.cites)} />
                     </p>
                     {c.check_first && titleOf(c.check_first) && (
                       <p className="note">
                         Start with: {titleOf(c.check_first)}
-                        <Ref nums={evidence.numbersFor(c.check_first)} />
                       </p>
                     )}
                     <Unverified item={c} />
@@ -108,7 +101,6 @@ export function AnswerView({ outcome, flags, map }) {
                   <li key={l.flag_id}>
                     {titleOf(l.flag_id) && <strong>{titleOf(l.flag_id)}. </strong>}
                     {rs(l.reason)}
-                    <Ref nums={evidence.numbersFor(l.flag_id)} />
                     <Unverified item={l} />
                   </li>
                 ))}
@@ -124,7 +116,6 @@ export function AnswerView({ outcome, flags, map }) {
                   <li key={q.question}>
                     {rs(q.question)}
                     {q.reason && <span className="note"> {rs(q.reason)}</span>}
-                    <Ref nums={evidence.numbersFor(q.flag_ids)} />
                     <Unverified item={q} />
                   </li>
                 ))}
@@ -148,7 +139,6 @@ export function AnswerView({ outcome, flags, map }) {
                     </p>
                     <p>
                       {rs(i.why)}
-                      <Ref nums={evidence.numbersFor(i.cites)} />
                     </p>
                     <Unverified item={i} />
                   </li>
@@ -180,26 +170,43 @@ export function AnswerView({ outcome, flags, map }) {
         <div className="card plain ai-evidence" aria-label="Evidence">
           <div className="body">
             <p className="section-label">Evidence behind this opinion</p>
-            <p className="note">These are the checks’ own findings, and the spreadsheet cells, that the AI pointed to, numbered in the order it used them. They come from the rules, not from the AI.</p>
+            <p className="note">These are the checks’ own findings, and the spreadsheet cells, that the AI relied on, in the order it used them. Under each: the ideas it supports, and which figures in the answer it explains. They come from the rules and your workbook, not from the AI.</p>
             <ol className="ai-evidence-list">
               {evidence.entries.map((e) => (
                 <li key={e.n} id={`ai-evidence-${e.n}`}>
                   <span className="ai-ref-num">{e.n}</span>
-                  {e.kind === 'finding' ? (
-                    <div>
-                      <p>
-                        <span className={`chip ${SEVERITY_CHIP[e.flag.severity] ?? ''}`}>{e.flag.severity}</span> {e.flag.title}
+                  <div>
+                    {e.kind === 'finding' ? (
+                      <>
+                        <p>
+                          <span className={`chip ${SEVERITY_CHIP[e.flag.severity] ?? ''}`}>{e.flag.severity}</span> {e.flag.title}
+                        </p>
+                        <p className="note ai-ev-text">{e.flag.evidence}</p>
+                      </>
+                    ) : (
+                      <>
+                        <p>
+                          Spreadsheet cell <span className="chip cell">{e.cell}</span>
+                        </p>
+                        {e.label && (
+                          <p className="note ai-ev-text">
+                            {e.label}: <strong>{e.value}</strong>
+                          </p>
+                        )}
+                      </>
+                    )}
+                    {e.supports.length > 0 && (
+                      <p className="ai-ev-link">
+                        <span className="ai-ev-key">Supports</span> {e.supports.map((t) => rs(t)).join(' · ')}
                       </p>
-                      <p className="note ai-ev-text">{e.flag.evidence}</p>
-                      <p className="note ai-ev-id">{e.flag.id}</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p>
-                        Spreadsheet cell <span className="chip cell">{e.cell}</span>
+                    )}
+                    {e.figures.length > 0 && (
+                      <p className="ai-ev-link">
+                        <span className="ai-ev-key">Explains</span> {e.figures.join(', ')}
                       </p>
-                    </div>
-                  )}
+                    )}
+                    {e.kind === 'finding' && <p className="note ai-ev-id">{e.flag.id}</p>}
+                  </div>
                 </li>
               ))}
             </ol>
@@ -343,7 +350,7 @@ export default function AiPanel({ record, firm, settings, result }) {
       </div>
 
       {stale && <p className="banner warn">The review was changed after the last answer, so that answer was cleared. Ask again to get a new one.</p>}
-      {shown && <AnswerView outcome={shown} flags={gathered.flags} map={gathered.map} />}
+      {shown && <AnswerView outcome={shown} flags={gathered.flags} map={gathered.map} data={fitted?.payload.data ?? []} />}
     </section>
   )
 }

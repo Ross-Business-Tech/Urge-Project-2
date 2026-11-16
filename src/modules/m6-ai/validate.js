@@ -21,7 +21,8 @@ const list = (v) => (Array.isArray(v) ? v : [])
 
 // ---- figures ----------------------------------------------------------------------------------------------------------
 
-const NUMBER = /(\$?)(\d[\d,]*(?:\.\d+)?)(\s?%?)/g
+// Thousands are read as groups of three digits, so a comma that follows a figure in a sentence ("$700,000, yet...") is not part of it.
+const NUMBER = /(\$?)(\d+(?:,\d{3})*(?:\.\d+)?)(\s?%?)/g
 
 function normalize(token) {
   let t = token.replace(/,/g, '')
@@ -53,6 +54,29 @@ export function figuresSent(payload) {
   }
   walk(payload)
   return seen
+}
+
+// ---- citations written into sentences ----------------------------------------------------------------------------------
+
+// The AI is told never to write sources inside a sentence, but if it does ("... roles identified. [Balance Sheet!B9; M5-no-track-record]")
+// they are taken out of the wording, and kept as evidence. Only a bracket or parenthesis holding NOTHING BUT flag ids and cell
+// references is touched: a label such as [Project A], or "(about 4 months)", is left alone.
+const FLAG_ID = /^M\d[A-Z]?(?:-[a-z])?(?:-[A-Za-z0-9]+)+$/
+const CELL_REF = /^[^![\]()]+![A-Z]{1,3}\d+$/
+
+export function extractCitations(text) {
+  const pointers = []
+  const cleaned = String(text)
+    .replace(/\s*[[(]([^[\]()]*)[\])]/g, (whole, inner) => {
+      const tokens = inner.split(/[;,]/).map((t) => t.trim()).filter(Boolean)
+      if (tokens.length === 0 || !tokens.every((t) => FLAG_ID.test(t) || CELL_REF.test(t))) return whole
+      pointers.push(...tokens)
+      return ''
+    })
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\s+([.,;:!?])/g, '$1')
+    .trim()
+  return { text: cleaned, pointers: pointers.filter((p, i, a) => a.indexOf(p) === i) }
 }
 
 // ---- pointers ---------------------------------------------------------------------------------------------------------
@@ -113,67 +137,82 @@ export function validateAnswer(text, payload) {
   }
   const drop = (section, reason) => dropped.push({ section, reason })
 
-  const summary = str(parsed.summary, MAX.summary)
+  // Text with any sources written into it taken out. The sources it held are returned as `found`, to be kept as evidence.
+  const plain = (value, max) => {
+    const { text, pointers } = extractCitations(str(value, max))
+    return { text, found: pointers }
+  }
+  const validIds = (pointers) => pointers.filter((x) => ids.has(x))
+  const unique = (list2) => list2.filter((x, i, a) => a.indexOf(x) === i)
+
+  const summaryText = plain(parsed.summary, MAX.summary)
+  const summary = summaryText.text
   if (!summary) return { ok: false, reason: 'The AI answer had no summary, so nothing from it is shown. Try again.' }
+  // What stands behind the summary: its own evidence fields, plus anything it wrote into the sentences.
+  const summary_pointers = unique([...idsOf(parsed.summary_evidence?.flag_ids), ...citesOf(parsed.summary_evidence?.cites), ...citesOf(summaryText.found)])
 
   const connections = []
   for (const c of list(parsed.connections)) {
-    const flag_ids = idsOf(c?.flag_ids)
-    const headline = str(c?.headline, MAX.headline)
-    const explanation = str(c?.explanation, MAX.explanation)
-    if (!headline || !explanation) { drop('connections', 'an item was incomplete'); continue }
+    const headline = plain(c?.headline, MAX.headline)
+    const explanation = plain(c?.explanation, MAX.explanation)
+    const found = [...headline.found, ...explanation.found]
+    const flag_ids = idsOf([...list(c?.flag_ids), ...validIds(found)])
+    if (!headline.text || !explanation.text) { drop('connections', 'an item was incomplete'); continue }
     if (flag_ids.length === 0) { drop('connections', 'a statement pointed at no real finding'); continue }
     const check_first = ids.has(c?.check_first) ? c.check_first : flag_ids[0]
-    connections.push(mark({ headline, explanation, flag_ids, check_first, cites: citesOf(c?.cites) }, headline, explanation))
+    connections.push(mark({ headline: headline.text, explanation: explanation.text, flag_ids, check_first, cites: citesOf([...list(c?.cites), ...found]) }, headline.text, explanation.text))
   }
 
   const look_first = []
   for (const l of list(parsed.look_first)) {
-    const reason = str(l?.reason, MAX.reason)
-    if (!ids.has(l?.flag_id) || !reason) { drop('look_first', 'an item pointed at no real finding'); continue }
-    look_first.push(mark({ flag_id: l.flag_id, reason }, reason))
+    const reason = plain(l?.reason, MAX.reason)
+    const flag_id = ids.has(l?.flag_id) ? l.flag_id : validIds(reason.found)[0]
+    if (!flag_id || !reason.text) { drop('look_first', 'an item pointed at no real finding'); continue }
+    look_first.push(mark({ flag_id, reason: reason.text }, reason.text))
   }
 
   const questions = []
   const seenQuestions = new Set()
   for (const q of list(parsed.questions)) {
-    const question = str(q?.question, MAX.question)
-    const flag_ids = idsOf(q?.flag_ids)
-    if (!question) { drop('questions', 'an item was incomplete'); continue }
+    const question = plain(q?.question, MAX.question)
+    const reason = plain(q?.reason, MAX.reason)
+    const flag_ids = idsOf([...list(q?.flag_ids), ...validIds([...question.found, ...reason.found])])
+    if (!question.text) { drop('questions', 'an item was incomplete'); continue }
     if (flag_ids.length === 0) { drop('questions', 'a question pointed at no real finding'); continue }
-    const dedupe = question.toLowerCase().replace(/\s+/g, ' ')
+    const dedupe = question.text.toLowerCase().replace(/\s+/g, ' ')
     if (seenQuestions.has(dedupe)) continue
     seenQuestions.add(dedupe)
-    questions.push(mark({ question, reason: str(q?.reason, MAX.reason), flag_ids }, question, q?.reason))
+    questions.push(mark({ question: question.text, reason: reason.text, flag_ids }, question.text, reason.text))
   }
 
   const integrity_screen = []
   for (const i of list(parsed.integrity_screen)) {
-    const title = str(i?.title, MAX.title)
-    const why = str(i?.why, MAX.why)
-    const cites = citesOf(i?.cites)
-    if (!title || !why) { drop('integrity_screen', 'an item was incomplete'); continue }
+    const title = plain(i?.title, MAX.title)
+    const why = plain(i?.why, MAX.why)
+    const cites = citesOf([...list(i?.cites), ...title.found, ...why.found])
+    if (!title.text || !why.text) { drop('integrity_screen', 'an item was incomplete'); continue }
     if (cites.length === 0) { drop('integrity_screen', 'a concern cited no real finding or cell'); continue }
-    integrity_screen.push(mark({ title, why, cites, confidence: CONFIDENCE.includes(i?.confidence) ? i.confidence : 'low' }, title, why))
+    integrity_screen.push(mark({ title: title.text, why: why.text, cites, confidence: CONFIDENCE.includes(i?.confidence) ? i.confidence : 'low' }, title.text, why.text))
   }
 
   const cannot_tell = []
   for (const c of list(parsed.cannot_tell)) {
-    const what = str(c?.what, MAX.what)
+    const what = plain(c?.what, MAX.what).text
     if (!what) continue
-    cannot_tell.push({ what, would_settle_it: str(c?.would_settle_it, MAX.settle) })
+    cannot_tell.push({ what, would_settle_it: plain(c?.would_settle_it, MAX.settle).text })
   }
 
   const answer = {
     second_opinion: parsed.second_opinion,
     ...mark({ summary }, summary),
+    summary_pointers,
     connections: cap('connections', connections),
     look_first: cap('look_first', look_first),
     questions: cap('questions', questions),
     integrity_screen: cap('integrity_screen', integrity_screen),
     cannot_tell: cap('cannot_tell', cannot_tell),
     confidence: CONFIDENCE.includes(parsed.confidence) ? parsed.confidence : 'low',
-    confidence_reason: str(parsed.confidence_reason, MAX.confidence_reason),
+    confidence_reason: plain(parsed.confidence_reason, MAX.confidence_reason).text,
   }
   return { ok: true, answer, dropped, unverifiedCount }
 }

@@ -8,6 +8,7 @@ export function exampleAnswer(flags = []) {
   const answer = {
     second_opinion: 'cannot_tell',
     summary: 'Example only. In a real answer, three to five plain sentences here would say what the biggest findings mean when read together.',
+    summary_pointers: ids.slice(0, 2),
     connections: [],
     look_first: [],
     questions: [],
