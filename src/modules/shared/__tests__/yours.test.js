@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  readChangedAt,
   METRICS, metricOf, keyOf, checkEntry, usableEntries, problemsByEntry, toBenchmarkSets, serializeEntries, parseEntries, newEntry, checkBenchmarkSet, loadBenchmarks, rentBenchmark, expenseBenchmark, costBenchmark, contingencyBenchmark,
 } from '../index.js'
 
@@ -105,7 +106,7 @@ test('the built-in checks still insist on a complete set, so a broken built-in s
 test('a benchmarks file saves and reopens exactly, and says what a bad file is', () => {
   const list = [rent({ typical: 1500, ami: '60' }), entry('interestRate', 0.05, 0.065), entry('dscr', 1.2, 1.5, { typical: 1.3 })]
   const text = serializeEntries(list, 'Detroit, spring')
-  assert.deepEqual(parseEntries(text), { ok: true, entries: list })
+  assert.deepEqual(parseEntries(text), { ok: true, entries: list, changedAt: null })
   assert.equal(JSON.parse(text).note, 'Detroit, spring')
   for (const [bad, why] of [['not json', /could not be read/], ['{}', /not a benchmarks file/], [JSON.stringify({ kind: 'deal-review-benchmarks', version: 9, benchmarks: [] }), /version 9/], [JSON.stringify({ kind: 'deal-review-benchmarks', version: 1 }), /no list/], [JSON.stringify({ kind: 'deal-review-benchmarks', version: 1, benchmarks: new Array(300).fill({}) }), /too many/]]) {
     const r = parseEntries(bad)
@@ -133,4 +134,23 @@ test('a new entry starts blank, and a blank entry is not usable until filled in'
   assert.deepEqual(e, { id: 'n1', metric: 'rent', unitType: '', ami: '', low: null, high: null, typical: null })
   assert.ok(checkEntry(e).length > 0)
   assert.deepEqual(usableEntries([e]), [])
+})
+
+test('the date the ranges were last changed is saved in the file and read back, in a standard form', () => {
+  const list = [entry('dscr', 1.2, 1.5)]
+  const text = serializeEntries(list, '', '2026-11-16T15:30:00.000Z')
+  assert.equal(JSON.parse(text).changedAt, '2026-11-16T15:30:00.000Z')
+  assert.deepEqual(parseEntries(text), { ok: true, entries: list, changedAt: '2026-11-16T15:30:00.000Z' })
+  assert.equal(JSON.parse(serializeEntries(list, '', '2026-11-16T10:30:00+02:00')).changedAt, '2026-11-16T08:30:00.000Z', 'any valid ISO time is stored in UTC')
+})
+
+test('a missing or unreadable date is "no date", never a guess and never a crash', () => {
+  const list = [entry('dscr', 1.2, 1.5)]
+  assert.equal('changedAt' in JSON.parse(serializeEntries(list)), false)
+  for (const bad of [undefined, null, '', 'yesterday', '2026-13-45T00:00:00Z', 20261116, {}, 'x'.repeat(100), '2026-11-16']) {
+    assert.equal(readChangedAt(bad), null, String(bad))
+    assert.equal('changedAt' in JSON.parse(serializeEntries(list, '', bad)), false, String(bad))
+  }
+  const file = JSON.stringify({ kind: 'deal-review-benchmarks', version: 1, changedAt: 'not a date', benchmarks: list })
+  assert.equal(parseEntries(file).changedAt, null)
 })

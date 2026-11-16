@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import { compareProject, compareYours, UNITS } from './index.js'
 import { usableEntries, DEFAULT_SETTINGS } from '../shared/index.js'
-import { useBenchmarkContext } from '../../useBenchmarks.js'
+import { useBenchmarkContext, useBenchmarks } from '../../useBenchmarks.js'
+import { lastChangedText } from '../../benchmarkDate.js'
 import './benchmarks.css'
 
 const STATUS = {
@@ -35,6 +36,7 @@ function RangeStrip({ row }) {
 export default function BenchmarkTable({ record, settings = DEFAULT_SETTINGS, onOpenBenchmarks }) {
   const stage = record.data.stage.stage
   const bm = useBenchmarkContext()
+  const { changedAt } = useBenchmarks()
   const result = useMemo(() => {
     if (!stage) return null
     try {
@@ -99,7 +101,7 @@ export default function BenchmarkTable({ record, settings = DEFAULT_SETTINGS, on
         {compared === 0 ? 'Nothing could be compared yet.' : `${compared - outside} of ${compared} figures are within ${bm.benchmarks ? 'your' : 'the market'} range${outside ? `. ${outside} ${outside === 1 ? 'is' : 'are'} outside.` : '.'}`}
       </p>
       <p className="note">
-        Compared with: {result.set.name}.{result.set.madeUp && <strong> Sample numbers only, not real market data.</strong>}
+        Compared with: {result.set.name}{bm.benchmarks ? ` (${lastChangedText(changedAt)})` : ''}.{result.set.madeUp && <strong> Sample numbers only, not real market data.</strong>}
         {onOpenBenchmarks && (
           <>
             {' '}

@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo } from 'react'
 
 // The team's own benchmarks, shared by every screen that compares a project with a range (see BenchmarksProvider.jsx).
 // Outside the provider (the tests of the individual screens) `entries` is null, and the checks fall back to their own built-in sets.
-export const BenchmarksContext = createContext({ entries: null, sets: undefined, kept: true, replace: () => {}, hasProvider: false })
+export const BenchmarksContext = createContext({ entries: null, sets: undefined, changedAt: null, kept: true, replace: () => {}, hasProvider: false })
 
 export const useBenchmarks = () => useContext(BenchmarksContext)
 

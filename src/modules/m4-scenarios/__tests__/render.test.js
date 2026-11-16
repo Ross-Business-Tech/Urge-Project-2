@@ -58,3 +58,16 @@ test('a project with no stage asks for one, and a project whose numbers are refu
   assert.match(refused, /cannot be stress-tested/)
   assert.ok(!refused.includes('could not be shown'))
 })
+
+test('with no development budget, the downside column has the same rows as the others, marked "Not available", with the reason once', () => {
+  const record = recordFor(scenarios[0], 'development')
+  for (const line of Object.values(record.data.budget.lines)) line.amount = null
+  const html = draw(record)
+  const count = (label) => html.split(`>${label}<`).length - 1
+  for (const label of ['Extra cost from overrun and delay', 'Covered by contingency and reserves', 'Funding gap', 'Delay the reserves can absorb']) {
+    assert.equal(count(label), 3, `"${label}" is shown for the downside, base and upside cases alike`)
+  }
+  assert.equal(html.split('The cost overrun cannot be priced: No development budget entered.').length - 1, 1, 'the reason is given once, for the case that needs it')
+  assert.ok(!html.includes('One-time costs from the stress'), 'the old single row is gone')
+  assert.ok(!html.includes('could not be shown'))
+})

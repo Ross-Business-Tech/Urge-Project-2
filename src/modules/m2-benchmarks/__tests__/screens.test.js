@@ -26,9 +26,9 @@ after(async () => {
 })
 
 const plain = (html) => html.replaceAll('<!-- -->', '').replaceAll(/<[^>]+>/g, ' ').replaceAll(/\s+/g, ' ')
-const memory = (entries) => ({ getItem: () => (entries ? serializeEntries(entries) : null), setItem: () => {} })
+const memory = (entries, changedAt) => ({ getItem: () => (entries ? serializeEntries(entries, '', changedAt) : null), setItem: () => {} })
 const record = () => applyStageAndDate(healthyProject(), { stage: 'development', asOfDate: '2026-01-15' })
-const withProvider = (entries, child) => createElement(Provider, { storage: memory(entries) }, child)
+const withProvider = (entries, child, changedAt) => createElement(Provider, { storage: memory(entries, changedAt) }, child)
 const MADE_UP = /made-up|made up|sample numbers|not real market data/i
 
 test('with nothing entered the Benchmarks screen says so and offers to add one', () => {
@@ -164,4 +164,27 @@ test('with no workbook loaded the dropdown offers the standard types and makes n
   assert.match(html, /<optgroup label="Standard types">/)
   assert.match(html, /<option value="2br" selected="">/)
   assert.doesNotMatch(plain(html), /loaded workbook/)
+})
+
+// --- when the benchmarks were last changed -------------------------------------------------------------------------------
+
+const SAVED = [{ id: 'v', metric: 'vacancy', low: 0.05, high: 0.08, typical: null }]
+
+test('the Benchmarks screen and the comparison table say when the ranges were last changed', () => {
+  const when = '2026-11-16T12:00:00.000Z'
+  const editor = plain(renderToString(withProvider(SAVED, createElement(Editor), when)))
+  assert.match(editor, /1 of 1 benchmark is in use, last changed November 1[56], 2026\./)
+  const table = plain(renderToString(withProvider(SAVED, createElement(Table, { record: record() }), when)))
+  assert.match(table, /Compared with: Your benchmarks \(last changed November 1[56], 2026\)\./)
+})
+
+test('benchmarks saved without a date say so, instead of showing a made-up one', () => {
+  const editor = plain(renderToString(withProvider(SAVED, createElement(Editor))))
+  assert.match(editor, /last changed date not recorded yet/)
+  const table = plain(renderToString(withProvider(SAVED, createElement(Table, { record: record() }))))
+  assert.match(table, /\(last changed date not recorded yet\)/)
+})
+
+test('with nothing entered no date is shown', () => {
+  assert.doesNotMatch(plain(renderToString(withProvider(null, createElement(Editor)))), /last changed/)
 })

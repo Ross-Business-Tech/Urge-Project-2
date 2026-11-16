@@ -59,7 +59,15 @@ function CaseResults({ result, settings, stage, onOpenGroup }) {
         hint={result.yearlyShortfall > 0 ? `Short by ${fmt.usd(result.yearlyShortfall)} a year` : null}
       />
       <Result label="Debt yield" value={result.debtYield === null ? 'Not available' : fmt.pct(result.debtYield)} hint="NOI as a share of the debt" />
-      {stage !== 'completed' && gap && !gap.ok && <Result label="One-time costs from the stress" value="Not available" hint={gap.reason} />}
+      {/* The same rows as the cases that can be priced, so the columns line up. Nothing is worked out without the figure it needs. */}
+      {stage !== 'completed' && gap && !gap.ok && (
+        <>
+          <Result label="Extra cost from overrun and delay" value="Not available" hint={gap.reason} />
+          <Result label="Covered by contingency and reserves" value="Not available" hint="Needs the extra cost above." />
+          <Result label="Funding gap" value="Not available" hint="Needs the extra cost above." />
+          <Result label="Delay the reserves can absorb" value="Not available" hint="Needs the extra cost above." />
+        </>
+      )}
       {stage !== 'completed' && gap?.ok && (
         <>
           <Result

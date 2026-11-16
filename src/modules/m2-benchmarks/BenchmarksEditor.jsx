@@ -2,6 +2,7 @@ import { useId, useMemo, useRef, useState } from 'react'
 import { METRICS, metricOf, newEntry, problemsByEntry, usableEntries, parseEntries, serializeEntries, normalizeUnitType } from '../shared/index.js'
 import { useBenchmarks } from '../../useBenchmarks.js'
 import { downloadBytes } from '../../download.js'
+import { lastChangedText } from '../../benchmarkDate.js'
 import { fromText, toText, ADORNMENT } from './fields.js'
 import { unitTypeChoices, STANDARD_TYPES } from './unitTypes.js'
 import './benchmark-editor.css'
@@ -159,7 +160,7 @@ function EntryCard({ entry, problems, workbookTypes, onChange, onRemove }) {
 
 // The "Benchmarks" screen: the ranges the team trusts, typed in by them. Every comparison in the app is against these.
 export default function BenchmarksEditor({ workbookTypes }) {
-  const { entries, kept, replace } = useBenchmarks()
+  const { entries, kept, changedAt, replace } = useBenchmarks()
   const [adding, setAdding] = useState('rent')
   const [message, setMessage] = useState(null)
   const [version, setVersion] = useState(0) // changes when the whole list is replaced, so the figure boxes show the new values
@@ -189,7 +190,7 @@ export default function BenchmarksEditor({ workbookTypes }) {
     setVersion((v) => v + 1)
     replace([])
   }
-  const saveFile = () => downloadBytes(serializeEntries(list), 'my-benchmarks.json', 'application/json')
+  const saveFile = () => downloadBytes(serializeEntries(list, '', changedAt), 'my-benchmarks.json', 'application/json')
   const openFile = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -200,7 +201,7 @@ export default function BenchmarksEditor({ workbookTypes }) {
       return
     }
     setVersion((v) => v + 1)
-    replace(read.entries)
+    replace(read.entries, read.changedAt)
     setMessage({ bad: false, text: `Opened ${read.entries.length} benchmark${read.entries.length === 1 ? '' : 's'} from ${file.name}. They replace the list that was here.` })
   }
 
@@ -209,7 +210,7 @@ export default function BenchmarksEditor({ workbookTypes }) {
       <p className="banner info" role="status">
         {list.length === 0
           ? 'You have not entered any benchmarks yet, so nothing is compared. Add the ranges you trust below, and every screen will compare the project with them.'
-          : `${inUse} of ${list.length} benchmark${list.length === 1 ? ' is' : 's are'} in use. Anything you have not entered is not compared.`}
+          : `${inUse} of ${list.length} benchmark${list.length === 1 ? ' is' : 's are'} in use, ${lastChangedText(changedAt)}. Anything you have not entered is not compared.`}
       </p>
       <p className="note">
         Use the ranges you would defend: rents from your comparables, the interest rates you are seeing, the coverage your lender requires. They apply to every project you review, so you can change them whenever the market or the deal type changes.

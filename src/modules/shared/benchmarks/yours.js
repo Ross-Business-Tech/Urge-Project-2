@@ -133,8 +133,16 @@ export function toBenchmarkSets(entries) {
 export const FILE_KIND = 'deal-review-benchmarks'
 export const FILE_VERSION = 1
 
-export function serializeEntries(entries, note = '') {
-  return JSON.stringify({ kind: FILE_KIND, version: FILE_VERSION, note: String(note).slice(0, 500), benchmarks: (Array.isArray(entries) ? entries : []).map(cleanEntry) }, null, 2)
+// A date the ranges were last changed, as an ISO timestamp, or null when it is missing or not a real date.
+export function readChangedAt(value) {
+  if (typeof value !== 'string' || value.length > 40 || !/^\d{4}-\d{2}-\d{2}T/.test(value)) return null
+  const ms = Date.parse(value)
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : null
+}
+
+export function serializeEntries(entries, note = '', changedAt = null) {
+  const when = readChangedAt(changedAt)
+  return JSON.stringify({ kind: FILE_KIND, version: FILE_VERSION, note: String(note).slice(0, 500), ...(when ? { changedAt: when } : {}), benchmarks: (Array.isArray(entries) ? entries : []).map(cleanEntry) }, null, 2)
 }
 
 const cleanEntry = (e) => ({
@@ -146,7 +154,7 @@ const cleanEntry = (e) => ({
   typical: isNum(e?.typical) ? e.typical : null,
 })
 
-// Read a saved file. Returns { ok: true, entries } or { ok: false, reason }. A file with some bad entries is still read: the
+// Read a saved file. Returns { ok: true, entries, changedAt } (changedAt is null when the file has no date) or { ok: false, reason }. A file with some bad entries is still read: the
 // bad ones come back as they are, so the editor can show what is wrong with them, and they are never used.
 export function parseEntries(text) {
   let data
@@ -160,7 +168,7 @@ export function parseEntries(text) {
   if (!Array.isArray(data.benchmarks)) return { ok: false, reason: 'That benchmarks file has no list of benchmarks.' }
   if (data.benchmarks.length > 200) return { ok: false, reason: 'That benchmarks file has too many entries.' }
   const entries = data.benchmarks.filter((e) => e && typeof e === 'object').map(cleanEntry).map((e, i) => ({ ...e, id: e.id || `b${i + 1}` }))
-  return { ok: true, entries }
+  return { ok: true, entries, changedAt: readChangedAt(data.changedAt) }
 }
 
 export function newEntry(metric, id) {
