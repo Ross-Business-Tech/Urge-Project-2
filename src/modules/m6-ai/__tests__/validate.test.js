@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { validateAnswer, figuresIn, figuresSent, CAPS } from '../validate.js'
+import { validateAnswer, figuresIn, figuresSent, extractCitations, CAPS } from '../validate.js'
 
 const payload = {
   flags: [
@@ -111,7 +111,7 @@ test('lists are capped and each item is length-limited', () => {
 
 test('extra fields the AI invents (an approval, a new severity) are not passed on', () => {
   const r = validateAnswer(answer({ approve: true, new_severity: { 'M1-sources-uses': 'low' }, decision: 'safe' }), payload)
-  assert.deepEqual(Object.keys(r.answer).sort(), ['cannot_tell', 'confidence', 'confidence_reason', 'connections', 'integrity_screen', 'look_first', 'questions', 'second_opinion', 'summary'])
+  assert.deepEqual(Object.keys(r.answer).sort(), ['cannot_tell', 'confidence', 'confidence_reason', 'connections', 'integrity_screen', 'look_first', 'questions', 'second_opinion', 'summary', 'summary_pointers'])
 })
 
 test('text is kept as plain text: a script tag in an answer is just words, never markup', () => {
@@ -123,4 +123,94 @@ test('figure reading: amounts, percentages, decimals and long numbers are notice
   assert.deepEqual(figuresIn('Cost $5,550,000, 6.5%, ratio 2.71, year 2026, 3 flags', true).map((f) => f.key), ['5550000', '6.5', '2.71', '2026'])
   assert.ok(figuresSent({ a: 1.2, b: 'DSCR 1.20× and $1,000' }).has('1.2'))
   assert.ok(figuresSent({ a: 1.2, b: 'DSCR 1.20× and $1,000' }).has('1000'))
+})
+
+
+// ---------------------------------------------------------------- sources written into sentences
+// The real summary an AI wrote, with its sources listed inside the sentences. The app must show it as plain prose and keep
+// the evidence those sources pointed to.
+const REAL = 'The main risk is delivery execution: this is new construction, while the sponsor has no completed projects loaded and none of the named delivery, design, management, or guarantor roles is identified. [Development Project 1 Details!E5; M5-no-track-record; M3D-team-incomplete] Reported firm cash increased to $900,000 from $700,000, and firm notes payable declined to $300,000 from $350,000, which supports the reported sponsor-strength picture but does not establish construction-delivery capability. [Balance Sheet!B9; Balance Sheet!D9; Balance Sheet!B47; Balance Sheet!D47] The capital plan lists $3,000,000 of hard debt, $2,000,000 of developer equity, and $550,000 of other funding; the unidentified team and unclarified other funding are the first items to resolve. [Development Project 1 Details!F28; Development Project 1 Details!F29; Development Project 1 Details!F30; M3D-team-incomplete]'
+const realPayload = {
+  flags: [
+    { id: 'M5-no-track-record', cell_refs: [], title: 'The sponsor has no completed projects to judge.', evidence: 'No completed projects are loaded.' },
+    { id: 'M3D-team-incomplete', cell_refs: ['Development Project 1 Details!D11'], title: 'The sponsor has no completed projects to show.', evidence: 'The firm reports no completed projects.' },
+  ],
+  data: [
+    ['Development Project 1 Details!E5', 'New construction'],
+    ['Balance Sheet!B9', '$900,000'], ['Balance Sheet!D9', '$700,000'], ['Balance Sheet!B47', '$300,000'], ['Balance Sheet!D47', '$350,000'],
+    ['Development Project 1 Details!F28', '$3,000,000'], ['Development Project 1 Details!F29', '$2,000,000'], ['Development Project 1 Details!F30', '$550,000'],
+  ].map(([cell, value]) => ({ cell, label: 'x', value })),
+}
+const reply = (over = {}) => JSON.stringify({ second_opinion: 'agrees_with_caveats', summary: REAL, connections: [], look_first: [], questions: [], integrity_screen: [], cannot_tell: [], confidence: 'medium', confidence_reason: 'x', ...over })
+
+test('a summary with its sources written into the sentences is shown as plain prose, and the sources are kept as its evidence', () => {
+  const r = validateAnswer(reply(), realPayload)
+  assert.equal(r.ok, true)
+  const { summary, summary_pointers } = r.answer
+  assert.ok(!/[[\]]/.test(summary), 'no brackets left')
+  assert.ok(!/M5-no-track-record|M3D-team-incomplete|Details!|Balance Sheet!/.test(summary), 'no ids or cells left in the wording')
+  assert.match(summary, /roles is identified\. Reported firm cash increased to \$900,000 from \$700,000/, 'sentences run on cleanly')
+  assert.match(summary, /other funding; the unidentified team and unclarified other funding are the first items to resolve\.$/)
+  assert.deepEqual(summary_pointers, ['Development Project 1 Details!E5', 'M5-no-track-record', 'M3D-team-incomplete', 'Balance Sheet!B9', 'Balance Sheet!D9', 'Balance Sheet!B47', 'Balance Sheet!D47', 'Development Project 1 Details!F28', 'Development Project 1 Details!F29', 'Development Project 1 Details!F30'])
+  assert.equal(r.answer.unverified, undefined, 'every figure is in the data')
+})
+
+test('the summary’s own evidence fields are used, and only real ones are kept', () => {
+  const r = validateAnswer(reply({ summary: 'Plain summary with $900,000.', summary_evidence: { flag_ids: ['M5-no-track-record', 'M9-made-up'], cites: ['Balance Sheet!B9', 'Nowhere!Z9', 'M3D-team-incomplete'] } }), realPayload)
+  assert.deepEqual(r.answer.summary_pointers, ['M5-no-track-record', 'Balance Sheet!B9', 'M3D-team-incomplete'])
+  assert.equal(r.answer.summary, 'Plain summary with $900,000.')
+  const none = validateAnswer(reply({ summary: 'Plain.' }), realPayload)
+  assert.deepEqual(none.answer.summary_pointers, [], 'no evidence given is an empty list, not a failure')
+})
+
+test('only a bracket holding nothing but sources is removed: labels, ordinary brackets and mixed ones stay', () => {
+  const r = validateAnswer(reply({ summary: 'Ask [Project A] (about 4 months late) and see [below; M5-no-track-record] for more.' }), realPayload)
+  assert.equal(r.answer.summary, 'Ask [Project A] (about 4 months late) and see [below; M5-no-track-record] for more.')
+  assert.deepEqual(r.answer.summary_pointers, [])
+})
+
+test('sources in parentheses are handled too, and sources inside other statements join that statement’s own evidence', () => {
+  const r = validateAnswer(reply({
+    summary: 'Cash is up (Balance Sheet!B9; M5-no-track-record).',
+    connections: [{ headline: 'One cause [M3D-team-incomplete]', explanation: 'These share a cause (M5-no-track-record; Development Project 1 Details!E5).', flag_ids: [], check_first: null, cites: [] }],
+    look_first: [{ flag_id: 'not-real', reason: 'Read this one first [M5-no-track-record].' }],
+    questions: [{ question: 'Who guarantees the loan? [M3D-team-incomplete]', reason: '', flag_ids: [] }],
+    integrity_screen: [{ title: 'A cell looks odd', why: 'It does not fit [Balance Sheet!D9].', cites: [], confidence: 'low' }],
+    confidence_reason: 'Thin evidence [M5-no-track-record].',
+  }), realPayload)
+  assert.equal(r.answer.summary, 'Cash is up.')
+  assert.deepEqual(r.answer.summary_pointers, ['Balance Sheet!B9', 'M5-no-track-record'])
+  const c = r.answer.connections[0]
+  assert.equal(c.headline, 'One cause')
+  assert.equal(c.explanation, 'These share a cause.')
+  assert.deepEqual(c.flag_ids, ['M3D-team-incomplete', 'M5-no-track-record'])
+  assert.deepEqual(c.cites, ['M3D-team-incomplete', 'M5-no-track-record', 'Development Project 1 Details!E5'])
+  assert.deepEqual(r.answer.look_first, [{ flag_id: 'M5-no-track-record', reason: 'Read this one first.' }])
+  assert.equal(r.answer.questions[0].question, 'Who guarantees the loan?')
+  assert.deepEqual(r.answer.questions[0].flag_ids, ['M3D-team-incomplete'])
+  assert.deepEqual(r.answer.integrity_screen[0].cites, ['Balance Sheet!D9'])
+  assert.equal(r.answer.integrity_screen[0].why, 'It does not fit.')
+  assert.equal(r.answer.confidence_reason, 'Thin evidence.')
+  assert.deepEqual(r.dropped, [])
+})
+
+test('sources the AI made up are removed from the wording and then ignored, so they cannot make a statement look backed', () => {
+  const r = validateAnswer(reply({ connections: [{ headline: 'Invented', explanation: 'Points at nothing [M9-made-up; Nowhere!A1].', flag_ids: [], check_first: null, cites: [] }] }), realPayload)
+  assert.equal(r.answer.connections.length, 0, 'no real pointer, so the statement is removed')
+  assert.match(r.dropped[0].reason, /no real finding/)
+})
+
+test('extractCitations: spacing and punctuation are tidied, and text with nothing to take out is unchanged', () => {
+  assert.deepEqual(extractCitations('One. [Balance Sheet!B9] Two.'), { text: 'One. Two.', pointers: ['Balance Sheet!B9'] })
+  assert.deepEqual(extractCitations('Ends here [M5-no-track-record].'), { text: 'Ends here.', pointers: ['M5-no-track-record'] })
+  assert.deepEqual(extractCitations('Repeated [M1-a-b] and again [M1-a-b; Tab!A1].'), { text: 'Repeated and again.', pointers: ['M1-a-b', 'Tab!A1'] })
+  assert.deepEqual(extractCitations('Nothing to take out.'), { text: 'Nothing to take out.', pointers: [] })
+  assert.deepEqual(extractCitations('A [Project A] label (and 2 more).'), { text: 'A [Project A] label (and 2 more).', pointers: [] })
+  assert.deepEqual(extractCitations('Cell with comma-free tab [Consol Financials & Projections!E9].'), { text: 'Cell with comma-free tab.', pointers: ['Consol Financials & Projections!E9'] })
+})
+
+test('figures are read cleanly: a comma, full stop or bracket after a figure is not part of it, and thousands are grouped properly', () => {
+  assert.deepEqual(figuresIn('Cash $900,000, then 3.5%, and 2.71×. Also $5,550,000; and (1,234.50).', true).map((f) => f.raw), ['$900,000', '3.5%', '2.71', '$5,550,000', '1,234.50'])
+  assert.deepEqual(figuresIn('Cash $900,000, then $700,000, yet $20,000.', true).map((f) => f.key), ['900000', '700000', '20000'])
+  assert.deepEqual(figuresIn('Sources 5550000 and 12,5 and 1,23,456.').map((f) => f.key), ['5550000', '12', '5', '1', '23456'], 'only proper three-digit groups join into one figure: 12,5 is two numbers, 23,456 is one')
 })
