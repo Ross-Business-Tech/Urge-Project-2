@@ -1,0 +1,153 @@
+{
+  "kind": "deal-review-benchmarks",
+  "version": 1,
+  "note": "Made-up example ranges for the demo. Not market data.",
+  "changedAt": "2026-01-15T12:00:00.000Z",
+  "benchmarks": [
+    {
+      "id": "rent-studio",
+      "metric": "rent",
+      "unitType": "studio",
+      "ami": "",
+      "low": 1000,
+      "high": 1300,
+      "typical": 1150
+    },
+    {
+      "id": "rent-1br",
+      "metric": "rent",
+      "unitType": "1br",
+      "ami": "",
+      "low": 1350,
+      "high": 1650,
+      "typical": 1500
+    },
+    {
+      "id": "rent-1br-60",
+      "metric": "rent",
+      "unitType": "1br",
+      "ami": "60",
+      "low": 850,
+      "high": 1050,
+      "typical": 950
+    },
+    {
+      "id": "rent-2br",
+      "metric": "rent",
+      "unitType": "2br",
+      "ami": "",
+      "low": 1600,
+      "high": 1900,
+      "typical": 1750
+    },
+    {
+      "id": "rent-2br-60",
+      "metric": "rent",
+      "unitType": "2br",
+      "ami": "60",
+      "low": 1000,
+      "high": 1300,
+      "typical": 1150
+    },
+    {
+      "id": "rent-3br",
+      "metric": "rent",
+      "unitType": "3br",
+      "ami": "",
+      "low": 2000,
+      "high": 2500,
+      "typical": 2250
+    },
+    {
+      "id": "expense",
+      "metric": "expense",
+      "low": 5500,
+      "high": 7000,
+      "typical": null
+    },
+    {
+      "id": "cost-hard",
+      "metric": "costHard",
+      "low": 115,
+      "high": 150,
+      "typical": null
+    },
+    {
+      "id": "cost-soft",
+      "metric": "costSoft",
+      "low": 25,
+      "high": 45,
+      "typical": null
+    },
+    {
+      "id": "cost-total",
+      "metric": "costTotal",
+      "low": 160,
+      "high": 220,
+      "typical": null
+    },
+    {
+      "id": "contingency",
+      "metric": "contingency",
+      "low": 0.05,
+      "high": 0.12,
+      "typical": null
+    },
+    {
+      "id": "interest",
+      "metric": "interestRate",
+      "low": 0.055,
+      "high": 0.0675,
+      "typical": null
+    },
+    {
+      "id": "coverage",
+      "metric": "dscr",
+      "low": 1.25,
+      "high": 2.25,
+      "typical": null
+    },
+    {
+      "id": "loan-to-cost",
+      "metric": "debtToCost",
+      "low": 0.5,
+      "high": 0.65,
+      "typical": null
+    },
+    {
+      "id": "equity",
+      "metric": "equityShare",
+      "low": 0.25,
+      "high": 0.4,
+      "typical": null
+    },
+    {
+      "id": "break-even",
+      "metric": "breakEven",
+      "low": 0.55,
+      "high": 0.85,
+      "typical": null
+    },
+    {
+      "id": "yield",
+      "metric": "yieldOnCost",
+      "low": 0.07,
+      "high": 0.09,
+      "typical": null
+    },
+    {
+      "id": "debt-yield",
+      "metric": "debtYield",
+      "low": 0.09,
+      "high": 0.15,
+      "typical": null
+    },
+    {
+      "id": "vacancy",
+      "metric": "vacancy",
+      "low": 0.05,
+      "high": 0.08,
+      "typical": null
+    }
+  ]
+}

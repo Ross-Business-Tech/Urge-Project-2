@@ -8,6 +8,10 @@ Made-up applicant workbooks and T-12 files for trying the app. Nothing here is r
 
 - `sponsors/`: three made-up sponsors with a history of completed projects, for trying the Sponsor tab (one workbook each, plus a T-12 file per past project). See `sponsors/README.md`.
 
+## The demo pack (`demo/`)
+
+One workbook with a clean firm, a healthy project and an unhealthy project, for showing what the tool does with each. `demo/demo-review.json` opens with everything already set up. See `demo/README.md` for a five-minute run and what each screen should show.
+
 ## The fully filled-in example (for trying every feature)
 
 Riverside Commons is a made-up 100-apartment project with nothing missing: five room types (studio, 1, 2 and 3 bedroom, two of them also at the 60% income level), shops, a complete budget, three loans plus a grant and a deferred fee, every expense line, and a full team. Nothing is broken on purpose.

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import LoadedProject, { EmptyState } from './LoadedProject.jsx'
 import { ScenarioPanel } from './modules/m4-scenarios/ScenarioPanel.jsx'
 import DevelopmentRisk from './modules/m3d-development/DevelopmentRisk.jsx'
@@ -10,6 +10,7 @@ import BenchmarksEditor from './modules/m2-benchmarks/BenchmarksEditor.jsx'
 import BenchmarkImpact from './BenchmarkImpact.jsx'
 import { unitTypesIn } from './modules/m2-benchmarks/unitTypes.js'
 import { BenchmarksProvider } from './BenchmarksProvider.jsx'
+import { ProjectChoiceContext } from './ProjectChoice.js'
 import IntegrityChecklist from './modules/m1-integrity/IntegrityChecklist.jsx'
 import SponsorPanel from './modules/m5-sponsor/SponsorPanel.jsx'
 import AiPanel from './modules/m6-ai/AiPanel.jsx'
@@ -194,6 +195,8 @@ function Shell() {
   const [view, setView] = useState('import')
   const [review, setReview] = useState(null) // what "Load workbook" has on screen; the other tabs show it
   const [attempt, setAttempt] = useState(0) // changing this starts the review screen over after a crash
+  const [projectId, setProjectId] = useState(null) // the project being looked at, the same on every analysis screen
+  const projectChoice = useMemo(() => ({ id: projectId, setId: setProjectId }), [projectId])
   const current = VIEWS.find((v) => v.id === view)
   const hasReview = Boolean(review)
   const goLoad = () => goTo('import')
@@ -210,6 +213,7 @@ function Shell() {
   const fileName = review?.result?.report?.fileName
 
   return (
+    <ProjectChoiceContext.Provider value={projectChoice}>
     <div className="shell">
       <header className="topbar">
         <button type="button" className="brand" onClick={goLoad} aria-label={`${APP_NAME}: back to the start`}>
@@ -359,5 +363,6 @@ function Shell() {
         </main>
       </div>
     </div>
+    </ProjectChoiceContext.Provider>
   )
 }

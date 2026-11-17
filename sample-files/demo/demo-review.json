@@ -1,0 +1,5283 @@
+{
+  "kind": "underwriting-review",
+  "formatVersion": 1,
+  "schemaVersion": 2,
+  "savedAt": "2026-01-15T12:00:00.000Z",
+  "firm": {
+    "schemaVersion": 2,
+    "kind": "firm",
+    "data": {
+      "identity": {
+        "name": "Cedar Hollow Partners",
+        "street": "1 Sample Way",
+        "cityStateZip": "Exampleton, ST 00000",
+        "principalName": "Riley Example",
+        "developmentProjectCount": 2,
+        "completedProjectCount": 3
+      },
+      "owners": {
+        "rows": [
+          {
+            "name": "Riley Example",
+            "ownershipPct": 1
+          }
+        ]
+      },
+      "balanceSheet": {
+        "lines": {
+          "cash": {
+            "current": 900000,
+            "prior": 700000
+          },
+          "pettyCash": {
+            "current": null,
+            "prior": null
+          },
+          "accountsReceivable": {
+            "current": 150000,
+            "prior": 120000
+          },
+          "inventory": {
+            "current": null,
+            "prior": null
+          },
+          "prepaidExpenses": {
+            "current": null,
+            "prior": null
+          },
+          "employeeAdvances": {
+            "current": null,
+            "prior": null
+          },
+          "temporaryInvestments": {
+            "current": null,
+            "prior": null
+          },
+          "land": {
+            "current": null,
+            "prior": null
+          },
+          "buildings": {
+            "current": null,
+            "prior": null
+          },
+          "furnitureEquipment": {
+            "current": null,
+            "prior": null
+          },
+          "computerEquipment": {
+            "current": null,
+            "prior": null
+          },
+          "vehicles": {
+            "current": null,
+            "prior": null
+          },
+          "accumulatedDepreciation": {
+            "current": null,
+            "prior": null
+          },
+          "trademarks": {
+            "current": null,
+            "prior": null
+          },
+          "patents": {
+            "current": null,
+            "prior": null
+          },
+          "securityDeposits": {
+            "current": null,
+            "prior": null
+          },
+          "otherAssets": {
+            "current": null,
+            "prior": null
+          },
+          "accountsPayable": {
+            "current": 80000,
+            "prior": 70000
+          },
+          "businessCreditCards": {
+            "current": null,
+            "prior": null
+          },
+          "salesTaxPayable": {
+            "current": null,
+            "prior": null
+          },
+          "payrollLiabilities": {
+            "current": null,
+            "prior": null
+          },
+          "otherLiabilities": {
+            "current": null,
+            "prior": null
+          },
+          "currentPortionLongTermDebt": {
+            "current": null,
+            "prior": null
+          },
+          "notesPayable": {
+            "current": 300000,
+            "prior": 350000
+          },
+          "mortgagePayable": {
+            "current": null,
+            "prior": null
+          },
+          "lessCurrentPortion": {
+            "current": null,
+            "prior": null
+          },
+          "partnersEquity": {
+            "current": 1200000,
+            "prior": 1000000
+          },
+          "openingRetainedEarnings": {
+            "current": null,
+            "prior": null
+          },
+          "dividendsOwnerDraw": {
+            "current": null,
+            "prior": null
+          },
+          "netIncome": {
+            "current": null,
+            "prior": null
+          }
+        },
+        "currentPeriod": "2025",
+        "priorPeriod": "2024"
+      },
+      "principalStatement": {
+        "lines": {
+          "cashChecking": {
+            "amount": 250000
+          },
+          "cashSavings": {
+            "amount": null
+          },
+          "certificatesOfDeposit": {
+            "amount": null
+          },
+          "securities": {
+            "amount": null
+          },
+          "notesReceivable": {
+            "amount": null
+          },
+          "lifeInsuranceCashValue": {
+            "amount": null
+          },
+          "personalProperty": {
+            "amount": null
+          },
+          "retirementFunds": {
+            "amount": null
+          },
+          "realEstateOwned": {
+            "amount": 1500000
+          },
+          "otherAssetsCollege": {
+            "amount": null
+          },
+          "otherAssets": {
+            "amount": null
+          },
+          "currentDebt": {
+            "amount": null
+          },
+          "notesPayable": {
+            "amount": null
+          },
+          "taxesPayable": {
+            "amount": null
+          },
+          "propertyMortgages": {
+            "amount": 800000
+          },
+          "otherLiabilities1": {
+            "amount": null
+          },
+          "otherLiabilities2": {
+            "amount": null
+          }
+        },
+        "name": "Riley Example",
+        "statementDate": "2025-12-31"
+      },
+      "earnings": {
+        "rows": [
+          {
+            "fiscalYear": 2023,
+            "operatingCashDistributions": null,
+            "developerFee": 400000,
+            "propertyManagementFee": 120000,
+            "gcFee": null,
+            "assetManagementFee": null,
+            "otherFee1": null,
+            "otherFee2": null,
+            "otherFee3": null,
+            "nonFeeIncome": null,
+            "salariesWages": 350000,
+            "leaseExpense": null,
+            "utilities": null,
+            "marketing": null,
+            "insurance": 30000,
+            "mealsEntertainment": null,
+            "travel": null,
+            "technologyTelecom": null,
+            "officeSupplies": null,
+            "legalProfessional": 40000,
+            "otherExpense1": null,
+            "otherExpense2": null,
+            "existingInterestExpense": null,
+            "costOfOtherCapital": null,
+            "drawFromReserves": null,
+            "cashTaxes": null
+          },
+          {
+            "fiscalYear": 2024,
+            "operatingCashDistributions": null,
+            "developerFee": 450000,
+            "propertyManagementFee": 130000,
+            "gcFee": null,
+            "assetManagementFee": null,
+            "otherFee1": null,
+            "otherFee2": null,
+            "otherFee3": null,
+            "nonFeeIncome": null,
+            "salariesWages": 360000,
+            "leaseExpense": null,
+            "utilities": null,
+            "marketing": null,
+            "insurance": 30000,
+            "mealsEntertainment": null,
+            "travel": null,
+            "technologyTelecom": null,
+            "officeSupplies": null,
+            "legalProfessional": 40000,
+            "otherExpense1": null,
+            "otherExpense2": null,
+            "existingInterestExpense": null,
+            "costOfOtherCapital": null,
+            "drawFromReserves": null,
+            "cashTaxes": null
+          },
+          {
+            "fiscalYear": 2025,
+            "operatingCashDistributions": null,
+            "developerFee": 500000,
+            "propertyManagementFee": 140000,
+            "gcFee": null,
+            "assetManagementFee": null,
+            "otherFee1": null,
+            "otherFee2": null,
+            "otherFee3": null,
+            "nonFeeIncome": null,
+            "salariesWages": 370000,
+            "leaseExpense": null,
+            "utilities": null,
+            "marketing": null,
+            "insurance": 32000,
+            "mealsEntertainment": null,
+            "travel": null,
+            "technologyTelecom": null,
+            "officeSupplies": null,
+            "legalProfessional": 45000,
+            "otherExpense1": null,
+            "otherExpense2": null,
+            "existingInterestExpense": null,
+            "costOfOtherCapital": null,
+            "drawFromReserves": null,
+            "cashTaxes": null
+          }
+        ]
+      },
+      "capital": {
+        "lines": {
+          "securedDebt": {
+            "committed": 3000000,
+            "funded": 2500000
+          },
+          "unsecuredDebt": {
+            "committed": null,
+            "funded": null
+          },
+          "ownerEquity": {
+            "committed": 2000000,
+            "funded": 2000000
+          }
+        }
+      },
+      "projects": {
+        "rows": [
+          {
+            "projectId": "development-project-1",
+            "ownershipPct": null
+          },
+          {
+            "projectId": "development-project-2",
+            "ownershipPct": null
+          },
+          {
+            "projectId": "completed-project-1",
+            "ownershipPct": null
+          },
+          {
+            "projectId": "completed-project-2",
+            "ownershipPct": null
+          },
+          {
+            "projectId": "completed-project-3",
+            "ownershipPct": null
+          }
+        ]
+      }
+    },
+    "sources": {
+      "identity.name": "Cover!C8",
+      "identity.street": "Cover!C13",
+      "identity.cityStateZip": "Cover!C14",
+      "identity.principalName": "Cover!C17",
+      "identity.developmentProjectCount": "Cover!C9",
+      "identity.completedProjectCount": "Cover!C10",
+      "owners.rows.0.name": "Cover!C17",
+      "owners.rows.0.ownershipPct": "Cover!C18",
+      "balanceSheet.currentPeriod": "Balance Sheet!B6",
+      "balanceSheet.priorPeriod": "Balance Sheet!D6",
+      "balanceSheet.lines.cash.current": "Balance Sheet!B9",
+      "balanceSheet.lines.cash.prior": "Balance Sheet!D9",
+      "balanceSheet.lines.accountsReceivable.current": "Balance Sheet!B11",
+      "balanceSheet.lines.accountsReceivable.prior": "Balance Sheet!D11",
+      "balanceSheet.lines.accountsPayable.current": "Balance Sheet!B38",
+      "balanceSheet.lines.accountsPayable.prior": "Balance Sheet!D38",
+      "balanceSheet.lines.notesPayable.current": "Balance Sheet!B47",
+      "balanceSheet.lines.notesPayable.prior": "Balance Sheet!D47",
+      "balanceSheet.lines.partnersEquity.current": "Balance Sheet!B53",
+      "balanceSheet.lines.partnersEquity.prior": "Balance Sheet!D53",
+      "principalStatement.name": "Principal PFS!B5",
+      "principalStatement.statementDate": "Principal PFS!B7",
+      "principalStatement.lines.cashChecking.amount": "Principal PFS!D11",
+      "principalStatement.lines.realEstateOwned.amount": "Principal PFS!D19",
+      "principalStatement.lines.propertyMortgages.amount": "Principal PFS!D30",
+      "earnings.rows.0.fiscalYear": "Consol Financials & Projections!C5",
+      "earnings.rows.0.developerFee": "Consol Financials & Projections!C9",
+      "earnings.rows.0.propertyManagementFee": "Consol Financials & Projections!C10",
+      "earnings.rows.0.salariesWages": "Consol Financials & Projections!C21",
+      "earnings.rows.0.insurance": "Consol Financials & Projections!C25",
+      "earnings.rows.0.legalProfessional": "Consol Financials & Projections!C30",
+      "earnings.rows.1.fiscalYear": "Consol Financials & Projections!D5",
+      "earnings.rows.1.developerFee": "Consol Financials & Projections!D9",
+      "earnings.rows.1.propertyManagementFee": "Consol Financials & Projections!D10",
+      "earnings.rows.1.salariesWages": "Consol Financials & Projections!D21",
+      "earnings.rows.1.insurance": "Consol Financials & Projections!D25",
+      "earnings.rows.1.legalProfessional": "Consol Financials & Projections!D30",
+      "earnings.rows.2.fiscalYear": "Consol Financials & Projections!E5",
+      "earnings.rows.2.developerFee": "Consol Financials & Projections!E9",
+      "earnings.rows.2.propertyManagementFee": "Consol Financials & Projections!E10",
+      "earnings.rows.2.salariesWages": "Consol Financials & Projections!E21",
+      "earnings.rows.2.insurance": "Consol Financials & Projections!E25",
+      "earnings.rows.2.legalProfessional": "Consol Financials & Projections!E30",
+      "capital.lines.securedDebt.committed": "Cap Table!C8",
+      "capital.lines.securedDebt.funded": "Cap Table!D8",
+      "capital.lines.ownerEquity.committed": "Cap Table!C16",
+      "capital.lines.ownerEquity.funded": "Cap Table!D16"
+    },
+    "originals": {}
+  },
+  "projects": [
+    {
+      "schemaVersion": 2,
+      "kind": "project",
+      "data": {
+        "identity": {
+          "name": "Maple Court Apartments",
+          "address": "210 Maple Court",
+          "constructionType": "New construction",
+          "propertyType": "Multifamily",
+          "confidential": false
+        },
+        "stage": {
+          "stage": "development",
+          "asOfDate": "2026-01-15",
+          "workbookVersion": "Version 1.9"
+        },
+        "team": {
+          "lines": {
+            "generalContractor": {
+              "firmName": "Northgate Builders",
+              "principal": "Casey Example",
+              "ownershipPct": null
+            },
+            "architect": {
+              "firmName": "Lakeline Architects",
+              "principal": "Riley Example",
+              "ownershipPct": null
+            },
+            "devPartner1": {
+              "firmName": "Riverbend Development Group",
+              "principal": "Jordan Example",
+              "ownershipPct": 0.6
+            },
+            "devPartner2": {
+              "firmName": "Eastside Community Partners",
+              "principal": "Morgan Example",
+              "ownershipPct": 0.4
+            },
+            "devPartner3": {
+              "firmName": null,
+              "principal": null,
+              "ownershipPct": null
+            },
+            "other1": {
+              "firmName": "Brightside Management Co",
+              "principal": "Property manager",
+              "ownershipPct": null
+            },
+            "other2": {
+              "firmName": "Jordan Example",
+              "principal": "Personal guarantor",
+              "ownershipPct": null
+            }
+          }
+        },
+        "timeline": {
+          "constructionStart": "2026-06",
+          "constructionCompletion": "2027-12",
+          "stabilization": "2028-12"
+        },
+        "sources": {
+          "rows": [
+            {
+              "lienPriority": 1,
+              "name": "Example Bank construction-to-permanent loan",
+              "type": "hard_debt",
+              "amount": 8900000,
+              "termMonths": 360,
+              "interestRate": 0.0625,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 2,
+              "name": "City housing loan",
+              "type": "gov_debt",
+              "amount": 1000000,
+              "termMonths": 480,
+              "interestRate": 0.03,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 3,
+              "name": "State housing grant",
+              "type": "nonrecoverable_grant",
+              "amount": 500000,
+              "termMonths": null,
+              "interestRate": null,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 4,
+              "name": "Deferred developer fee",
+              "type": "other",
+              "amount": 500000,
+              "termMonths": null,
+              "interestRate": null,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 5,
+              "name": "Sponsor equity",
+              "type": "developer_equity",
+              "amount": 6400250,
+              "termMonths": null,
+              "interestRate": null,
+              "paymentOverride": null
+            }
+          ]
+        },
+        "budget": {
+          "lines": {
+            "land": {
+              "amount": 1500000
+            },
+            "buildings": {
+              "amount": null
+            },
+            "acquisitionOther": {
+              "amount": 60000
+            },
+            "environmentalMitigation": {
+              "amount": 36000
+            },
+            "earthWork": {
+              "amount": 378000
+            },
+            "roadsWalks": {
+              "amount": 234000
+            },
+            "siteUtilities": {
+              "amount": 342000
+            },
+            "siteImprovementsDemolition": {
+              "amount": 81000
+            },
+            "landscaping": {
+              "amount": 135000
+            },
+            "irrigation": {
+              "amount": 31500
+            },
+            "siteWorkOther": {
+              "amount": null
+            },
+            "concreteMasonry": {
+              "amount": 1485000
+            },
+            "carpentry": {
+              "amount": 1665000
+            },
+            "roofingSiding": {
+              "amount": 648000
+            },
+            "doorsWindows": {
+              "amount": 576000
+            },
+            "drywall": {
+              "amount": 504000
+            },
+            "flooring": {
+              "amount": 369000
+            },
+            "cabinetsAppliances": {
+              "amount": 468000
+            },
+            "paintingFurnishings": {
+              "amount": 234000
+            },
+            "plumbingElectrical": {
+              "amount": 1305000
+            },
+            "hvac": {
+              "amount": 702000
+            },
+            "accessoryBuildings": {
+              "amount": 108000
+            },
+            "elevatorsEquipment": {
+              "amount": 279000
+            },
+            "tenantUpgrades": {
+              "amount": 81000
+            },
+            "structuresOther1": {
+              "amount": null
+            },
+            "structuresOther2": {
+              "amount": null
+            },
+            "generalRequirements": {
+              "amount": 468000
+            },
+            "buildersOverhead": {
+              "amount": 234000
+            },
+            "buildersProfit": {
+              "amount": 351000
+            },
+            "siteSecurity": {
+              "amount": 40500
+            },
+            "permitsBonds": {
+              "amount": 171000
+            },
+            "constructionContingency": {
+              "amount": 1000000
+            },
+            "ownersContingency": {
+              "amount": 100000
+            },
+            "hardCostOther1": {
+              "amount": null
+            },
+            "hardCostOther2": {
+              "amount": null
+            },
+            "architectureEngineering": {
+              "amount": 420000
+            },
+            "survey": {
+              "amount": 21000
+            },
+            "legalAccounting": {
+              "amount": 112500
+            },
+            "environmentalStudies": {
+              "amount": 24000
+            },
+            "marketStudy": {
+              "amount": 13500
+            },
+            "appraisal": {
+              "amount": 10500
+            },
+            "costCertification": {
+              "amount": 16500
+            },
+            "professionalFeesOther": {
+              "amount": null
+            },
+            "constructionLoanFee": {
+              "amount": 120000
+            },
+            "constructionInterest": {
+              "amount": 615000
+            },
+            "constructionTaxes": {
+              "amount": 71250
+            },
+            "constructionInsurance": {
+              "amount": 105000
+            },
+            "interimOther1": {
+              "amount": null
+            },
+            "interimOther2": {
+              "amount": null
+            },
+            "permanentLoanFees": {
+              "amount": 63750
+            },
+            "applicationFees": {
+              "amount": 18750
+            },
+            "titleWork": {
+              "amount": 45000
+            },
+            "permanentFinancingOther": {
+              "amount": null
+            },
+            "developerFee": {
+              "amount": 675000
+            },
+            "projectManagementFees": {
+              "amount": 90000
+            },
+            "constructionManagementFees": {
+              "amount": 112500
+            },
+            "consultingFees": {
+              "amount": 30000
+            },
+            "relatedPartyFees": {
+              "amount": null
+            },
+            "feesOther": {
+              "amount": null
+            },
+            "rentUpReserve": {
+              "amount": 450000
+            },
+            "replacementReserve": {
+              "amount": 200000
+            },
+            "operatingReserve": {
+              "amount": 400000
+            },
+            "softCostContingency": {
+              "amount": 100000
+            },
+            "reservesOther": {
+              "amount": null
+            },
+            "miscOther1": {
+              "amount": null
+            },
+            "miscOther2": {
+              "amount": null
+            },
+            "miscOther3": {
+              "amount": null
+            },
+            "miscOther4": {
+              "amount": null
+            },
+            "miscOther5": {
+              "amount": null
+            },
+            "miscOther6": {
+              "amount": null
+            }
+          }
+        },
+        "residentialIncome": {
+          "rows": [
+            {
+              "amiLevel": null,
+              "unitType": "Studio",
+              "units": 10,
+              "baths": 1,
+              "sqft": 480,
+              "monthlyRent": 1150
+            },
+            {
+              "amiLevel": null,
+              "unitType": "1 BR",
+              "units": 30,
+              "baths": 1,
+              "sqft": 700,
+              "monthlyRent": 1500
+            },
+            {
+              "amiLevel": "0.6",
+              "unitType": "1 BR",
+              "units": 10,
+              "baths": 1,
+              "sqft": 700,
+              "monthlyRent": 950
+            },
+            {
+              "amiLevel": null,
+              "unitType": "2 BR",
+              "units": 30,
+              "baths": 2,
+              "sqft": 950,
+              "monthlyRent": 1850
+            },
+            {
+              "amiLevel": "0.6",
+              "unitType": "2 BR",
+              "units": 5,
+              "baths": 2,
+              "sqft": 950,
+              "monthlyRent": 1150
+            },
+            {
+              "amiLevel": null,
+              "unitType": "3 BR",
+              "units": 15,
+              "baths": 2,
+              "sqft": 1200,
+              "monthlyRent": 2350
+            }
+          ],
+          "rentIncreaseYear2": 0.03,
+          "rentIncreaseYear3": 0.03,
+          "rentIncreaseFuture": 0.02,
+          "stabilizedVacancy": 0.05
+        },
+        "commercialIncome": {
+          "rows": [
+            {
+              "leaseType": "nnn",
+              "description": "Corner café",
+              "sqft": 1800,
+              "rentPerSqft": 24
+            },
+            {
+              "leaseType": "nnn",
+              "description": "Dental office",
+              "sqft": 2200,
+              "rentPerSqft": 21
+            }
+          ],
+          "rentIncreaseYear2": null,
+          "rentIncreaseYear3": null,
+          "rentIncreaseFuture": null,
+          "stabilizedVacancy": 0.1
+        },
+        "otherIncome": {
+          "rows": [
+            {
+              "description": "Parking",
+              "monthlyIncome": 3000
+            },
+            {
+              "description": "Laundry and storage",
+              "monthlyIncome": 1200
+            }
+          ],
+          "inflationYear2": null,
+          "inflationYear3": null,
+          "inflationFuture": null
+        },
+        "operatingExpenses": {
+          "lines": {
+            "propertyManagement": {
+              "amount": 73600
+            },
+            "leasingExpense": {
+              "amount": 19200
+            },
+            "auditTax": {
+              "amount": 11200
+            },
+            "miscAdmin": {
+              "amount": 30400
+            },
+            "electricHeatCommon": {
+              "amount": 36800
+            },
+            "waterSewer": {
+              "amount": 57600
+            },
+            "garbage": {
+              "amount": 16800
+            },
+            "replacementReserves": {
+              "amount": 32000
+            },
+            "contractRepairs": {
+              "amount": 49600
+            },
+            "elevatorContract": {
+              "amount": 14400
+            },
+            "groundsMaintenance": {
+              "amount": 27200
+            },
+            "propertyLiabilityInsurance": {
+              "amount": 76800
+            },
+            "propertyTaxes": {
+              "amount": 185600
+            }
+          }
+        },
+        "otherExpenses": {
+          "rows": []
+        },
+        "t12": {
+          "rows": []
+        }
+      },
+      "sources": {
+        "identity.name": "Development Project 1 Details!E3",
+        "identity.address": "Development Project 1 Details!E4",
+        "identity.constructionType": "Development Project 1 Details!E5",
+        "identity.propertyType": "Development Project 1 Details!E6",
+        "identity.confidential": "Development Project 1 Details!D184",
+        "team.lines.generalContractor.firmName": "Development Project 1 Details!D11",
+        "team.lines.generalContractor.principal": "Development Project 1 Details!E11",
+        "team.lines.architect.firmName": "Development Project 1 Details!D12",
+        "team.lines.architect.principal": "Development Project 1 Details!E12",
+        "team.lines.devPartner1.firmName": "Development Project 1 Details!D13",
+        "team.lines.devPartner1.principal": "Development Project 1 Details!E13",
+        "team.lines.devPartner1.ownershipPct": "Development Project 1 Details!F13",
+        "team.lines.devPartner2.firmName": "Development Project 1 Details!D14",
+        "team.lines.devPartner2.principal": "Development Project 1 Details!E14",
+        "team.lines.devPartner2.ownershipPct": "Development Project 1 Details!F14",
+        "team.lines.other1.firmName": "Development Project 1 Details!D16",
+        "team.lines.other1.principal": "Development Project 1 Details!E16",
+        "team.lines.other2.firmName": "Development Project 1 Details!D17",
+        "team.lines.other2.principal": "Development Project 1 Details!E17",
+        "timeline.constructionStart": "Development Project 1 Details!E20",
+        "timeline.constructionCompletion": "Development Project 1 Details!E21",
+        "timeline.stabilization": "Development Project 1 Details!E22",
+        "sources.rows.0.lienPriority": "Development Project 1 Details!C28",
+        "sources.rows.0.name": "Development Project 1 Details!D28",
+        "sources.rows.0.type": "Development Project 1 Details!E28",
+        "sources.rows.0.amount": "Development Project 1 Details!F28",
+        "sources.rows.0.termMonths": "Development Project 1 Details!G28",
+        "sources.rows.0.interestRate": "Development Project 1 Details!H28",
+        "sources.rows.1.lienPriority": "Development Project 1 Details!C29",
+        "sources.rows.1.name": "Development Project 1 Details!D29",
+        "sources.rows.1.type": "Development Project 1 Details!E29",
+        "sources.rows.1.amount": "Development Project 1 Details!F29",
+        "sources.rows.1.termMonths": "Development Project 1 Details!G29",
+        "sources.rows.1.interestRate": "Development Project 1 Details!H29",
+        "sources.rows.2.lienPriority": "Development Project 1 Details!C30",
+        "sources.rows.2.name": "Development Project 1 Details!D30",
+        "sources.rows.2.type": "Development Project 1 Details!E30",
+        "sources.rows.2.amount": "Development Project 1 Details!F30",
+        "sources.rows.3.lienPriority": "Development Project 1 Details!C31",
+        "sources.rows.3.name": "Development Project 1 Details!D31",
+        "sources.rows.3.type": "Development Project 1 Details!E31",
+        "sources.rows.3.amount": "Development Project 1 Details!F31",
+        "sources.rows.4.lienPriority": "Development Project 1 Details!C32",
+        "sources.rows.4.name": "Development Project 1 Details!D32",
+        "sources.rows.4.type": "Development Project 1 Details!E32",
+        "sources.rows.4.amount": "Development Project 1 Details!F32",
+        "budget.lines.land.amount": "Development Project 1 Budget!G3",
+        "budget.lines.acquisitionOther.amount": "Development Project 1 Budget!G5",
+        "budget.lines.environmentalMitigation.amount": "Development Project 1 Budget!G11",
+        "budget.lines.earthWork.amount": "Development Project 1 Budget!G12",
+        "budget.lines.roadsWalks.amount": "Development Project 1 Budget!G13",
+        "budget.lines.siteUtilities.amount": "Development Project 1 Budget!G14",
+        "budget.lines.siteImprovementsDemolition.amount": "Development Project 1 Budget!G15",
+        "budget.lines.landscaping.amount": "Development Project 1 Budget!G16",
+        "budget.lines.irrigation.amount": "Development Project 1 Budget!G17",
+        "budget.lines.concreteMasonry.amount": "Development Project 1 Budget!G20",
+        "budget.lines.carpentry.amount": "Development Project 1 Budget!G21",
+        "budget.lines.roofingSiding.amount": "Development Project 1 Budget!G22",
+        "budget.lines.doorsWindows.amount": "Development Project 1 Budget!G23",
+        "budget.lines.drywall.amount": "Development Project 1 Budget!G24",
+        "budget.lines.flooring.amount": "Development Project 1 Budget!G25",
+        "budget.lines.cabinetsAppliances.amount": "Development Project 1 Budget!G26",
+        "budget.lines.paintingFurnishings.amount": "Development Project 1 Budget!G27",
+        "budget.lines.plumbingElectrical.amount": "Development Project 1 Budget!G28",
+        "budget.lines.hvac.amount": "Development Project 1 Budget!G29",
+        "budget.lines.accessoryBuildings.amount": "Development Project 1 Budget!G30",
+        "budget.lines.elevatorsEquipment.amount": "Development Project 1 Budget!G31",
+        "budget.lines.tenantUpgrades.amount": "Development Project 1 Budget!G32",
+        "budget.lines.generalRequirements.amount": "Development Project 1 Budget!G35",
+        "budget.lines.buildersOverhead.amount": "Development Project 1 Budget!G36",
+        "budget.lines.buildersProfit.amount": "Development Project 1 Budget!G37",
+        "budget.lines.siteSecurity.amount": "Development Project 1 Budget!G38",
+        "budget.lines.permitsBonds.amount": "Development Project 1 Budget!G39",
+        "budget.lines.constructionContingency.amount": "Development Project 1 Budget!G40",
+        "budget.lines.ownersContingency.amount": "Development Project 1 Budget!G41",
+        "budget.lines.architectureEngineering.amount": "Development Project 1 Budget!G49",
+        "budget.lines.survey.amount": "Development Project 1 Budget!G50",
+        "budget.lines.legalAccounting.amount": "Development Project 1 Budget!G51",
+        "budget.lines.environmentalStudies.amount": "Development Project 1 Budget!G52",
+        "budget.lines.marketStudy.amount": "Development Project 1 Budget!G53",
+        "budget.lines.appraisal.amount": "Development Project 1 Budget!G54",
+        "budget.lines.costCertification.amount": "Development Project 1 Budget!G55",
+        "budget.lines.constructionLoanFee.amount": "Development Project 1 Budget!G60",
+        "budget.lines.constructionInterest.amount": "Development Project 1 Budget!G61",
+        "budget.lines.constructionTaxes.amount": "Development Project 1 Budget!G62",
+        "budget.lines.constructionInsurance.amount": "Development Project 1 Budget!G63",
+        "budget.lines.permanentLoanFees.amount": "Development Project 1 Budget!G69",
+        "budget.lines.applicationFees.amount": "Development Project 1 Budget!G70",
+        "budget.lines.titleWork.amount": "Development Project 1 Budget!G71",
+        "budget.lines.developerFee.amount": "Development Project 1 Budget!G76",
+        "budget.lines.projectManagementFees.amount": "Development Project 1 Budget!G77",
+        "budget.lines.constructionManagementFees.amount": "Development Project 1 Budget!G78",
+        "budget.lines.consultingFees.amount": "Development Project 1 Budget!G79",
+        "budget.lines.rentUpReserve.amount": "Development Project 1 Budget!G85",
+        "budget.lines.replacementReserve.amount": "Development Project 1 Budget!G86",
+        "budget.lines.operatingReserve.amount": "Development Project 1 Budget!G87",
+        "budget.lines.softCostContingency.amount": "Development Project 1 Budget!G88",
+        "residentialIncome.rentIncreaseYear2": "Development Project 1 Details!P58",
+        "residentialIncome.rentIncreaseYear3": "Development Project 1 Details!Q58",
+        "residentialIncome.rentIncreaseFuture": "Development Project 1 Details!R58",
+        "residentialIncome.stabilizedVacancy": "Development Project 1 Details!P60",
+        "residentialIncome.rows.0.unitType": "Development Project 1 Details!D58",
+        "residentialIncome.rows.0.units": "Development Project 1 Details!E58",
+        "residentialIncome.rows.0.baths": "Development Project 1 Details!F58",
+        "residentialIncome.rows.0.sqft": "Development Project 1 Details!G58",
+        "residentialIncome.rows.0.monthlyRent": "Development Project 1 Details!H58",
+        "residentialIncome.rows.1.unitType": "Development Project 1 Details!D59",
+        "residentialIncome.rows.1.units": "Development Project 1 Details!E59",
+        "residentialIncome.rows.1.baths": "Development Project 1 Details!F59",
+        "residentialIncome.rows.1.sqft": "Development Project 1 Details!G59",
+        "residentialIncome.rows.1.monthlyRent": "Development Project 1 Details!H59",
+        "residentialIncome.rows.2.amiLevel": "Development Project 1 Details!C60",
+        "residentialIncome.rows.2.unitType": "Development Project 1 Details!D60",
+        "residentialIncome.rows.2.units": "Development Project 1 Details!E60",
+        "residentialIncome.rows.2.baths": "Development Project 1 Details!F60",
+        "residentialIncome.rows.2.sqft": "Development Project 1 Details!G60",
+        "residentialIncome.rows.2.monthlyRent": "Development Project 1 Details!H60",
+        "residentialIncome.rows.3.unitType": "Development Project 1 Details!D61",
+        "residentialIncome.rows.3.units": "Development Project 1 Details!E61",
+        "residentialIncome.rows.3.baths": "Development Project 1 Details!F61",
+        "residentialIncome.rows.3.sqft": "Development Project 1 Details!G61",
+        "residentialIncome.rows.3.monthlyRent": "Development Project 1 Details!H61",
+        "residentialIncome.rows.4.amiLevel": "Development Project 1 Details!C62",
+        "residentialIncome.rows.4.unitType": "Development Project 1 Details!D62",
+        "residentialIncome.rows.4.units": "Development Project 1 Details!E62",
+        "residentialIncome.rows.4.baths": "Development Project 1 Details!F62",
+        "residentialIncome.rows.4.sqft": "Development Project 1 Details!G62",
+        "residentialIncome.rows.4.monthlyRent": "Development Project 1 Details!H62",
+        "residentialIncome.rows.5.unitType": "Development Project 1 Details!D63",
+        "residentialIncome.rows.5.units": "Development Project 1 Details!E63",
+        "residentialIncome.rows.5.baths": "Development Project 1 Details!F63",
+        "residentialIncome.rows.5.sqft": "Development Project 1 Details!G63",
+        "residentialIncome.rows.5.monthlyRent": "Development Project 1 Details!H63",
+        "commercialIncome.stabilizedVacancy": "Development Project 1 Details!O86",
+        "commercialIncome.rows.0.leaseType": "Development Project 1 Details!C84",
+        "commercialIncome.rows.0.description": "Development Project 1 Details!D84",
+        "commercialIncome.rows.0.sqft": "Development Project 1 Details!G84",
+        "commercialIncome.rows.0.rentPerSqft": "Development Project 1 Details!H84",
+        "commercialIncome.rows.1.leaseType": "Development Project 1 Details!C85",
+        "commercialIncome.rows.1.description": "Development Project 1 Details!D85",
+        "commercialIncome.rows.1.sqft": "Development Project 1 Details!G85",
+        "commercialIncome.rows.1.rentPerSqft": "Development Project 1 Details!H85",
+        "otherIncome.rows.0.description": "Development Project 1 Details!D104",
+        "otherIncome.rows.0.monthlyIncome": "Development Project 1 Details!G104",
+        "otherIncome.rows.1.description": "Development Project 1 Details!D105",
+        "otherIncome.rows.1.monthlyIncome": "Development Project 1 Details!G105",
+        "operatingExpenses.lines.propertyManagement.amount": "Development Project 1 Details!E124",
+        "operatingExpenses.lines.leasingExpense.amount": "Development Project 1 Details!E125",
+        "operatingExpenses.lines.auditTax.amount": "Development Project 1 Details!E126",
+        "operatingExpenses.lines.miscAdmin.amount": "Development Project 1 Details!E127",
+        "operatingExpenses.lines.electricHeatCommon.amount": "Development Project 1 Details!E129",
+        "operatingExpenses.lines.waterSewer.amount": "Development Project 1 Details!E130",
+        "operatingExpenses.lines.garbage.amount": "Development Project 1 Details!E131",
+        "operatingExpenses.lines.replacementReserves.amount": "Development Project 1 Details!E132",
+        "operatingExpenses.lines.contractRepairs.amount": "Development Project 1 Details!E134",
+        "operatingExpenses.lines.elevatorContract.amount": "Development Project 1 Details!E135",
+        "operatingExpenses.lines.groundsMaintenance.amount": "Development Project 1 Details!E136",
+        "operatingExpenses.lines.propertyLiabilityInsurance.amount": "Development Project 1 Details!E138",
+        "operatingExpenses.lines.propertyTaxes.amount": "Development Project 1 Details!E139",
+        "stage.stage": "manual",
+        "stage.asOfDate": "manual"
+      },
+      "originals": {},
+      "meta": {
+        "projectId": "development-project-1",
+        "sourceTab": "Development Project 1 Details",
+        "hint": "This came from a \"Development Project 1\" tab"
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "kind": "project",
+      "data": {
+        "identity": {
+          "name": "Harbor Point Towers",
+          "address": "900 Harbor Point",
+          "constructionType": "New construction",
+          "propertyType": "Multifamily",
+          "confidential": false
+        },
+        "stage": {
+          "stage": "development",
+          "asOfDate": "2026-01-15",
+          "workbookVersion": "Version 1.9"
+        },
+        "team": {
+          "lines": {
+            "generalContractor": {
+              "firmName": null,
+              "principal": null,
+              "ownershipPct": null
+            },
+            "architect": {
+              "firmName": null,
+              "principal": null,
+              "ownershipPct": null
+            },
+            "devPartner1": {
+              "firmName": "Riverbend Development Group",
+              "principal": "Jordan Example",
+              "ownershipPct": 0.6
+            },
+            "devPartner2": {
+              "firmName": "Eastside Community Partners",
+              "principal": "Morgan Example",
+              "ownershipPct": 0.4
+            },
+            "devPartner3": {
+              "firmName": null,
+              "principal": null,
+              "ownershipPct": null
+            },
+            "other1": {
+              "firmName": "Brightside Management Co",
+              "principal": "Property manager",
+              "ownershipPct": null
+            },
+            "other2": {
+              "firmName": "Jordan Example",
+              "principal": "Personal guarantor",
+              "ownershipPct": null
+            }
+          }
+        },
+        "timeline": {
+          "constructionStart": "2024-09",
+          "constructionCompletion": "2025-06",
+          "stabilization": "2025-12"
+        },
+        "sources": {
+          "rows": [
+            {
+              "lienPriority": 1,
+              "name": "Harbor Mezzanine Fund",
+              "type": "mezzanine_debt",
+              "amount": 2500000,
+              "termMonths": 240,
+              "interestRate": 0.13,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 2,
+              "name": "Example Bank construction-to-permanent loan",
+              "type": "hard_debt",
+              "amount": 14500000,
+              "termMonths": 360,
+              "interestRate": 0.095,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 3,
+              "name": "Short bridge loan",
+              "type": "hard_debt",
+              "amount": 600000,
+              "termMonths": 12,
+              "interestRate": 0.11,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 4,
+              "name": "Sponsor equity",
+              "type": "developer_equity",
+              "amount": 1281500,
+              "termMonths": null,
+              "interestRate": null,
+              "paymentOverride": null
+            }
+          ]
+        },
+        "budget": {
+          "lines": {
+            "land": {
+              "amount": 1800000
+            },
+            "buildings": {
+              "amount": null
+            },
+            "acquisitionOther": {
+              "amount": 60000
+            },
+            "environmentalMitigation": {
+              "amount": 40000
+            },
+            "earthWork": {
+              "amount": 420000
+            },
+            "roadsWalks": {
+              "amount": 260000
+            },
+            "siteUtilities": {
+              "amount": 380000
+            },
+            "siteImprovementsDemolition": {
+              "amount": 90000
+            },
+            "landscaping": {
+              "amount": 150000
+            },
+            "irrigation": {
+              "amount": 35000
+            },
+            "siteWorkOther": {
+              "amount": null
+            },
+            "concreteMasonry": {
+              "amount": 2062500
+            },
+            "carpentry": {
+              "amount": 2312500
+            },
+            "roofingSiding": {
+              "amount": 720000
+            },
+            "doorsWindows": {
+              "amount": 640000
+            },
+            "drywall": {
+              "amount": 560000
+            },
+            "flooring": {
+              "amount": 410000
+            },
+            "cabinetsAppliances": {
+              "amount": 520000
+            },
+            "paintingFurnishings": {
+              "amount": 260000
+            },
+            "plumbingElectrical": {
+              "amount": 1812500
+            },
+            "hvac": {
+              "amount": 975000
+            },
+            "accessoryBuildings": {
+              "amount": 120000
+            },
+            "elevatorsEquipment": {
+              "amount": 310000
+            },
+            "tenantUpgrades": {
+              "amount": 90000
+            },
+            "structuresOther1": {
+              "amount": null
+            },
+            "structuresOther2": {
+              "amount": null
+            },
+            "generalRequirements": {
+              "amount": 520000
+            },
+            "buildersOverhead": {
+              "amount": 260000
+            },
+            "buildersProfit": {
+              "amount": 390000
+            },
+            "siteSecurity": {
+              "amount": 45000
+            },
+            "permitsBonds": {
+              "amount": 190000
+            },
+            "constructionContingency": {
+              "amount": 90000
+            },
+            "ownersContingency": {
+              "amount": 0
+            },
+            "hardCostOther1": {
+              "amount": null
+            },
+            "hardCostOther2": {
+              "amount": null
+            },
+            "architectureEngineering": {
+              "amount": 900000
+            },
+            "survey": {
+              "amount": 28000
+            },
+            "legalAccounting": {
+              "amount": 150000
+            },
+            "environmentalStudies": {
+              "amount": 32000
+            },
+            "marketStudy": {
+              "amount": 18000
+            },
+            "appraisal": {
+              "amount": 14000
+            },
+            "costCertification": {
+              "amount": 22000
+            },
+            "professionalFeesOther": {
+              "amount": null
+            },
+            "constructionLoanFee": {
+              "amount": 160000
+            },
+            "constructionInterest": {
+              "amount": 820000
+            },
+            "constructionTaxes": {
+              "amount": 95000
+            },
+            "constructionInsurance": {
+              "amount": 140000
+            },
+            "interimOther1": {
+              "amount": null
+            },
+            "interimOther2": {
+              "amount": null
+            },
+            "permanentLoanFees": {
+              "amount": 85000
+            },
+            "applicationFees": {
+              "amount": 25000
+            },
+            "titleWork": {
+              "amount": 60000
+            },
+            "permanentFinancingOther": {
+              "amount": null
+            },
+            "developerFee": {
+              "amount": 1400000
+            },
+            "projectManagementFees": {
+              "amount": 120000
+            },
+            "constructionManagementFees": {
+              "amount": 150000
+            },
+            "consultingFees": {
+              "amount": 40000
+            },
+            "relatedPartyFees": {
+              "amount": null
+            },
+            "feesOther": {
+              "amount": null
+            },
+            "rentUpReserve": {
+              "amount": 0
+            },
+            "replacementReserve": {
+              "amount": 0
+            },
+            "operatingReserve": {
+              "amount": 0
+            },
+            "softCostContingency": {
+              "amount": 0
+            },
+            "reservesOther": {
+              "amount": null
+            },
+            "miscOther1": {
+              "amount": null
+            },
+            "miscOther2": {
+              "amount": null
+            },
+            "miscOther3": {
+              "amount": null
+            },
+            "miscOther4": {
+              "amount": null
+            },
+            "miscOther5": {
+              "amount": null
+            },
+            "miscOther6": {
+              "amount": null
+            }
+          }
+        },
+        "residentialIncome": {
+          "rows": [
+            {
+              "amiLevel": null,
+              "unitType": "Studio",
+              "units": 10,
+              "baths": 1,
+              "sqft": 480,
+              "monthlyRent": 1495
+            },
+            {
+              "amiLevel": null,
+              "unitType": "1 BR",
+              "units": 30,
+              "baths": 1,
+              "sqft": 700,
+              "monthlyRent": 1950
+            },
+            {
+              "amiLevel": "0.6",
+              "unitType": "1 BR",
+              "units": 10,
+              "baths": 1,
+              "sqft": 700,
+              "monthlyRent": 1235
+            },
+            {
+              "amiLevel": null,
+              "unitType": "2 BR",
+              "units": 30,
+              "baths": 2,
+              "sqft": 950,
+              "monthlyRent": 2535
+            },
+            {
+              "amiLevel": "0.6",
+              "unitType": "2 BR",
+              "units": 5,
+              "baths": 2,
+              "sqft": 950,
+              "monthlyRent": 1495
+            },
+            {
+              "amiLevel": null,
+              "unitType": "3 BR",
+              "units": 15,
+              "baths": 2,
+              "sqft": 1200,
+              "monthlyRent": 3055
+            }
+          ],
+          "rentIncreaseYear2": 0.03,
+          "rentIncreaseYear3": 0.03,
+          "rentIncreaseFuture": 0.02,
+          "stabilizedVacancy": 0.02
+        },
+        "commercialIncome": {
+          "rows": [
+            {
+              "leaseType": "nnn",
+              "description": "Corner café",
+              "sqft": 1800,
+              "rentPerSqft": 24
+            },
+            {
+              "leaseType": "nnn",
+              "description": "Dental office",
+              "sqft": 2200,
+              "rentPerSqft": 21
+            }
+          ],
+          "rentIncreaseYear2": null,
+          "rentIncreaseYear3": null,
+          "rentIncreaseFuture": null,
+          "stabilizedVacancy": 0.1
+        },
+        "otherIncome": {
+          "rows": [
+            {
+              "description": "Parking",
+              "monthlyIncome": 3000
+            },
+            {
+              "description": "Laundry and storage",
+              "monthlyIncome": 1200
+            }
+          ],
+          "inflationYear2": null,
+          "inflationYear3": null,
+          "inflationFuture": null
+        },
+        "operatingExpenses": {
+          "lines": {
+            "propertyManagement": {
+              "amount": 50600
+            },
+            "leasingExpense": {
+              "amount": 13200
+            },
+            "auditTax": {
+              "amount": 7700
+            },
+            "miscAdmin": {
+              "amount": 20900
+            },
+            "electricHeatCommon": {
+              "amount": 25300
+            },
+            "waterSewer": {
+              "amount": 39600
+            },
+            "garbage": {
+              "amount": 11550
+            },
+            "replacementReserves": {
+              "amount": 22000
+            },
+            "contractRepairs": {
+              "amount": 34100
+            },
+            "elevatorContract": {
+              "amount": 9900
+            },
+            "groundsMaintenance": {
+              "amount": 18700
+            },
+            "propertyLiabilityInsurance": {
+              "amount": 52800
+            },
+            "propertyTaxes": {
+              "amount": 127600
+            }
+          }
+        },
+        "otherExpenses": {
+          "rows": []
+        },
+        "t12": {
+          "rows": []
+        }
+      },
+      "sources": {
+        "identity.name": "Development Project 2 Details!E3",
+        "identity.address": "Development Project 2 Details!E4",
+        "identity.constructionType": "Development Project 2 Details!E5",
+        "identity.propertyType": "Development Project 2 Details!E6",
+        "identity.confidential": "Development Project 2 Details!D184",
+        "team.lines.devPartner1.firmName": "Development Project 2 Details!D13",
+        "team.lines.devPartner1.principal": "Development Project 2 Details!E13",
+        "team.lines.devPartner1.ownershipPct": "Development Project 2 Details!F13",
+        "team.lines.devPartner2.firmName": "Development Project 2 Details!D14",
+        "team.lines.devPartner2.principal": "Development Project 2 Details!E14",
+        "team.lines.devPartner2.ownershipPct": "Development Project 2 Details!F14",
+        "team.lines.other1.firmName": "Development Project 2 Details!D16",
+        "team.lines.other1.principal": "Development Project 2 Details!E16",
+        "team.lines.other2.firmName": "Development Project 2 Details!D17",
+        "team.lines.other2.principal": "Development Project 2 Details!E17",
+        "timeline.constructionStart": "Development Project 2 Details!E20",
+        "timeline.constructionCompletion": "Development Project 2 Details!E21",
+        "timeline.stabilization": "Development Project 2 Details!E22",
+        "sources.rows.0.lienPriority": "Development Project 2 Details!C28",
+        "sources.rows.0.name": "Development Project 2 Details!D28",
+        "sources.rows.0.type": "Development Project 2 Details!E28",
+        "sources.rows.0.amount": "Development Project 2 Details!F28",
+        "sources.rows.0.termMonths": "Development Project 2 Details!G28",
+        "sources.rows.0.interestRate": "Development Project 2 Details!H28",
+        "sources.rows.1.lienPriority": "Development Project 2 Details!C29",
+        "sources.rows.1.name": "Development Project 2 Details!D29",
+        "sources.rows.1.type": "Development Project 2 Details!E29",
+        "sources.rows.1.amount": "Development Project 2 Details!F29",
+        "sources.rows.1.termMonths": "Development Project 2 Details!G29",
+        "sources.rows.1.interestRate": "Development Project 2 Details!H29",
+        "sources.rows.2.lienPriority": "Development Project 2 Details!C30",
+        "sources.rows.2.name": "Development Project 2 Details!D30",
+        "sources.rows.2.type": "Development Project 2 Details!E30",
+        "sources.rows.2.amount": "Development Project 2 Details!F30",
+        "sources.rows.2.termMonths": "Development Project 2 Details!G30",
+        "sources.rows.2.interestRate": "Development Project 2 Details!H30",
+        "sources.rows.3.lienPriority": "Development Project 2 Details!C31",
+        "sources.rows.3.name": "Development Project 2 Details!D31",
+        "sources.rows.3.type": "Development Project 2 Details!E31",
+        "sources.rows.3.amount": "Development Project 2 Details!F31",
+        "budget.lines.land.amount": "Development Project 2 Budget!G3",
+        "budget.lines.acquisitionOther.amount": "Development Project 2 Budget!G5",
+        "budget.lines.environmentalMitigation.amount": "Development Project 2 Budget!G11",
+        "budget.lines.earthWork.amount": "Development Project 2 Budget!G12",
+        "budget.lines.roadsWalks.amount": "Development Project 2 Budget!G13",
+        "budget.lines.siteUtilities.amount": "Development Project 2 Budget!G14",
+        "budget.lines.siteImprovementsDemolition.amount": "Development Project 2 Budget!G15",
+        "budget.lines.landscaping.amount": "Development Project 2 Budget!G16",
+        "budget.lines.irrigation.amount": "Development Project 2 Budget!G17",
+        "budget.lines.concreteMasonry.amount": "Development Project 2 Budget!G20",
+        "budget.lines.carpentry.amount": "Development Project 2 Budget!G21",
+        "budget.lines.roofingSiding.amount": "Development Project 2 Budget!G22",
+        "budget.lines.doorsWindows.amount": "Development Project 2 Budget!G23",
+        "budget.lines.drywall.amount": "Development Project 2 Budget!G24",
+        "budget.lines.flooring.amount": "Development Project 2 Budget!G25",
+        "budget.lines.cabinetsAppliances.amount": "Development Project 2 Budget!G26",
+        "budget.lines.paintingFurnishings.amount": "Development Project 2 Budget!G27",
+        "budget.lines.plumbingElectrical.amount": "Development Project 2 Budget!G28",
+        "budget.lines.hvac.amount": "Development Project 2 Budget!G29",
+        "budget.lines.accessoryBuildings.amount": "Development Project 2 Budget!G30",
+        "budget.lines.elevatorsEquipment.amount": "Development Project 2 Budget!G31",
+        "budget.lines.tenantUpgrades.amount": "Development Project 2 Budget!G32",
+        "budget.lines.generalRequirements.amount": "Development Project 2 Budget!G35",
+        "budget.lines.buildersOverhead.amount": "Development Project 2 Budget!G36",
+        "budget.lines.buildersProfit.amount": "Development Project 2 Budget!G37",
+        "budget.lines.siteSecurity.amount": "Development Project 2 Budget!G38",
+        "budget.lines.permitsBonds.amount": "Development Project 2 Budget!G39",
+        "budget.lines.constructionContingency.amount": "Development Project 2 Budget!G40",
+        "budget.lines.ownersContingency.amount": "Development Project 2 Budget!G41",
+        "budget.lines.architectureEngineering.amount": "Development Project 2 Budget!G49",
+        "budget.lines.survey.amount": "Development Project 2 Budget!G50",
+        "budget.lines.legalAccounting.amount": "Development Project 2 Budget!G51",
+        "budget.lines.environmentalStudies.amount": "Development Project 2 Budget!G52",
+        "budget.lines.marketStudy.amount": "Development Project 2 Budget!G53",
+        "budget.lines.appraisal.amount": "Development Project 2 Budget!G54",
+        "budget.lines.costCertification.amount": "Development Project 2 Budget!G55",
+        "budget.lines.constructionLoanFee.amount": "Development Project 2 Budget!G60",
+        "budget.lines.constructionInterest.amount": "Development Project 2 Budget!G61",
+        "budget.lines.constructionTaxes.amount": "Development Project 2 Budget!G62",
+        "budget.lines.constructionInsurance.amount": "Development Project 2 Budget!G63",
+        "budget.lines.permanentLoanFees.amount": "Development Project 2 Budget!G69",
+        "budget.lines.applicationFees.amount": "Development Project 2 Budget!G70",
+        "budget.lines.titleWork.amount": "Development Project 2 Budget!G71",
+        "budget.lines.developerFee.amount": "Development Project 2 Budget!G76",
+        "budget.lines.projectManagementFees.amount": "Development Project 2 Budget!G77",
+        "budget.lines.constructionManagementFees.amount": "Development Project 2 Budget!G78",
+        "budget.lines.consultingFees.amount": "Development Project 2 Budget!G79",
+        "budget.lines.rentUpReserve.amount": "Development Project 2 Budget!G85",
+        "budget.lines.replacementReserve.amount": "Development Project 2 Budget!G86",
+        "budget.lines.operatingReserve.amount": "Development Project 2 Budget!G87",
+        "budget.lines.softCostContingency.amount": "Development Project 2 Budget!G88",
+        "residentialIncome.rentIncreaseYear2": "Development Project 2 Details!P58",
+        "residentialIncome.rentIncreaseYear3": "Development Project 2 Details!Q58",
+        "residentialIncome.rentIncreaseFuture": "Development Project 2 Details!R58",
+        "residentialIncome.stabilizedVacancy": "Development Project 2 Details!P60",
+        "residentialIncome.rows.0.unitType": "Development Project 2 Details!D58",
+        "residentialIncome.rows.0.units": "Development Project 2 Details!E58",
+        "residentialIncome.rows.0.baths": "Development Project 2 Details!F58",
+        "residentialIncome.rows.0.sqft": "Development Project 2 Details!G58",
+        "residentialIncome.rows.0.monthlyRent": "Development Project 2 Details!H58",
+        "residentialIncome.rows.1.unitType": "Development Project 2 Details!D59",
+        "residentialIncome.rows.1.units": "Development Project 2 Details!E59",
+        "residentialIncome.rows.1.baths": "Development Project 2 Details!F59",
+        "residentialIncome.rows.1.sqft": "Development Project 2 Details!G59",
+        "residentialIncome.rows.1.monthlyRent": "Development Project 2 Details!H59",
+        "residentialIncome.rows.2.amiLevel": "Development Project 2 Details!C60",
+        "residentialIncome.rows.2.unitType": "Development Project 2 Details!D60",
+        "residentialIncome.rows.2.units": "Development Project 2 Details!E60",
+        "residentialIncome.rows.2.baths": "Development Project 2 Details!F60",
+        "residentialIncome.rows.2.sqft": "Development Project 2 Details!G60",
+        "residentialIncome.rows.2.monthlyRent": "Development Project 2 Details!H60",
+        "residentialIncome.rows.3.unitType": "Development Project 2 Details!D61",
+        "residentialIncome.rows.3.units": "Development Project 2 Details!E61",
+        "residentialIncome.rows.3.baths": "Development Project 2 Details!F61",
+        "residentialIncome.rows.3.sqft": "Development Project 2 Details!G61",
+        "residentialIncome.rows.3.monthlyRent": "Development Project 2 Details!H61",
+        "residentialIncome.rows.4.amiLevel": "Development Project 2 Details!C62",
+        "residentialIncome.rows.4.unitType": "Development Project 2 Details!D62",
+        "residentialIncome.rows.4.units": "Development Project 2 Details!E62",
+        "residentialIncome.rows.4.baths": "Development Project 2 Details!F62",
+        "residentialIncome.rows.4.sqft": "Development Project 2 Details!G62",
+        "residentialIncome.rows.4.monthlyRent": "Development Project 2 Details!H62",
+        "residentialIncome.rows.5.unitType": "Development Project 2 Details!D63",
+        "residentialIncome.rows.5.units": "Development Project 2 Details!E63",
+        "residentialIncome.rows.5.baths": "Development Project 2 Details!F63",
+        "residentialIncome.rows.5.sqft": "Development Project 2 Details!G63",
+        "residentialIncome.rows.5.monthlyRent": "Development Project 2 Details!H63",
+        "commercialIncome.stabilizedVacancy": "Development Project 2 Details!O86",
+        "commercialIncome.rows.0.leaseType": "Development Project 2 Details!C84",
+        "commercialIncome.rows.0.description": "Development Project 2 Details!D84",
+        "commercialIncome.rows.0.sqft": "Development Project 2 Details!G84",
+        "commercialIncome.rows.0.rentPerSqft": "Development Project 2 Details!H84",
+        "commercialIncome.rows.1.leaseType": "Development Project 2 Details!C85",
+        "commercialIncome.rows.1.description": "Development Project 2 Details!D85",
+        "commercialIncome.rows.1.sqft": "Development Project 2 Details!G85",
+        "commercialIncome.rows.1.rentPerSqft": "Development Project 2 Details!H85",
+        "otherIncome.rows.0.description": "Development Project 2 Details!D104",
+        "otherIncome.rows.0.monthlyIncome": "Development Project 2 Details!G104",
+        "otherIncome.rows.1.description": "Development Project 2 Details!D105",
+        "otherIncome.rows.1.monthlyIncome": "Development Project 2 Details!G105",
+        "operatingExpenses.lines.propertyManagement.amount": "Development Project 2 Details!E124",
+        "operatingExpenses.lines.leasingExpense.amount": "Development Project 2 Details!E125",
+        "operatingExpenses.lines.auditTax.amount": "Development Project 2 Details!E126",
+        "operatingExpenses.lines.miscAdmin.amount": "Development Project 2 Details!E127",
+        "operatingExpenses.lines.electricHeatCommon.amount": "Development Project 2 Details!E129",
+        "operatingExpenses.lines.waterSewer.amount": "Development Project 2 Details!E130",
+        "operatingExpenses.lines.garbage.amount": "Development Project 2 Details!E131",
+        "operatingExpenses.lines.replacementReserves.amount": "Development Project 2 Details!E132",
+        "operatingExpenses.lines.contractRepairs.amount": "Development Project 2 Details!E134",
+        "operatingExpenses.lines.elevatorContract.amount": "Development Project 2 Details!E135",
+        "operatingExpenses.lines.groundsMaintenance.amount": "Development Project 2 Details!E136",
+        "operatingExpenses.lines.propertyLiabilityInsurance.amount": "Development Project 2 Details!E138",
+        "operatingExpenses.lines.propertyTaxes.amount": "Development Project 2 Details!E139",
+        "stage.stage": "manual",
+        "stage.asOfDate": "manual"
+      },
+      "originals": {},
+      "meta": {
+        "projectId": "development-project-2",
+        "sourceTab": "Development Project 2 Details",
+        "hint": "This came from a \"Development Project 2\" tab"
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "kind": "project",
+      "data": {
+        "identity": {
+          "name": "Alder Court",
+          "address": "12 Alder Street",
+          "constructionType": "New construction",
+          "propertyType": "Multifamily",
+          "confidential": false
+        },
+        "stage": {
+          "stage": "completed",
+          "asOfDate": "2026-01-15",
+          "workbookVersion": "Version 1.9"
+        },
+        "team": {
+          "lines": {
+            "generalContractor": {
+              "firmName": "Keystone Builders",
+              "principal": "Alex Example",
+              "ownershipPct": null
+            },
+            "architect": {
+              "firmName": "Lakeline Architects",
+              "principal": "Riley Example",
+              "ownershipPct": null
+            },
+            "devPartner1": {
+              "firmName": "Harbor Development Partners",
+              "principal": "Sam Example",
+              "ownershipPct": 0.5
+            },
+            "devPartner2": {
+              "firmName": null,
+              "principal": null,
+              "ownershipPct": null
+            },
+            "devPartner3": {
+              "firmName": null,
+              "principal": null,
+              "ownershipPct": null
+            },
+            "other1": {
+              "firmName": "Brightside Management Co",
+              "principal": "Property manager",
+              "ownershipPct": null
+            },
+            "other2": {
+              "firmName": "Pat Sample",
+              "principal": "Personal guarantor",
+              "ownershipPct": null
+            }
+          }
+        },
+        "timeline": {
+          "constructionStart": "2021-03",
+          "constructionCompletion": "2022-09",
+          "stabilization": "2025-03"
+        },
+        "sources": {
+          "rows": [
+            {
+              "lienPriority": 1,
+              "name": "Example Bank",
+              "type": "hard_debt",
+              "amount": 9000000,
+              "termMonths": 360,
+              "interestRate": 0.06,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 2,
+              "name": "Sponsor",
+              "type": "developer_equity",
+              "amount": 6000000,
+              "termMonths": null,
+              "interestRate": null,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 3,
+              "name": "Deferred fee",
+              "type": "other",
+              "amount": 1650000,
+              "termMonths": null,
+              "interestRate": null,
+              "paymentOverride": null
+            }
+          ]
+        },
+        "budget": {
+          "lines": {
+            "land": {
+              "amount": null
+            },
+            "buildings": {
+              "amount": null
+            },
+            "acquisitionOther": {
+              "amount": null
+            },
+            "environmentalMitigation": {
+              "amount": null
+            },
+            "earthWork": {
+              "amount": null
+            },
+            "roadsWalks": {
+              "amount": null
+            },
+            "siteUtilities": {
+              "amount": null
+            },
+            "siteImprovementsDemolition": {
+              "amount": null
+            },
+            "landscaping": {
+              "amount": null
+            },
+            "irrigation": {
+              "amount": null
+            },
+            "siteWorkOther": {
+              "amount": null
+            },
+            "concreteMasonry": {
+              "amount": null
+            },
+            "carpentry": {
+              "amount": null
+            },
+            "roofingSiding": {
+              "amount": null
+            },
+            "doorsWindows": {
+              "amount": null
+            },
+            "drywall": {
+              "amount": null
+            },
+            "flooring": {
+              "amount": null
+            },
+            "cabinetsAppliances": {
+              "amount": null
+            },
+            "paintingFurnishings": {
+              "amount": null
+            },
+            "plumbingElectrical": {
+              "amount": null
+            },
+            "hvac": {
+              "amount": null
+            },
+            "accessoryBuildings": {
+              "amount": null
+            },
+            "elevatorsEquipment": {
+              "amount": null
+            },
+            "tenantUpgrades": {
+              "amount": null
+            },
+            "structuresOther1": {
+              "amount": null
+            },
+            "structuresOther2": {
+              "amount": null
+            },
+            "generalRequirements": {
+              "amount": null
+            },
+            "buildersOverhead": {
+              "amount": null
+            },
+            "buildersProfit": {
+              "amount": null
+            },
+            "siteSecurity": {
+              "amount": null
+            },
+            "permitsBonds": {
+              "amount": null
+            },
+            "constructionContingency": {
+              "amount": null
+            },
+            "ownersContingency": {
+              "amount": null
+            },
+            "hardCostOther1": {
+              "amount": null
+            },
+            "hardCostOther2": {
+              "amount": null
+            },
+            "architectureEngineering": {
+              "amount": null
+            },
+            "survey": {
+              "amount": null
+            },
+            "legalAccounting": {
+              "amount": null
+            },
+            "environmentalStudies": {
+              "amount": null
+            },
+            "marketStudy": {
+              "amount": null
+            },
+            "appraisal": {
+              "amount": null
+            },
+            "costCertification": {
+              "amount": null
+            },
+            "professionalFeesOther": {
+              "amount": null
+            },
+            "constructionLoanFee": {
+              "amount": null
+            },
+            "constructionInterest": {
+              "amount": null
+            },
+            "constructionTaxes": {
+              "amount": null
+            },
+            "constructionInsurance": {
+              "amount": null
+            },
+            "interimOther1": {
+              "amount": null
+            },
+            "interimOther2": {
+              "amount": null
+            },
+            "permanentLoanFees": {
+              "amount": null
+            },
+            "applicationFees": {
+              "amount": null
+            },
+            "titleWork": {
+              "amount": null
+            },
+            "permanentFinancingOther": {
+              "amount": null
+            },
+            "developerFee": {
+              "amount": null
+            },
+            "projectManagementFees": {
+              "amount": null
+            },
+            "constructionManagementFees": {
+              "amount": null
+            },
+            "consultingFees": {
+              "amount": null
+            },
+            "relatedPartyFees": {
+              "amount": null
+            },
+            "feesOther": {
+              "amount": null
+            },
+            "rentUpReserve": {
+              "amount": null
+            },
+            "replacementReserve": {
+              "amount": null
+            },
+            "operatingReserve": {
+              "amount": null
+            },
+            "softCostContingency": {
+              "amount": null
+            },
+            "reservesOther": {
+              "amount": null
+            },
+            "miscOther1": {
+              "amount": null
+            },
+            "miscOther2": {
+              "amount": null
+            },
+            "miscOther3": {
+              "amount": null
+            },
+            "miscOther4": {
+              "amount": null
+            },
+            "miscOther5": {
+              "amount": null
+            },
+            "miscOther6": {
+              "amount": null
+            }
+          }
+        },
+        "residentialIncome": {
+          "rows": [
+            {
+              "amiLevel": null,
+              "unitType": "1-bdr",
+              "units": 120,
+              "baths": 1,
+              "sqft": 700,
+              "monthlyRent": 1500
+            }
+          ],
+          "rentIncreaseYear2": null,
+          "rentIncreaseYear3": null,
+          "rentIncreaseFuture": null,
+          "stabilizedVacancy": 0.05
+        },
+        "commercialIncome": {
+          "rows": [
+            {
+              "leaseType": "nnn",
+              "description": "Retail",
+              "sqft": 15000,
+              "rentPerSqft": 20
+            }
+          ],
+          "rentIncreaseYear2": null,
+          "rentIncreaseYear3": null,
+          "rentIncreaseFuture": null,
+          "stabilizedVacancy": 0.1
+        },
+        "otherIncome": {
+          "rows": [
+            {
+              "description": "Parking",
+              "monthlyIncome": 3000
+            }
+          ],
+          "inflationYear2": null,
+          "inflationYear3": null,
+          "inflationFuture": null
+        },
+        "operatingExpenses": {
+          "lines": {
+            "propertyManagement": {
+              "amount": 150000
+            },
+            "leasingExpense": {
+              "amount": null
+            },
+            "auditTax": {
+              "amount": null
+            },
+            "miscAdmin": {
+              "amount": null
+            },
+            "electricHeatCommon": {
+              "amount": 9000
+            },
+            "waterSewer": {
+              "amount": 9000
+            },
+            "garbage": {
+              "amount": 3000
+            },
+            "replacementReserves": {
+              "amount": 60000
+            },
+            "contractRepairs": {
+              "amount": 6000
+            },
+            "elevatorContract": {
+              "amount": null
+            },
+            "groundsMaintenance": {
+              "amount": 3000
+            },
+            "propertyLiabilityInsurance": {
+              "amount": 108000
+            },
+            "propertyTaxes": {
+              "amount": 252000
+            }
+          }
+        },
+        "otherExpenses": {
+          "rows": []
+        },
+        "t12": {
+          "rows": [
+            {
+              "month": "2024-12",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-01",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-02",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-03",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-04",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-05",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-06",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-07",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-08",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-09",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-10",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-11",
+              "residentialRevenue": 180000,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 9000,
+              "concessions": 0,
+              "occupancy": 0.95,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            }
+          ]
+        }
+      },
+      "sources": {
+        "identity.name": "Completed Project 1 Details!E3",
+        "identity.address": "Completed Project 1 Details!E4",
+        "identity.constructionType": "Completed Project 1 Details!E5",
+        "identity.propertyType": "Completed Project 1 Details!E6",
+        "identity.confidential": "Completed Project 1 Details!D184",
+        "team.lines.generalContractor.firmName": "Completed Project 1 Details!D11",
+        "team.lines.generalContractor.principal": "Completed Project 1 Details!E11",
+        "team.lines.architect.firmName": "Completed Project 1 Details!D12",
+        "team.lines.architect.principal": "Completed Project 1 Details!E12",
+        "team.lines.devPartner1.firmName": "Completed Project 1 Details!D13",
+        "team.lines.devPartner1.principal": "Completed Project 1 Details!E13",
+        "team.lines.devPartner1.ownershipPct": "Completed Project 1 Details!F13",
+        "team.lines.other1.firmName": "Completed Project 1 Details!D16",
+        "team.lines.other1.principal": "Completed Project 1 Details!E16",
+        "team.lines.other2.firmName": "Completed Project 1 Details!D17",
+        "team.lines.other2.principal": "Completed Project 1 Details!E17",
+        "timeline.constructionStart": "Completed Project 1 Details!E20",
+        "timeline.constructionCompletion": "Completed Project 1 Details!E21",
+        "timeline.stabilization": "Completed Project 1 Details!E22",
+        "sources.rows.0.lienPriority": "Completed Project 1 Details!C28",
+        "sources.rows.0.name": "Completed Project 1 Details!D28",
+        "sources.rows.0.type": "Completed Project 1 Details!E28",
+        "sources.rows.0.amount": "Completed Project 1 Details!F28",
+        "sources.rows.0.termMonths": "Completed Project 1 Details!G28",
+        "sources.rows.0.interestRate": "Completed Project 1 Details!H28",
+        "sources.rows.1.lienPriority": "Completed Project 1 Details!C29",
+        "sources.rows.1.name": "Completed Project 1 Details!D29",
+        "sources.rows.1.type": "Completed Project 1 Details!E29",
+        "sources.rows.1.amount": "Completed Project 1 Details!F29",
+        "sources.rows.2.lienPriority": "Completed Project 1 Details!C30",
+        "sources.rows.2.name": "Completed Project 1 Details!D30",
+        "sources.rows.2.type": "Completed Project 1 Details!E30",
+        "sources.rows.2.amount": "Completed Project 1 Details!F30",
+        "residentialIncome.stabilizedVacancy": "Completed Project 1 Details!P60",
+        "residentialIncome.rows.0.unitType": "Completed Project 1 Details!D58",
+        "residentialIncome.rows.0.units": "Completed Project 1 Details!E58",
+        "residentialIncome.rows.0.baths": "Completed Project 1 Details!F58",
+        "residentialIncome.rows.0.sqft": "Completed Project 1 Details!G58",
+        "residentialIncome.rows.0.monthlyRent": "Completed Project 1 Details!H58",
+        "commercialIncome.stabilizedVacancy": "Completed Project 1 Details!O86",
+        "commercialIncome.rows.0.leaseType": "Completed Project 1 Details!C84",
+        "commercialIncome.rows.0.description": "Completed Project 1 Details!D84",
+        "commercialIncome.rows.0.sqft": "Completed Project 1 Details!G84",
+        "commercialIncome.rows.0.rentPerSqft": "Completed Project 1 Details!H84",
+        "otherIncome.rows.0.description": "Completed Project 1 Details!D104",
+        "otherIncome.rows.0.monthlyIncome": "Completed Project 1 Details!G104",
+        "operatingExpenses.lines.propertyManagement.amount": "Completed Project 1 Details!E124",
+        "operatingExpenses.lines.electricHeatCommon.amount": "Completed Project 1 Details!E129",
+        "operatingExpenses.lines.waterSewer.amount": "Completed Project 1 Details!E130",
+        "operatingExpenses.lines.garbage.amount": "Completed Project 1 Details!E131",
+        "operatingExpenses.lines.replacementReserves.amount": "Completed Project 1 Details!E132",
+        "operatingExpenses.lines.contractRepairs.amount": "Completed Project 1 Details!E134",
+        "operatingExpenses.lines.groundsMaintenance.amount": "Completed Project 1 Details!E136",
+        "operatingExpenses.lines.propertyLiabilityInsurance.amount": "Completed Project 1 Details!E138",
+        "operatingExpenses.lines.propertyTaxes.amount": "Completed Project 1 Details!E139",
+        "stage.stage": "manual",
+        "stage.asOfDate": "manual",
+        "t12.rows.0.month": "T-12 template!A5",
+        "t12.rows.0.residentialRevenue": "T-12 template!B5",
+        "t12.rows.0.commercialRevenue": "T-12 template!C5",
+        "t12.rows.0.otherRevenue": "T-12 template!D5",
+        "t12.rows.0.vacancyLoss": "T-12 template!E5",
+        "t12.rows.0.concessions": "T-12 template!F5",
+        "t12.rows.0.occupancy": "T-12 template!G5",
+        "t12.rows.0.propertyManagement": "T-12 template!H5",
+        "t12.rows.0.electricHeatCommon": "T-12 template!L5",
+        "t12.rows.0.waterSewer": "T-12 template!M5",
+        "t12.rows.0.garbage": "T-12 template!N5",
+        "t12.rows.0.replacementReserves": "T-12 template!O5",
+        "t12.rows.0.contractRepairs": "T-12 template!P5",
+        "t12.rows.0.groundsMaintenance": "T-12 template!R5",
+        "t12.rows.0.propertyLiabilityInsurance": "T-12 template!S5",
+        "t12.rows.0.propertyTaxes": "T-12 template!T5",
+        "t12.rows.1.month": "T-12 template!A6",
+        "t12.rows.1.residentialRevenue": "T-12 template!B6",
+        "t12.rows.1.commercialRevenue": "T-12 template!C6",
+        "t12.rows.1.otherRevenue": "T-12 template!D6",
+        "t12.rows.1.vacancyLoss": "T-12 template!E6",
+        "t12.rows.1.concessions": "T-12 template!F6",
+        "t12.rows.1.occupancy": "T-12 template!G6",
+        "t12.rows.1.propertyManagement": "T-12 template!H6",
+        "t12.rows.1.electricHeatCommon": "T-12 template!L6",
+        "t12.rows.1.waterSewer": "T-12 template!M6",
+        "t12.rows.1.garbage": "T-12 template!N6",
+        "t12.rows.1.replacementReserves": "T-12 template!O6",
+        "t12.rows.1.contractRepairs": "T-12 template!P6",
+        "t12.rows.1.groundsMaintenance": "T-12 template!R6",
+        "t12.rows.1.propertyLiabilityInsurance": "T-12 template!S6",
+        "t12.rows.1.propertyTaxes": "T-12 template!T6",
+        "t12.rows.2.month": "T-12 template!A7",
+        "t12.rows.2.residentialRevenue": "T-12 template!B7",
+        "t12.rows.2.commercialRevenue": "T-12 template!C7",
+        "t12.rows.2.otherRevenue": "T-12 template!D7",
+        "t12.rows.2.vacancyLoss": "T-12 template!E7",
+        "t12.rows.2.concessions": "T-12 template!F7",
+        "t12.rows.2.occupancy": "T-12 template!G7",
+        "t12.rows.2.propertyManagement": "T-12 template!H7",
+        "t12.rows.2.electricHeatCommon": "T-12 template!L7",
+        "t12.rows.2.waterSewer": "T-12 template!M7",
+        "t12.rows.2.garbage": "T-12 template!N7",
+        "t12.rows.2.replacementReserves": "T-12 template!O7",
+        "t12.rows.2.contractRepairs": "T-12 template!P7",
+        "t12.rows.2.groundsMaintenance": "T-12 template!R7",
+        "t12.rows.2.propertyLiabilityInsurance": "T-12 template!S7",
+        "t12.rows.2.propertyTaxes": "T-12 template!T7",
+        "t12.rows.3.month": "T-12 template!A8",
+        "t12.rows.3.residentialRevenue": "T-12 template!B8",
+        "t12.rows.3.commercialRevenue": "T-12 template!C8",
+        "t12.rows.3.otherRevenue": "T-12 template!D8",
+        "t12.rows.3.vacancyLoss": "T-12 template!E8",
+        "t12.rows.3.concessions": "T-12 template!F8",
+        "t12.rows.3.occupancy": "T-12 template!G8",
+        "t12.rows.3.propertyManagement": "T-12 template!H8",
+        "t12.rows.3.electricHeatCommon": "T-12 template!L8",
+        "t12.rows.3.waterSewer": "T-12 template!M8",
+        "t12.rows.3.garbage": "T-12 template!N8",
+        "t12.rows.3.replacementReserves": "T-12 template!O8",
+        "t12.rows.3.contractRepairs": "T-12 template!P8",
+        "t12.rows.3.groundsMaintenance": "T-12 template!R8",
+        "t12.rows.3.propertyLiabilityInsurance": "T-12 template!S8",
+        "t12.rows.3.propertyTaxes": "T-12 template!T8",
+        "t12.rows.4.month": "T-12 template!A9",
+        "t12.rows.4.residentialRevenue": "T-12 template!B9",
+        "t12.rows.4.commercialRevenue": "T-12 template!C9",
+        "t12.rows.4.otherRevenue": "T-12 template!D9",
+        "t12.rows.4.vacancyLoss": "T-12 template!E9",
+        "t12.rows.4.concessions": "T-12 template!F9",
+        "t12.rows.4.occupancy": "T-12 template!G9",
+        "t12.rows.4.propertyManagement": "T-12 template!H9",
+        "t12.rows.4.electricHeatCommon": "T-12 template!L9",
+        "t12.rows.4.waterSewer": "T-12 template!M9",
+        "t12.rows.4.garbage": "T-12 template!N9",
+        "t12.rows.4.replacementReserves": "T-12 template!O9",
+        "t12.rows.4.contractRepairs": "T-12 template!P9",
+        "t12.rows.4.groundsMaintenance": "T-12 template!R9",
+        "t12.rows.4.propertyLiabilityInsurance": "T-12 template!S9",
+        "t12.rows.4.propertyTaxes": "T-12 template!T9",
+        "t12.rows.5.month": "T-12 template!A10",
+        "t12.rows.5.residentialRevenue": "T-12 template!B10",
+        "t12.rows.5.commercialRevenue": "T-12 template!C10",
+        "t12.rows.5.otherRevenue": "T-12 template!D10",
+        "t12.rows.5.vacancyLoss": "T-12 template!E10",
+        "t12.rows.5.concessions": "T-12 template!F10",
+        "t12.rows.5.occupancy": "T-12 template!G10",
+        "t12.rows.5.propertyManagement": "T-12 template!H10",
+        "t12.rows.5.electricHeatCommon": "T-12 template!L10",
+        "t12.rows.5.waterSewer": "T-12 template!M10",
+        "t12.rows.5.garbage": "T-12 template!N10",
+        "t12.rows.5.replacementReserves": "T-12 template!O10",
+        "t12.rows.5.contractRepairs": "T-12 template!P10",
+        "t12.rows.5.groundsMaintenance": "T-12 template!R10",
+        "t12.rows.5.propertyLiabilityInsurance": "T-12 template!S10",
+        "t12.rows.5.propertyTaxes": "T-12 template!T10",
+        "t12.rows.6.month": "T-12 template!A11",
+        "t12.rows.6.residentialRevenue": "T-12 template!B11",
+        "t12.rows.6.commercialRevenue": "T-12 template!C11",
+        "t12.rows.6.otherRevenue": "T-12 template!D11",
+        "t12.rows.6.vacancyLoss": "T-12 template!E11",
+        "t12.rows.6.concessions": "T-12 template!F11",
+        "t12.rows.6.occupancy": "T-12 template!G11",
+        "t12.rows.6.propertyManagement": "T-12 template!H11",
+        "t12.rows.6.electricHeatCommon": "T-12 template!L11",
+        "t12.rows.6.waterSewer": "T-12 template!M11",
+        "t12.rows.6.garbage": "T-12 template!N11",
+        "t12.rows.6.replacementReserves": "T-12 template!O11",
+        "t12.rows.6.contractRepairs": "T-12 template!P11",
+        "t12.rows.6.groundsMaintenance": "T-12 template!R11",
+        "t12.rows.6.propertyLiabilityInsurance": "T-12 template!S11",
+        "t12.rows.6.propertyTaxes": "T-12 template!T11",
+        "t12.rows.7.month": "T-12 template!A12",
+        "t12.rows.7.residentialRevenue": "T-12 template!B12",
+        "t12.rows.7.commercialRevenue": "T-12 template!C12",
+        "t12.rows.7.otherRevenue": "T-12 template!D12",
+        "t12.rows.7.vacancyLoss": "T-12 template!E12",
+        "t12.rows.7.concessions": "T-12 template!F12",
+        "t12.rows.7.occupancy": "T-12 template!G12",
+        "t12.rows.7.propertyManagement": "T-12 template!H12",
+        "t12.rows.7.electricHeatCommon": "T-12 template!L12",
+        "t12.rows.7.waterSewer": "T-12 template!M12",
+        "t12.rows.7.garbage": "T-12 template!N12",
+        "t12.rows.7.replacementReserves": "T-12 template!O12",
+        "t12.rows.7.contractRepairs": "T-12 template!P12",
+        "t12.rows.7.groundsMaintenance": "T-12 template!R12",
+        "t12.rows.7.propertyLiabilityInsurance": "T-12 template!S12",
+        "t12.rows.7.propertyTaxes": "T-12 template!T12",
+        "t12.rows.8.month": "T-12 template!A13",
+        "t12.rows.8.residentialRevenue": "T-12 template!B13",
+        "t12.rows.8.commercialRevenue": "T-12 template!C13",
+        "t12.rows.8.otherRevenue": "T-12 template!D13",
+        "t12.rows.8.vacancyLoss": "T-12 template!E13",
+        "t12.rows.8.concessions": "T-12 template!F13",
+        "t12.rows.8.occupancy": "T-12 template!G13",
+        "t12.rows.8.propertyManagement": "T-12 template!H13",
+        "t12.rows.8.electricHeatCommon": "T-12 template!L13",
+        "t12.rows.8.waterSewer": "T-12 template!M13",
+        "t12.rows.8.garbage": "T-12 template!N13",
+        "t12.rows.8.replacementReserves": "T-12 template!O13",
+        "t12.rows.8.contractRepairs": "T-12 template!P13",
+        "t12.rows.8.groundsMaintenance": "T-12 template!R13",
+        "t12.rows.8.propertyLiabilityInsurance": "T-12 template!S13",
+        "t12.rows.8.propertyTaxes": "T-12 template!T13",
+        "t12.rows.9.month": "T-12 template!A14",
+        "t12.rows.9.residentialRevenue": "T-12 template!B14",
+        "t12.rows.9.commercialRevenue": "T-12 template!C14",
+        "t12.rows.9.otherRevenue": "T-12 template!D14",
+        "t12.rows.9.vacancyLoss": "T-12 template!E14",
+        "t12.rows.9.concessions": "T-12 template!F14",
+        "t12.rows.9.occupancy": "T-12 template!G14",
+        "t12.rows.9.propertyManagement": "T-12 template!H14",
+        "t12.rows.9.electricHeatCommon": "T-12 template!L14",
+        "t12.rows.9.waterSewer": "T-12 template!M14",
+        "t12.rows.9.garbage": "T-12 template!N14",
+        "t12.rows.9.replacementReserves": "T-12 template!O14",
+        "t12.rows.9.contractRepairs": "T-12 template!P14",
+        "t12.rows.9.groundsMaintenance": "T-12 template!R14",
+        "t12.rows.9.propertyLiabilityInsurance": "T-12 template!S14",
+        "t12.rows.9.propertyTaxes": "T-12 template!T14",
+        "t12.rows.10.month": "T-12 template!A15",
+        "t12.rows.10.residentialRevenue": "T-12 template!B15",
+        "t12.rows.10.commercialRevenue": "T-12 template!C15",
+        "t12.rows.10.otherRevenue": "T-12 template!D15",
+        "t12.rows.10.vacancyLoss": "T-12 template!E15",
+        "t12.rows.10.concessions": "T-12 template!F15",
+        "t12.rows.10.occupancy": "T-12 template!G15",
+        "t12.rows.10.propertyManagement": "T-12 template!H15",
+        "t12.rows.10.electricHeatCommon": "T-12 template!L15",
+        "t12.rows.10.waterSewer": "T-12 template!M15",
+        "t12.rows.10.garbage": "T-12 template!N15",
+        "t12.rows.10.replacementReserves": "T-12 template!O15",
+        "t12.rows.10.contractRepairs": "T-12 template!P15",
+        "t12.rows.10.groundsMaintenance": "T-12 template!R15",
+        "t12.rows.10.propertyLiabilityInsurance": "T-12 template!S15",
+        "t12.rows.10.propertyTaxes": "T-12 template!T15",
+        "t12.rows.11.month": "T-12 template!A16",
+        "t12.rows.11.residentialRevenue": "T-12 template!B16",
+        "t12.rows.11.commercialRevenue": "T-12 template!C16",
+        "t12.rows.11.otherRevenue": "T-12 template!D16",
+        "t12.rows.11.vacancyLoss": "T-12 template!E16",
+        "t12.rows.11.concessions": "T-12 template!F16",
+        "t12.rows.11.occupancy": "T-12 template!G16",
+        "t12.rows.11.propertyManagement": "T-12 template!H16",
+        "t12.rows.11.electricHeatCommon": "T-12 template!L16",
+        "t12.rows.11.waterSewer": "T-12 template!M16",
+        "t12.rows.11.garbage": "T-12 template!N16",
+        "t12.rows.11.replacementReserves": "T-12 template!O16",
+        "t12.rows.11.contractRepairs": "T-12 template!P16",
+        "t12.rows.11.groundsMaintenance": "T-12 template!R16",
+        "t12.rows.11.propertyLiabilityInsurance": "T-12 template!S16",
+        "t12.rows.11.propertyTaxes": "T-12 template!T16"
+      },
+      "originals": {},
+      "meta": {
+        "projectId": "completed-project-1",
+        "sourceTab": "Completed Project 1 Details",
+        "hint": "This came from a \"Completed Project 1\" tab"
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "kind": "project",
+      "data": {
+        "identity": {
+          "name": "Willow Street Flats",
+          "address": "48 Willow Street",
+          "constructionType": "New construction",
+          "propertyType": "Multifamily",
+          "confidential": false
+        },
+        "stage": {
+          "stage": "completed",
+          "asOfDate": "2026-01-15",
+          "workbookVersion": "Version 1.9"
+        },
+        "team": {
+          "lines": {
+            "generalContractor": {
+              "firmName": "Keystone Builders",
+              "principal": "Alex Example",
+              "ownershipPct": null
+            },
+            "architect": {
+              "firmName": "Lakeline Architects",
+              "principal": "Riley Example",
+              "ownershipPct": null
+            },
+            "devPartner1": {
+              "firmName": "Harbor Development Partners",
+              "principal": "Sam Example",
+              "ownershipPct": 0.5
+            },
+            "devPartner2": {
+              "firmName": null,
+              "principal": null,
+              "ownershipPct": null
+            },
+            "devPartner3": {
+              "firmName": null,
+              "principal": null,
+              "ownershipPct": null
+            },
+            "other1": {
+              "firmName": "Brightside Management Co",
+              "principal": "Property manager",
+              "ownershipPct": null
+            },
+            "other2": {
+              "firmName": "Pat Sample",
+              "principal": "Personal guarantor",
+              "ownershipPct": null
+            }
+          }
+        },
+        "timeline": {
+          "constructionStart": "2021-09",
+          "constructionCompletion": "2023-01",
+          "stabilization": "2025-01"
+        },
+        "sources": {
+          "rows": [
+            {
+              "lienPriority": 1,
+              "name": "Example Bank",
+              "type": "hard_debt",
+              "amount": 9000000,
+              "termMonths": 360,
+              "interestRate": 0.06,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 2,
+              "name": "Sponsor",
+              "type": "developer_equity",
+              "amount": 6000000,
+              "termMonths": null,
+              "interestRate": null,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 3,
+              "name": "Deferred fee",
+              "type": "other",
+              "amount": 1650000,
+              "termMonths": null,
+              "interestRate": null,
+              "paymentOverride": null
+            }
+          ]
+        },
+        "budget": {
+          "lines": {
+            "land": {
+              "amount": null
+            },
+            "buildings": {
+              "amount": null
+            },
+            "acquisitionOther": {
+              "amount": null
+            },
+            "environmentalMitigation": {
+              "amount": null
+            },
+            "earthWork": {
+              "amount": null
+            },
+            "roadsWalks": {
+              "amount": null
+            },
+            "siteUtilities": {
+              "amount": null
+            },
+            "siteImprovementsDemolition": {
+              "amount": null
+            },
+            "landscaping": {
+              "amount": null
+            },
+            "irrigation": {
+              "amount": null
+            },
+            "siteWorkOther": {
+              "amount": null
+            },
+            "concreteMasonry": {
+              "amount": null
+            },
+            "carpentry": {
+              "amount": null
+            },
+            "roofingSiding": {
+              "amount": null
+            },
+            "doorsWindows": {
+              "amount": null
+            },
+            "drywall": {
+              "amount": null
+            },
+            "flooring": {
+              "amount": null
+            },
+            "cabinetsAppliances": {
+              "amount": null
+            },
+            "paintingFurnishings": {
+              "amount": null
+            },
+            "plumbingElectrical": {
+              "amount": null
+            },
+            "hvac": {
+              "amount": null
+            },
+            "accessoryBuildings": {
+              "amount": null
+            },
+            "elevatorsEquipment": {
+              "amount": null
+            },
+            "tenantUpgrades": {
+              "amount": null
+            },
+            "structuresOther1": {
+              "amount": null
+            },
+            "structuresOther2": {
+              "amount": null
+            },
+            "generalRequirements": {
+              "amount": null
+            },
+            "buildersOverhead": {
+              "amount": null
+            },
+            "buildersProfit": {
+              "amount": null
+            },
+            "siteSecurity": {
+              "amount": null
+            },
+            "permitsBonds": {
+              "amount": null
+            },
+            "constructionContingency": {
+              "amount": null
+            },
+            "ownersContingency": {
+              "amount": null
+            },
+            "hardCostOther1": {
+              "amount": null
+            },
+            "hardCostOther2": {
+              "amount": null
+            },
+            "architectureEngineering": {
+              "amount": null
+            },
+            "survey": {
+              "amount": null
+            },
+            "legalAccounting": {
+              "amount": null
+            },
+            "environmentalStudies": {
+              "amount": null
+            },
+            "marketStudy": {
+              "amount": null
+            },
+            "appraisal": {
+              "amount": null
+            },
+            "costCertification": {
+              "amount": null
+            },
+            "professionalFeesOther": {
+              "amount": null
+            },
+            "constructionLoanFee": {
+              "amount": null
+            },
+            "constructionInterest": {
+              "amount": null
+            },
+            "constructionTaxes": {
+              "amount": null
+            },
+            "constructionInsurance": {
+              "amount": null
+            },
+            "interimOther1": {
+              "amount": null
+            },
+            "interimOther2": {
+              "amount": null
+            },
+            "permanentLoanFees": {
+              "amount": null
+            },
+            "applicationFees": {
+              "amount": null
+            },
+            "titleWork": {
+              "amount": null
+            },
+            "permanentFinancingOther": {
+              "amount": null
+            },
+            "developerFee": {
+              "amount": null
+            },
+            "projectManagementFees": {
+              "amount": null
+            },
+            "constructionManagementFees": {
+              "amount": null
+            },
+            "consultingFees": {
+              "amount": null
+            },
+            "relatedPartyFees": {
+              "amount": null
+            },
+            "feesOther": {
+              "amount": null
+            },
+            "rentUpReserve": {
+              "amount": null
+            },
+            "replacementReserve": {
+              "amount": null
+            },
+            "operatingReserve": {
+              "amount": null
+            },
+            "softCostContingency": {
+              "amount": null
+            },
+            "reservesOther": {
+              "amount": null
+            },
+            "miscOther1": {
+              "amount": null
+            },
+            "miscOther2": {
+              "amount": null
+            },
+            "miscOther3": {
+              "amount": null
+            },
+            "miscOther4": {
+              "amount": null
+            },
+            "miscOther5": {
+              "amount": null
+            },
+            "miscOther6": {
+              "amount": null
+            }
+          }
+        },
+        "residentialIncome": {
+          "rows": [
+            {
+              "amiLevel": null,
+              "unitType": "1-bdr",
+              "units": 108,
+              "baths": 1,
+              "sqft": 700,
+              "monthlyRent": 1450
+            }
+          ],
+          "rentIncreaseYear2": null,
+          "rentIncreaseYear3": null,
+          "rentIncreaseFuture": null,
+          "stabilizedVacancy": 0.05
+        },
+        "commercialIncome": {
+          "rows": [
+            {
+              "leaseType": "nnn",
+              "description": "Retail",
+              "sqft": 15000,
+              "rentPerSqft": 20
+            }
+          ],
+          "rentIncreaseYear2": null,
+          "rentIncreaseYear3": null,
+          "rentIncreaseFuture": null,
+          "stabilizedVacancy": 0.1
+        },
+        "otherIncome": {
+          "rows": [
+            {
+              "description": "Parking",
+              "monthlyIncome": 3000
+            }
+          ],
+          "inflationYear2": null,
+          "inflationYear3": null,
+          "inflationFuture": null
+        },
+        "operatingExpenses": {
+          "lines": {
+            "propertyManagement": {
+              "amount": 150000
+            },
+            "leasingExpense": {
+              "amount": null
+            },
+            "auditTax": {
+              "amount": null
+            },
+            "miscAdmin": {
+              "amount": null
+            },
+            "electricHeatCommon": {
+              "amount": 9000
+            },
+            "waterSewer": {
+              "amount": 9000
+            },
+            "garbage": {
+              "amount": 3000
+            },
+            "replacementReserves": {
+              "amount": 60000
+            },
+            "contractRepairs": {
+              "amount": 6000
+            },
+            "elevatorContract": {
+              "amount": null
+            },
+            "groundsMaintenance": {
+              "amount": 3000
+            },
+            "propertyLiabilityInsurance": {
+              "amount": 108000
+            },
+            "propertyTaxes": {
+              "amount": 252000
+            }
+          }
+        },
+        "otherExpenses": {
+          "rows": []
+        },
+        "t12": {
+          "rows": [
+            {
+              "month": "2024-12",
+              "residentialRevenue": 125280,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 5010,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-01",
+              "residentialRevenue": 125280,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 5010,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-02",
+              "residentialRevenue": 125280,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 5010,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-03",
+              "residentialRevenue": 156600,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6264,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-04",
+              "residentialRevenue": 156600,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6264,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-05",
+              "residentialRevenue": 156600,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6264,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-06",
+              "residentialRevenue": 156600,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6264,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-07",
+              "residentialRevenue": 156600,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6264,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-08",
+              "residentialRevenue": 156600,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6264,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-09",
+              "residentialRevenue": 156600,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6264,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-10",
+              "residentialRevenue": 156600,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6264,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-11",
+              "residentialRevenue": 156600,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6264,
+              "concessions": 0,
+              "occupancy": 0.96,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            }
+          ]
+        }
+      },
+      "sources": {
+        "identity.name": "Completed Project 2 Details!E3",
+        "identity.address": "Completed Project 2 Details!E4",
+        "identity.constructionType": "Completed Project 2 Details!E5",
+        "identity.propertyType": "Completed Project 2 Details!E6",
+        "identity.confidential": "Completed Project 2 Details!D184",
+        "team.lines.generalContractor.firmName": "Completed Project 2 Details!D11",
+        "team.lines.generalContractor.principal": "Completed Project 2 Details!E11",
+        "team.lines.architect.firmName": "Completed Project 2 Details!D12",
+        "team.lines.architect.principal": "Completed Project 2 Details!E12",
+        "team.lines.devPartner1.firmName": "Completed Project 2 Details!D13",
+        "team.lines.devPartner1.principal": "Completed Project 2 Details!E13",
+        "team.lines.devPartner1.ownershipPct": "Completed Project 2 Details!F13",
+        "team.lines.other1.firmName": "Completed Project 2 Details!D16",
+        "team.lines.other1.principal": "Completed Project 2 Details!E16",
+        "team.lines.other2.firmName": "Completed Project 2 Details!D17",
+        "team.lines.other2.principal": "Completed Project 2 Details!E17",
+        "timeline.constructionStart": "Completed Project 2 Details!E20",
+        "timeline.constructionCompletion": "Completed Project 2 Details!E21",
+        "timeline.stabilization": "Completed Project 2 Details!E22",
+        "sources.rows.0.lienPriority": "Completed Project 2 Details!C28",
+        "sources.rows.0.name": "Completed Project 2 Details!D28",
+        "sources.rows.0.type": "Completed Project 2 Details!E28",
+        "sources.rows.0.amount": "Completed Project 2 Details!F28",
+        "sources.rows.0.termMonths": "Completed Project 2 Details!G28",
+        "sources.rows.0.interestRate": "Completed Project 2 Details!H28",
+        "sources.rows.1.lienPriority": "Completed Project 2 Details!C29",
+        "sources.rows.1.name": "Completed Project 2 Details!D29",
+        "sources.rows.1.type": "Completed Project 2 Details!E29",
+        "sources.rows.1.amount": "Completed Project 2 Details!F29",
+        "sources.rows.2.lienPriority": "Completed Project 2 Details!C30",
+        "sources.rows.2.name": "Completed Project 2 Details!D30",
+        "sources.rows.2.type": "Completed Project 2 Details!E30",
+        "sources.rows.2.amount": "Completed Project 2 Details!F30",
+        "residentialIncome.stabilizedVacancy": "Completed Project 2 Details!P60",
+        "residentialIncome.rows.0.unitType": "Completed Project 2 Details!D58",
+        "residentialIncome.rows.0.units": "Completed Project 2 Details!E58",
+        "residentialIncome.rows.0.baths": "Completed Project 2 Details!F58",
+        "residentialIncome.rows.0.sqft": "Completed Project 2 Details!G58",
+        "residentialIncome.rows.0.monthlyRent": "Completed Project 2 Details!H58",
+        "commercialIncome.stabilizedVacancy": "Completed Project 2 Details!O86",
+        "commercialIncome.rows.0.leaseType": "Completed Project 2 Details!C84",
+        "commercialIncome.rows.0.description": "Completed Project 2 Details!D84",
+        "commercialIncome.rows.0.sqft": "Completed Project 2 Details!G84",
+        "commercialIncome.rows.0.rentPerSqft": "Completed Project 2 Details!H84",
+        "otherIncome.rows.0.description": "Completed Project 2 Details!D104",
+        "otherIncome.rows.0.monthlyIncome": "Completed Project 2 Details!G104",
+        "operatingExpenses.lines.propertyManagement.amount": "Completed Project 2 Details!E124",
+        "operatingExpenses.lines.electricHeatCommon.amount": "Completed Project 2 Details!E129",
+        "operatingExpenses.lines.waterSewer.amount": "Completed Project 2 Details!E130",
+        "operatingExpenses.lines.garbage.amount": "Completed Project 2 Details!E131",
+        "operatingExpenses.lines.replacementReserves.amount": "Completed Project 2 Details!E132",
+        "operatingExpenses.lines.contractRepairs.amount": "Completed Project 2 Details!E134",
+        "operatingExpenses.lines.groundsMaintenance.amount": "Completed Project 2 Details!E136",
+        "operatingExpenses.lines.propertyLiabilityInsurance.amount": "Completed Project 2 Details!E138",
+        "operatingExpenses.lines.propertyTaxes.amount": "Completed Project 2 Details!E139",
+        "stage.stage": "manual",
+        "stage.asOfDate": "manual",
+        "t12.rows.0.month": "T-12 template!A5",
+        "t12.rows.0.residentialRevenue": "T-12 template!B5",
+        "t12.rows.0.commercialRevenue": "T-12 template!C5",
+        "t12.rows.0.otherRevenue": "T-12 template!D5",
+        "t12.rows.0.vacancyLoss": "T-12 template!E5",
+        "t12.rows.0.concessions": "T-12 template!F5",
+        "t12.rows.0.occupancy": "T-12 template!G5",
+        "t12.rows.0.propertyManagement": "T-12 template!H5",
+        "t12.rows.0.electricHeatCommon": "T-12 template!L5",
+        "t12.rows.0.waterSewer": "T-12 template!M5",
+        "t12.rows.0.garbage": "T-12 template!N5",
+        "t12.rows.0.replacementReserves": "T-12 template!O5",
+        "t12.rows.0.contractRepairs": "T-12 template!P5",
+        "t12.rows.0.groundsMaintenance": "T-12 template!R5",
+        "t12.rows.0.propertyLiabilityInsurance": "T-12 template!S5",
+        "t12.rows.0.propertyTaxes": "T-12 template!T5",
+        "t12.rows.1.month": "T-12 template!A6",
+        "t12.rows.1.residentialRevenue": "T-12 template!B6",
+        "t12.rows.1.commercialRevenue": "T-12 template!C6",
+        "t12.rows.1.otherRevenue": "T-12 template!D6",
+        "t12.rows.1.vacancyLoss": "T-12 template!E6",
+        "t12.rows.1.concessions": "T-12 template!F6",
+        "t12.rows.1.occupancy": "T-12 template!G6",
+        "t12.rows.1.propertyManagement": "T-12 template!H6",
+        "t12.rows.1.electricHeatCommon": "T-12 template!L6",
+        "t12.rows.1.waterSewer": "T-12 template!M6",
+        "t12.rows.1.garbage": "T-12 template!N6",
+        "t12.rows.1.replacementReserves": "T-12 template!O6",
+        "t12.rows.1.contractRepairs": "T-12 template!P6",
+        "t12.rows.1.groundsMaintenance": "T-12 template!R6",
+        "t12.rows.1.propertyLiabilityInsurance": "T-12 template!S6",
+        "t12.rows.1.propertyTaxes": "T-12 template!T6",
+        "t12.rows.2.month": "T-12 template!A7",
+        "t12.rows.2.residentialRevenue": "T-12 template!B7",
+        "t12.rows.2.commercialRevenue": "T-12 template!C7",
+        "t12.rows.2.otherRevenue": "T-12 template!D7",
+        "t12.rows.2.vacancyLoss": "T-12 template!E7",
+        "t12.rows.2.concessions": "T-12 template!F7",
+        "t12.rows.2.occupancy": "T-12 template!G7",
+        "t12.rows.2.propertyManagement": "T-12 template!H7",
+        "t12.rows.2.electricHeatCommon": "T-12 template!L7",
+        "t12.rows.2.waterSewer": "T-12 template!M7",
+        "t12.rows.2.garbage": "T-12 template!N7",
+        "t12.rows.2.replacementReserves": "T-12 template!O7",
+        "t12.rows.2.contractRepairs": "T-12 template!P7",
+        "t12.rows.2.groundsMaintenance": "T-12 template!R7",
+        "t12.rows.2.propertyLiabilityInsurance": "T-12 template!S7",
+        "t12.rows.2.propertyTaxes": "T-12 template!T7",
+        "t12.rows.3.month": "T-12 template!A8",
+        "t12.rows.3.residentialRevenue": "T-12 template!B8",
+        "t12.rows.3.commercialRevenue": "T-12 template!C8",
+        "t12.rows.3.otherRevenue": "T-12 template!D8",
+        "t12.rows.3.vacancyLoss": "T-12 template!E8",
+        "t12.rows.3.concessions": "T-12 template!F8",
+        "t12.rows.3.occupancy": "T-12 template!G8",
+        "t12.rows.3.propertyManagement": "T-12 template!H8",
+        "t12.rows.3.electricHeatCommon": "T-12 template!L8",
+        "t12.rows.3.waterSewer": "T-12 template!M8",
+        "t12.rows.3.garbage": "T-12 template!N8",
+        "t12.rows.3.replacementReserves": "T-12 template!O8",
+        "t12.rows.3.contractRepairs": "T-12 template!P8",
+        "t12.rows.3.groundsMaintenance": "T-12 template!R8",
+        "t12.rows.3.propertyLiabilityInsurance": "T-12 template!S8",
+        "t12.rows.3.propertyTaxes": "T-12 template!T8",
+        "t12.rows.4.month": "T-12 template!A9",
+        "t12.rows.4.residentialRevenue": "T-12 template!B9",
+        "t12.rows.4.commercialRevenue": "T-12 template!C9",
+        "t12.rows.4.otherRevenue": "T-12 template!D9",
+        "t12.rows.4.vacancyLoss": "T-12 template!E9",
+        "t12.rows.4.concessions": "T-12 template!F9",
+        "t12.rows.4.occupancy": "T-12 template!G9",
+        "t12.rows.4.propertyManagement": "T-12 template!H9",
+        "t12.rows.4.electricHeatCommon": "T-12 template!L9",
+        "t12.rows.4.waterSewer": "T-12 template!M9",
+        "t12.rows.4.garbage": "T-12 template!N9",
+        "t12.rows.4.replacementReserves": "T-12 template!O9",
+        "t12.rows.4.contractRepairs": "T-12 template!P9",
+        "t12.rows.4.groundsMaintenance": "T-12 template!R9",
+        "t12.rows.4.propertyLiabilityInsurance": "T-12 template!S9",
+        "t12.rows.4.propertyTaxes": "T-12 template!T9",
+        "t12.rows.5.month": "T-12 template!A10",
+        "t12.rows.5.residentialRevenue": "T-12 template!B10",
+        "t12.rows.5.commercialRevenue": "T-12 template!C10",
+        "t12.rows.5.otherRevenue": "T-12 template!D10",
+        "t12.rows.5.vacancyLoss": "T-12 template!E10",
+        "t12.rows.5.concessions": "T-12 template!F10",
+        "t12.rows.5.occupancy": "T-12 template!G10",
+        "t12.rows.5.propertyManagement": "T-12 template!H10",
+        "t12.rows.5.electricHeatCommon": "T-12 template!L10",
+        "t12.rows.5.waterSewer": "T-12 template!M10",
+        "t12.rows.5.garbage": "T-12 template!N10",
+        "t12.rows.5.replacementReserves": "T-12 template!O10",
+        "t12.rows.5.contractRepairs": "T-12 template!P10",
+        "t12.rows.5.groundsMaintenance": "T-12 template!R10",
+        "t12.rows.5.propertyLiabilityInsurance": "T-12 template!S10",
+        "t12.rows.5.propertyTaxes": "T-12 template!T10",
+        "t12.rows.6.month": "T-12 template!A11",
+        "t12.rows.6.residentialRevenue": "T-12 template!B11",
+        "t12.rows.6.commercialRevenue": "T-12 template!C11",
+        "t12.rows.6.otherRevenue": "T-12 template!D11",
+        "t12.rows.6.vacancyLoss": "T-12 template!E11",
+        "t12.rows.6.concessions": "T-12 template!F11",
+        "t12.rows.6.occupancy": "T-12 template!G11",
+        "t12.rows.6.propertyManagement": "T-12 template!H11",
+        "t12.rows.6.electricHeatCommon": "T-12 template!L11",
+        "t12.rows.6.waterSewer": "T-12 template!M11",
+        "t12.rows.6.garbage": "T-12 template!N11",
+        "t12.rows.6.replacementReserves": "T-12 template!O11",
+        "t12.rows.6.contractRepairs": "T-12 template!P11",
+        "t12.rows.6.groundsMaintenance": "T-12 template!R11",
+        "t12.rows.6.propertyLiabilityInsurance": "T-12 template!S11",
+        "t12.rows.6.propertyTaxes": "T-12 template!T11",
+        "t12.rows.7.month": "T-12 template!A12",
+        "t12.rows.7.residentialRevenue": "T-12 template!B12",
+        "t12.rows.7.commercialRevenue": "T-12 template!C12",
+        "t12.rows.7.otherRevenue": "T-12 template!D12",
+        "t12.rows.7.vacancyLoss": "T-12 template!E12",
+        "t12.rows.7.concessions": "T-12 template!F12",
+        "t12.rows.7.occupancy": "T-12 template!G12",
+        "t12.rows.7.propertyManagement": "T-12 template!H12",
+        "t12.rows.7.electricHeatCommon": "T-12 template!L12",
+        "t12.rows.7.waterSewer": "T-12 template!M12",
+        "t12.rows.7.garbage": "T-12 template!N12",
+        "t12.rows.7.replacementReserves": "T-12 template!O12",
+        "t12.rows.7.contractRepairs": "T-12 template!P12",
+        "t12.rows.7.groundsMaintenance": "T-12 template!R12",
+        "t12.rows.7.propertyLiabilityInsurance": "T-12 template!S12",
+        "t12.rows.7.propertyTaxes": "T-12 template!T12",
+        "t12.rows.8.month": "T-12 template!A13",
+        "t12.rows.8.residentialRevenue": "T-12 template!B13",
+        "t12.rows.8.commercialRevenue": "T-12 template!C13",
+        "t12.rows.8.otherRevenue": "T-12 template!D13",
+        "t12.rows.8.vacancyLoss": "T-12 template!E13",
+        "t12.rows.8.concessions": "T-12 template!F13",
+        "t12.rows.8.occupancy": "T-12 template!G13",
+        "t12.rows.8.propertyManagement": "T-12 template!H13",
+        "t12.rows.8.electricHeatCommon": "T-12 template!L13",
+        "t12.rows.8.waterSewer": "T-12 template!M13",
+        "t12.rows.8.garbage": "T-12 template!N13",
+        "t12.rows.8.replacementReserves": "T-12 template!O13",
+        "t12.rows.8.contractRepairs": "T-12 template!P13",
+        "t12.rows.8.groundsMaintenance": "T-12 template!R13",
+        "t12.rows.8.propertyLiabilityInsurance": "T-12 template!S13",
+        "t12.rows.8.propertyTaxes": "T-12 template!T13",
+        "t12.rows.9.month": "T-12 template!A14",
+        "t12.rows.9.residentialRevenue": "T-12 template!B14",
+        "t12.rows.9.commercialRevenue": "T-12 template!C14",
+        "t12.rows.9.otherRevenue": "T-12 template!D14",
+        "t12.rows.9.vacancyLoss": "T-12 template!E14",
+        "t12.rows.9.concessions": "T-12 template!F14",
+        "t12.rows.9.occupancy": "T-12 template!G14",
+        "t12.rows.9.propertyManagement": "T-12 template!H14",
+        "t12.rows.9.electricHeatCommon": "T-12 template!L14",
+        "t12.rows.9.waterSewer": "T-12 template!M14",
+        "t12.rows.9.garbage": "T-12 template!N14",
+        "t12.rows.9.replacementReserves": "T-12 template!O14",
+        "t12.rows.9.contractRepairs": "T-12 template!P14",
+        "t12.rows.9.groundsMaintenance": "T-12 template!R14",
+        "t12.rows.9.propertyLiabilityInsurance": "T-12 template!S14",
+        "t12.rows.9.propertyTaxes": "T-12 template!T14",
+        "t12.rows.10.month": "T-12 template!A15",
+        "t12.rows.10.residentialRevenue": "T-12 template!B15",
+        "t12.rows.10.commercialRevenue": "T-12 template!C15",
+        "t12.rows.10.otherRevenue": "T-12 template!D15",
+        "t12.rows.10.vacancyLoss": "T-12 template!E15",
+        "t12.rows.10.concessions": "T-12 template!F15",
+        "t12.rows.10.occupancy": "T-12 template!G15",
+        "t12.rows.10.propertyManagement": "T-12 template!H15",
+        "t12.rows.10.electricHeatCommon": "T-12 template!L15",
+        "t12.rows.10.waterSewer": "T-12 template!M15",
+        "t12.rows.10.garbage": "T-12 template!N15",
+        "t12.rows.10.replacementReserves": "T-12 template!O15",
+        "t12.rows.10.contractRepairs": "T-12 template!P15",
+        "t12.rows.10.groundsMaintenance": "T-12 template!R15",
+        "t12.rows.10.propertyLiabilityInsurance": "T-12 template!S15",
+        "t12.rows.10.propertyTaxes": "T-12 template!T15",
+        "t12.rows.11.month": "T-12 template!A16",
+        "t12.rows.11.residentialRevenue": "T-12 template!B16",
+        "t12.rows.11.commercialRevenue": "T-12 template!C16",
+        "t12.rows.11.otherRevenue": "T-12 template!D16",
+        "t12.rows.11.vacancyLoss": "T-12 template!E16",
+        "t12.rows.11.concessions": "T-12 template!F16",
+        "t12.rows.11.occupancy": "T-12 template!G16",
+        "t12.rows.11.propertyManagement": "T-12 template!H16",
+        "t12.rows.11.electricHeatCommon": "T-12 template!L16",
+        "t12.rows.11.waterSewer": "T-12 template!M16",
+        "t12.rows.11.garbage": "T-12 template!N16",
+        "t12.rows.11.replacementReserves": "T-12 template!O16",
+        "t12.rows.11.contractRepairs": "T-12 template!P16",
+        "t12.rows.11.groundsMaintenance": "T-12 template!R16",
+        "t12.rows.11.propertyLiabilityInsurance": "T-12 template!S16",
+        "t12.rows.11.propertyTaxes": "T-12 template!T16"
+      },
+      "originals": {},
+      "meta": {
+        "projectId": "completed-project-2",
+        "sourceTab": "Completed Project 2 Details",
+        "hint": "This came from a \"Completed Project 2\" tab"
+      }
+    },
+    {
+      "schemaVersion": 2,
+      "kind": "project",
+      "data": {
+        "identity": {
+          "name": "Maple Row Townhomes",
+          "address": "7 Maple Row",
+          "constructionType": "New construction",
+          "propertyType": "Multifamily",
+          "confidential": false
+        },
+        "stage": {
+          "stage": "completed",
+          "asOfDate": "2026-01-15",
+          "workbookVersion": "Version 1.9"
+        },
+        "team": {
+          "lines": {
+            "generalContractor": {
+              "firmName": "Keystone Builders",
+              "principal": "Alex Example",
+              "ownershipPct": null
+            },
+            "architect": {
+              "firmName": "Lakeline Architects",
+              "principal": "Riley Example",
+              "ownershipPct": null
+            },
+            "devPartner1": {
+              "firmName": "Harbor Development Partners",
+              "principal": "Sam Example",
+              "ownershipPct": 0.5
+            },
+            "devPartner2": {
+              "firmName": null,
+              "principal": null,
+              "ownershipPct": null
+            },
+            "devPartner3": {
+              "firmName": null,
+              "principal": null,
+              "ownershipPct": null
+            },
+            "other1": {
+              "firmName": "Brightside Management Co",
+              "principal": "Property manager",
+              "ownershipPct": null
+            },
+            "other2": {
+              "firmName": "Pat Sample",
+              "principal": "Personal guarantor",
+              "ownershipPct": null
+            }
+          }
+        },
+        "timeline": {
+          "constructionStart": "2022-02",
+          "constructionCompletion": "2023-06",
+          "stabilization": "2025-06"
+        },
+        "sources": {
+          "rows": [
+            {
+              "lienPriority": 1,
+              "name": "Example Bank",
+              "type": "hard_debt",
+              "amount": 9000000,
+              "termMonths": 360,
+              "interestRate": 0.06,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 2,
+              "name": "Sponsor",
+              "type": "developer_equity",
+              "amount": 6000000,
+              "termMonths": null,
+              "interestRate": null,
+              "paymentOverride": null
+            },
+            {
+              "lienPriority": 3,
+              "name": "Deferred fee",
+              "type": "other",
+              "amount": 1650000,
+              "termMonths": null,
+              "interestRate": null,
+              "paymentOverride": null
+            }
+          ]
+        },
+        "budget": {
+          "lines": {
+            "land": {
+              "amount": null
+            },
+            "buildings": {
+              "amount": null
+            },
+            "acquisitionOther": {
+              "amount": null
+            },
+            "environmentalMitigation": {
+              "amount": null
+            },
+            "earthWork": {
+              "amount": null
+            },
+            "roadsWalks": {
+              "amount": null
+            },
+            "siteUtilities": {
+              "amount": null
+            },
+            "siteImprovementsDemolition": {
+              "amount": null
+            },
+            "landscaping": {
+              "amount": null
+            },
+            "irrigation": {
+              "amount": null
+            },
+            "siteWorkOther": {
+              "amount": null
+            },
+            "concreteMasonry": {
+              "amount": null
+            },
+            "carpentry": {
+              "amount": null
+            },
+            "roofingSiding": {
+              "amount": null
+            },
+            "doorsWindows": {
+              "amount": null
+            },
+            "drywall": {
+              "amount": null
+            },
+            "flooring": {
+              "amount": null
+            },
+            "cabinetsAppliances": {
+              "amount": null
+            },
+            "paintingFurnishings": {
+              "amount": null
+            },
+            "plumbingElectrical": {
+              "amount": null
+            },
+            "hvac": {
+              "amount": null
+            },
+            "accessoryBuildings": {
+              "amount": null
+            },
+            "elevatorsEquipment": {
+              "amount": null
+            },
+            "tenantUpgrades": {
+              "amount": null
+            },
+            "structuresOther1": {
+              "amount": null
+            },
+            "structuresOther2": {
+              "amount": null
+            },
+            "generalRequirements": {
+              "amount": null
+            },
+            "buildersOverhead": {
+              "amount": null
+            },
+            "buildersProfit": {
+              "amount": null
+            },
+            "siteSecurity": {
+              "amount": null
+            },
+            "permitsBonds": {
+              "amount": null
+            },
+            "constructionContingency": {
+              "amount": null
+            },
+            "ownersContingency": {
+              "amount": null
+            },
+            "hardCostOther1": {
+              "amount": null
+            },
+            "hardCostOther2": {
+              "amount": null
+            },
+            "architectureEngineering": {
+              "amount": null
+            },
+            "survey": {
+              "amount": null
+            },
+            "legalAccounting": {
+              "amount": null
+            },
+            "environmentalStudies": {
+              "amount": null
+            },
+            "marketStudy": {
+              "amount": null
+            },
+            "appraisal": {
+              "amount": null
+            },
+            "costCertification": {
+              "amount": null
+            },
+            "professionalFeesOther": {
+              "amount": null
+            },
+            "constructionLoanFee": {
+              "amount": null
+            },
+            "constructionInterest": {
+              "amount": null
+            },
+            "constructionTaxes": {
+              "amount": null
+            },
+            "constructionInsurance": {
+              "amount": null
+            },
+            "interimOther1": {
+              "amount": null
+            },
+            "interimOther2": {
+              "amount": null
+            },
+            "permanentLoanFees": {
+              "amount": null
+            },
+            "applicationFees": {
+              "amount": null
+            },
+            "titleWork": {
+              "amount": null
+            },
+            "permanentFinancingOther": {
+              "amount": null
+            },
+            "developerFee": {
+              "amount": null
+            },
+            "projectManagementFees": {
+              "amount": null
+            },
+            "constructionManagementFees": {
+              "amount": null
+            },
+            "consultingFees": {
+              "amount": null
+            },
+            "relatedPartyFees": {
+              "amount": null
+            },
+            "feesOther": {
+              "amount": null
+            },
+            "rentUpReserve": {
+              "amount": null
+            },
+            "replacementReserve": {
+              "amount": null
+            },
+            "operatingReserve": {
+              "amount": null
+            },
+            "softCostContingency": {
+              "amount": null
+            },
+            "reservesOther": {
+              "amount": null
+            },
+            "miscOther1": {
+              "amount": null
+            },
+            "miscOther2": {
+              "amount": null
+            },
+            "miscOther3": {
+              "amount": null
+            },
+            "miscOther4": {
+              "amount": null
+            },
+            "miscOther5": {
+              "amount": null
+            },
+            "miscOther6": {
+              "amount": null
+            }
+          }
+        },
+        "residentialIncome": {
+          "rows": [
+            {
+              "amiLevel": null,
+              "unitType": "1-bdr",
+              "units": 144,
+              "baths": 1,
+              "sqft": 700,
+              "monthlyRent": 1550
+            }
+          ],
+          "rentIncreaseYear2": null,
+          "rentIncreaseYear3": null,
+          "rentIncreaseFuture": null,
+          "stabilizedVacancy": 0.05
+        },
+        "commercialIncome": {
+          "rows": [
+            {
+              "leaseType": "nnn",
+              "description": "Retail",
+              "sqft": 15000,
+              "rentPerSqft": 20
+            }
+          ],
+          "rentIncreaseYear2": null,
+          "rentIncreaseYear3": null,
+          "rentIncreaseFuture": null,
+          "stabilizedVacancy": 0.1
+        },
+        "otherIncome": {
+          "rows": [
+            {
+              "description": "Parking",
+              "monthlyIncome": 3000
+            }
+          ],
+          "inflationYear2": null,
+          "inflationYear3": null,
+          "inflationFuture": null
+        },
+        "operatingExpenses": {
+          "lines": {
+            "propertyManagement": {
+              "amount": 150000
+            },
+            "leasingExpense": {
+              "amount": null
+            },
+            "auditTax": {
+              "amount": null
+            },
+            "miscAdmin": {
+              "amount": null
+            },
+            "electricHeatCommon": {
+              "amount": 9000
+            },
+            "waterSewer": {
+              "amount": 9000
+            },
+            "garbage": {
+              "amount": 3000
+            },
+            "replacementReserves": {
+              "amount": 60000
+            },
+            "contractRepairs": {
+              "amount": 6000
+            },
+            "elevatorContract": {
+              "amount": null
+            },
+            "groundsMaintenance": {
+              "amount": 3000
+            },
+            "propertyLiabilityInsurance": {
+              "amount": 108000
+            },
+            "propertyTaxes": {
+              "amount": 252000
+            }
+          }
+        },
+        "otherExpenses": {
+          "rows": []
+        },
+        "t12": {
+          "rows": [
+            {
+              "month": "2024-12",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-01",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-02",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-03",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-04",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-05",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-06",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-07",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-08",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-09",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-10",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            },
+            {
+              "month": "2025-11",
+              "residentialRevenue": 223200,
+              "commercialRevenue": 24999,
+              "otherRevenue": 3000,
+              "vacancyLoss": 6696,
+              "concessions": 0,
+              "occupancy": 0.97,
+              "propertyManagement": 12501,
+              "leasingExpense": null,
+              "auditTax": null,
+              "miscAdmin": null,
+              "electricHeatCommon": 750,
+              "waterSewer": 750,
+              "garbage": 249,
+              "replacementReserves": 5001,
+              "contractRepairs": 501,
+              "elevatorContract": null,
+              "groundsMaintenance": 249,
+              "propertyLiabilityInsurance": 9000,
+              "propertyTaxes": 21000,
+              "otherExpenses": null,
+              "noiReported": null,
+              "debtService": null
+            }
+          ]
+        }
+      },
+      "sources": {
+        "identity.name": "Completed Project 3 Details!E3",
+        "identity.address": "Completed Project 3 Details!E4",
+        "identity.constructionType": "Completed Project 3 Details!E5",
+        "identity.propertyType": "Completed Project 3 Details!E6",
+        "identity.confidential": "Completed Project 3 Details!D184",
+        "team.lines.generalContractor.firmName": "Completed Project 3 Details!D11",
+        "team.lines.generalContractor.principal": "Completed Project 3 Details!E11",
+        "team.lines.architect.firmName": "Completed Project 3 Details!D12",
+        "team.lines.architect.principal": "Completed Project 3 Details!E12",
+        "team.lines.devPartner1.firmName": "Completed Project 3 Details!D13",
+        "team.lines.devPartner1.principal": "Completed Project 3 Details!E13",
+        "team.lines.devPartner1.ownershipPct": "Completed Project 3 Details!F13",
+        "team.lines.other1.firmName": "Completed Project 3 Details!D16",
+        "team.lines.other1.principal": "Completed Project 3 Details!E16",
+        "team.lines.other2.firmName": "Completed Project 3 Details!D17",
+        "team.lines.other2.principal": "Completed Project 3 Details!E17",
+        "timeline.constructionStart": "Completed Project 3 Details!E20",
+        "timeline.constructionCompletion": "Completed Project 3 Details!E21",
+        "timeline.stabilization": "Completed Project 3 Details!E22",
+        "sources.rows.0.lienPriority": "Completed Project 3 Details!C28",
+        "sources.rows.0.name": "Completed Project 3 Details!D28",
+        "sources.rows.0.type": "Completed Project 3 Details!E28",
+        "sources.rows.0.amount": "Completed Project 3 Details!F28",
+        "sources.rows.0.termMonths": "Completed Project 3 Details!G28",
+        "sources.rows.0.interestRate": "Completed Project 3 Details!H28",
+        "sources.rows.1.lienPriority": "Completed Project 3 Details!C29",
+        "sources.rows.1.name": "Completed Project 3 Details!D29",
+        "sources.rows.1.type": "Completed Project 3 Details!E29",
+        "sources.rows.1.amount": "Completed Project 3 Details!F29",
+        "sources.rows.2.lienPriority": "Completed Project 3 Details!C30",
+        "sources.rows.2.name": "Completed Project 3 Details!D30",
+        "sources.rows.2.type": "Completed Project 3 Details!E30",
+        "sources.rows.2.amount": "Completed Project 3 Details!F30",
+        "residentialIncome.stabilizedVacancy": "Completed Project 3 Details!P60",
+        "residentialIncome.rows.0.unitType": "Completed Project 3 Details!D58",
+        "residentialIncome.rows.0.units": "Completed Project 3 Details!E58",
+        "residentialIncome.rows.0.baths": "Completed Project 3 Details!F58",
+        "residentialIncome.rows.0.sqft": "Completed Project 3 Details!G58",
+        "residentialIncome.rows.0.monthlyRent": "Completed Project 3 Details!H58",
+        "commercialIncome.stabilizedVacancy": "Completed Project 3 Details!O86",
+        "commercialIncome.rows.0.leaseType": "Completed Project 3 Details!C84",
+        "commercialIncome.rows.0.description": "Completed Project 3 Details!D84",
+        "commercialIncome.rows.0.sqft": "Completed Project 3 Details!G84",
+        "commercialIncome.rows.0.rentPerSqft": "Completed Project 3 Details!H84",
+        "otherIncome.rows.0.description": "Completed Project 3 Details!D104",
+        "otherIncome.rows.0.monthlyIncome": "Completed Project 3 Details!G104",
+        "operatingExpenses.lines.propertyManagement.amount": "Completed Project 3 Details!E124",
+        "operatingExpenses.lines.electricHeatCommon.amount": "Completed Project 3 Details!E129",
+        "operatingExpenses.lines.waterSewer.amount": "Completed Project 3 Details!E130",
+        "operatingExpenses.lines.garbage.amount": "Completed Project 3 Details!E131",
+        "operatingExpenses.lines.replacementReserves.amount": "Completed Project 3 Details!E132",
+        "operatingExpenses.lines.contractRepairs.amount": "Completed Project 3 Details!E134",
+        "operatingExpenses.lines.groundsMaintenance.amount": "Completed Project 3 Details!E136",
+        "operatingExpenses.lines.propertyLiabilityInsurance.amount": "Completed Project 3 Details!E138",
+        "operatingExpenses.lines.propertyTaxes.amount": "Completed Project 3 Details!E139",
+        "stage.stage": "manual",
+        "stage.asOfDate": "manual",
+        "t12.rows.0.month": "T-12 template!A5",
+        "t12.rows.0.residentialRevenue": "T-12 template!B5",
+        "t12.rows.0.commercialRevenue": "T-12 template!C5",
+        "t12.rows.0.otherRevenue": "T-12 template!D5",
+        "t12.rows.0.vacancyLoss": "T-12 template!E5",
+        "t12.rows.0.concessions": "T-12 template!F5",
+        "t12.rows.0.occupancy": "T-12 template!G5",
+        "t12.rows.0.propertyManagement": "T-12 template!H5",
+        "t12.rows.0.electricHeatCommon": "T-12 template!L5",
+        "t12.rows.0.waterSewer": "T-12 template!M5",
+        "t12.rows.0.garbage": "T-12 template!N5",
+        "t12.rows.0.replacementReserves": "T-12 template!O5",
+        "t12.rows.0.contractRepairs": "T-12 template!P5",
+        "t12.rows.0.groundsMaintenance": "T-12 template!R5",
+        "t12.rows.0.propertyLiabilityInsurance": "T-12 template!S5",
+        "t12.rows.0.propertyTaxes": "T-12 template!T5",
+        "t12.rows.1.month": "T-12 template!A6",
+        "t12.rows.1.residentialRevenue": "T-12 template!B6",
+        "t12.rows.1.commercialRevenue": "T-12 template!C6",
+        "t12.rows.1.otherRevenue": "T-12 template!D6",
+        "t12.rows.1.vacancyLoss": "T-12 template!E6",
+        "t12.rows.1.concessions": "T-12 template!F6",
+        "t12.rows.1.occupancy": "T-12 template!G6",
+        "t12.rows.1.propertyManagement": "T-12 template!H6",
+        "t12.rows.1.electricHeatCommon": "T-12 template!L6",
+        "t12.rows.1.waterSewer": "T-12 template!M6",
+        "t12.rows.1.garbage": "T-12 template!N6",
+        "t12.rows.1.replacementReserves": "T-12 template!O6",
+        "t12.rows.1.contractRepairs": "T-12 template!P6",
+        "t12.rows.1.groundsMaintenance": "T-12 template!R6",
+        "t12.rows.1.propertyLiabilityInsurance": "T-12 template!S6",
+        "t12.rows.1.propertyTaxes": "T-12 template!T6",
+        "t12.rows.2.month": "T-12 template!A7",
+        "t12.rows.2.residentialRevenue": "T-12 template!B7",
+        "t12.rows.2.commercialRevenue": "T-12 template!C7",
+        "t12.rows.2.otherRevenue": "T-12 template!D7",
+        "t12.rows.2.vacancyLoss": "T-12 template!E7",
+        "t12.rows.2.concessions": "T-12 template!F7",
+        "t12.rows.2.occupancy": "T-12 template!G7",
+        "t12.rows.2.propertyManagement": "T-12 template!H7",
+        "t12.rows.2.electricHeatCommon": "T-12 template!L7",
+        "t12.rows.2.waterSewer": "T-12 template!M7",
+        "t12.rows.2.garbage": "T-12 template!N7",
+        "t12.rows.2.replacementReserves": "T-12 template!O7",
+        "t12.rows.2.contractRepairs": "T-12 template!P7",
+        "t12.rows.2.groundsMaintenance": "T-12 template!R7",
+        "t12.rows.2.propertyLiabilityInsurance": "T-12 template!S7",
+        "t12.rows.2.propertyTaxes": "T-12 template!T7",
+        "t12.rows.3.month": "T-12 template!A8",
+        "t12.rows.3.residentialRevenue": "T-12 template!B8",
+        "t12.rows.3.commercialRevenue": "T-12 template!C8",
+        "t12.rows.3.otherRevenue": "T-12 template!D8",
+        "t12.rows.3.vacancyLoss": "T-12 template!E8",
+        "t12.rows.3.concessions": "T-12 template!F8",
+        "t12.rows.3.occupancy": "T-12 template!G8",
+        "t12.rows.3.propertyManagement": "T-12 template!H8",
+        "t12.rows.3.electricHeatCommon": "T-12 template!L8",
+        "t12.rows.3.waterSewer": "T-12 template!M8",
+        "t12.rows.3.garbage": "T-12 template!N8",
+        "t12.rows.3.replacementReserves": "T-12 template!O8",
+        "t12.rows.3.contractRepairs": "T-12 template!P8",
+        "t12.rows.3.groundsMaintenance": "T-12 template!R8",
+        "t12.rows.3.propertyLiabilityInsurance": "T-12 template!S8",
+        "t12.rows.3.propertyTaxes": "T-12 template!T8",
+        "t12.rows.4.month": "T-12 template!A9",
+        "t12.rows.4.residentialRevenue": "T-12 template!B9",
+        "t12.rows.4.commercialRevenue": "T-12 template!C9",
+        "t12.rows.4.otherRevenue": "T-12 template!D9",
+        "t12.rows.4.vacancyLoss": "T-12 template!E9",
+        "t12.rows.4.concessions": "T-12 template!F9",
+        "t12.rows.4.occupancy": "T-12 template!G9",
+        "t12.rows.4.propertyManagement": "T-12 template!H9",
+        "t12.rows.4.electricHeatCommon": "T-12 template!L9",
+        "t12.rows.4.waterSewer": "T-12 template!M9",
+        "t12.rows.4.garbage": "T-12 template!N9",
+        "t12.rows.4.replacementReserves": "T-12 template!O9",
+        "t12.rows.4.contractRepairs": "T-12 template!P9",
+        "t12.rows.4.groundsMaintenance": "T-12 template!R9",
+        "t12.rows.4.propertyLiabilityInsurance": "T-12 template!S9",
+        "t12.rows.4.propertyTaxes": "T-12 template!T9",
+        "t12.rows.5.month": "T-12 template!A10",
+        "t12.rows.5.residentialRevenue": "T-12 template!B10",
+        "t12.rows.5.commercialRevenue": "T-12 template!C10",
+        "t12.rows.5.otherRevenue": "T-12 template!D10",
+        "t12.rows.5.vacancyLoss": "T-12 template!E10",
+        "t12.rows.5.concessions": "T-12 template!F10",
+        "t12.rows.5.occupancy": "T-12 template!G10",
+        "t12.rows.5.propertyManagement": "T-12 template!H10",
+        "t12.rows.5.electricHeatCommon": "T-12 template!L10",
+        "t12.rows.5.waterSewer": "T-12 template!M10",
+        "t12.rows.5.garbage": "T-12 template!N10",
+        "t12.rows.5.replacementReserves": "T-12 template!O10",
+        "t12.rows.5.contractRepairs": "T-12 template!P10",
+        "t12.rows.5.groundsMaintenance": "T-12 template!R10",
+        "t12.rows.5.propertyLiabilityInsurance": "T-12 template!S10",
+        "t12.rows.5.propertyTaxes": "T-12 template!T10",
+        "t12.rows.6.month": "T-12 template!A11",
+        "t12.rows.6.residentialRevenue": "T-12 template!B11",
+        "t12.rows.6.commercialRevenue": "T-12 template!C11",
+        "t12.rows.6.otherRevenue": "T-12 template!D11",
+        "t12.rows.6.vacancyLoss": "T-12 template!E11",
+        "t12.rows.6.concessions": "T-12 template!F11",
+        "t12.rows.6.occupancy": "T-12 template!G11",
+        "t12.rows.6.propertyManagement": "T-12 template!H11",
+        "t12.rows.6.electricHeatCommon": "T-12 template!L11",
+        "t12.rows.6.waterSewer": "T-12 template!M11",
+        "t12.rows.6.garbage": "T-12 template!N11",
+        "t12.rows.6.replacementReserves": "T-12 template!O11",
+        "t12.rows.6.contractRepairs": "T-12 template!P11",
+        "t12.rows.6.groundsMaintenance": "T-12 template!R11",
+        "t12.rows.6.propertyLiabilityInsurance": "T-12 template!S11",
+        "t12.rows.6.propertyTaxes": "T-12 template!T11",
+        "t12.rows.7.month": "T-12 template!A12",
+        "t12.rows.7.residentialRevenue": "T-12 template!B12",
+        "t12.rows.7.commercialRevenue": "T-12 template!C12",
+        "t12.rows.7.otherRevenue": "T-12 template!D12",
+        "t12.rows.7.vacancyLoss": "T-12 template!E12",
+        "t12.rows.7.concessions": "T-12 template!F12",
+        "t12.rows.7.occupancy": "T-12 template!G12",
+        "t12.rows.7.propertyManagement": "T-12 template!H12",
+        "t12.rows.7.electricHeatCommon": "T-12 template!L12",
+        "t12.rows.7.waterSewer": "T-12 template!M12",
+        "t12.rows.7.garbage": "T-12 template!N12",
+        "t12.rows.7.replacementReserves": "T-12 template!O12",
+        "t12.rows.7.contractRepairs": "T-12 template!P12",
+        "t12.rows.7.groundsMaintenance": "T-12 template!R12",
+        "t12.rows.7.propertyLiabilityInsurance": "T-12 template!S12",
+        "t12.rows.7.propertyTaxes": "T-12 template!T12",
+        "t12.rows.8.month": "T-12 template!A13",
+        "t12.rows.8.residentialRevenue": "T-12 template!B13",
+        "t12.rows.8.commercialRevenue": "T-12 template!C13",
+        "t12.rows.8.otherRevenue": "T-12 template!D13",
+        "t12.rows.8.vacancyLoss": "T-12 template!E13",
+        "t12.rows.8.concessions": "T-12 template!F13",
+        "t12.rows.8.occupancy": "T-12 template!G13",
+        "t12.rows.8.propertyManagement": "T-12 template!H13",
+        "t12.rows.8.electricHeatCommon": "T-12 template!L13",
+        "t12.rows.8.waterSewer": "T-12 template!M13",
+        "t12.rows.8.garbage": "T-12 template!N13",
+        "t12.rows.8.replacementReserves": "T-12 template!O13",
+        "t12.rows.8.contractRepairs": "T-12 template!P13",
+        "t12.rows.8.groundsMaintenance": "T-12 template!R13",
+        "t12.rows.8.propertyLiabilityInsurance": "T-12 template!S13",
+        "t12.rows.8.propertyTaxes": "T-12 template!T13",
+        "t12.rows.9.month": "T-12 template!A14",
+        "t12.rows.9.residentialRevenue": "T-12 template!B14",
+        "t12.rows.9.commercialRevenue": "T-12 template!C14",
+        "t12.rows.9.otherRevenue": "T-12 template!D14",
+        "t12.rows.9.vacancyLoss": "T-12 template!E14",
+        "t12.rows.9.concessions": "T-12 template!F14",
+        "t12.rows.9.occupancy": "T-12 template!G14",
+        "t12.rows.9.propertyManagement": "T-12 template!H14",
+        "t12.rows.9.electricHeatCommon": "T-12 template!L14",
+        "t12.rows.9.waterSewer": "T-12 template!M14",
+        "t12.rows.9.garbage": "T-12 template!N14",
+        "t12.rows.9.replacementReserves": "T-12 template!O14",
+        "t12.rows.9.contractRepairs": "T-12 template!P14",
+        "t12.rows.9.groundsMaintenance": "T-12 template!R14",
+        "t12.rows.9.propertyLiabilityInsurance": "T-12 template!S14",
+        "t12.rows.9.propertyTaxes": "T-12 template!T14",
+        "t12.rows.10.month": "T-12 template!A15",
+        "t12.rows.10.residentialRevenue": "T-12 template!B15",
+        "t12.rows.10.commercialRevenue": "T-12 template!C15",
+        "t12.rows.10.otherRevenue": "T-12 template!D15",
+        "t12.rows.10.vacancyLoss": "T-12 template!E15",
+        "t12.rows.10.concessions": "T-12 template!F15",
+        "t12.rows.10.occupancy": "T-12 template!G15",
+        "t12.rows.10.propertyManagement": "T-12 template!H15",
+        "t12.rows.10.electricHeatCommon": "T-12 template!L15",
+        "t12.rows.10.waterSewer": "T-12 template!M15",
+        "t12.rows.10.garbage": "T-12 template!N15",
+        "t12.rows.10.replacementReserves": "T-12 template!O15",
+        "t12.rows.10.contractRepairs": "T-12 template!P15",
+        "t12.rows.10.groundsMaintenance": "T-12 template!R15",
+        "t12.rows.10.propertyLiabilityInsurance": "T-12 template!S15",
+        "t12.rows.10.propertyTaxes": "T-12 template!T15",
+        "t12.rows.11.month": "T-12 template!A16",
+        "t12.rows.11.residentialRevenue": "T-12 template!B16",
+        "t12.rows.11.commercialRevenue": "T-12 template!C16",
+        "t12.rows.11.otherRevenue": "T-12 template!D16",
+        "t12.rows.11.vacancyLoss": "T-12 template!E16",
+        "t12.rows.11.concessions": "T-12 template!F16",
+        "t12.rows.11.occupancy": "T-12 template!G16",
+        "t12.rows.11.propertyManagement": "T-12 template!H16",
+        "t12.rows.11.electricHeatCommon": "T-12 template!L16",
+        "t12.rows.11.waterSewer": "T-12 template!M16",
+        "t12.rows.11.garbage": "T-12 template!N16",
+        "t12.rows.11.replacementReserves": "T-12 template!O16",
+        "t12.rows.11.contractRepairs": "T-12 template!P16",
+        "t12.rows.11.groundsMaintenance": "T-12 template!R16",
+        "t12.rows.11.propertyLiabilityInsurance": "T-12 template!S16",
+        "t12.rows.11.propertyTaxes": "T-12 template!T16"
+      },
+      "originals": {},
+      "meta": {
+        "projectId": "completed-project-3",
+        "sourceTab": "Completed Project 3 Details",
+        "hint": "This came from a \"Completed Project 3\" tab"
+      }
+    }
+  ],
+  "facts": {
+    "sheets": [
+      {
+        "name": "Cover",
+        "state": "visible",
+        "hasData": null,
+        "errorCount": 0
+      },
+      {
+        "name": "Balance Sheet",
+        "state": "visible",
+        "hasData": null,
+        "errorCount": 0
+      },
+      {
+        "name": "Principal PFS",
+        "state": "visible",
+        "hasData": null,
+        "errorCount": 0
+      },
+      {
+        "name": "Consol Financials & Projections",
+        "state": "visible",
+        "hasData": null,
+        "errorCount": 0
+      },
+      {
+        "name": "Cap Table",
+        "state": "visible",
+        "hasData": null,
+        "errorCount": 0
+      },
+      {
+        "name": "Development Project 1 Details",
+        "state": "visible",
+        "hasData": true,
+        "errorCount": 0
+      },
+      {
+        "name": "Development Project 1 Budget",
+        "state": "visible",
+        "hasData": null,
+        "errorCount": 0
+      },
+      {
+        "name": "Development Project 2 Details",
+        "state": "visible",
+        "hasData": true,
+        "errorCount": 0
+      },
+      {
+        "name": "Development Project 2 Budget",
+        "state": "visible",
+        "hasData": null,
+        "errorCount": 0
+      },
+      {
+        "name": "Completed Project 1 Details",
+        "state": "visible",
+        "hasData": true,
+        "errorCount": 0
+      },
+      {
+        "name": "Completed Project 2 Details",
+        "state": "visible",
+        "hasData": true,
+        "errorCount": 0
+      },
+      {
+        "name": "Completed Project 3 Details",
+        "state": "visible",
+        "hasData": true,
+        "errorCount": 0
+      }
+    ],
+    "errorCells": [],
+    "errorCellsTotal": 0,
+    "typedOver": [
+      {
+        "tab": "Development Project 2 Budget",
+        "cell": "G102",
+        "value": 17000000
+      }
+    ],
+    "typedOverTotal": 1
+  },
+  "report": {
+    "fileName": null,
+    "workbook": {
+      "version": "Version 1.9",
+      "versionKnown": true,
+      "sheetCount": 12,
+      "visible": 12,
+      "hidden": 0,
+      "veryHidden": 0
+    },
+    "firmGroups": [
+      {
+        "id": "identity",
+        "title": "Firm identity",
+        "filled": 6,
+        "blank": 0,
+        "errors": 0,
+        "bad": 0,
+        "read": true
+      },
+      {
+        "id": "owners",
+        "title": "Owners",
+        "filled": 2,
+        "blank": 0,
+        "errors": 0,
+        "bad": 0,
+        "read": true
+      },
+      {
+        "id": "balanceSheet",
+        "title": "Firm balance sheet",
+        "filled": 12,
+        "blank": 50,
+        "errors": 0,
+        "bad": 0,
+        "read": true
+      },
+      {
+        "id": "principalStatement",
+        "title": "Principal's personal financial statement",
+        "filled": 5,
+        "blank": 14,
+        "errors": 0,
+        "bad": 0,
+        "read": true
+      },
+      {
+        "id": "earnings",
+        "title": "Firm earnings by year",
+        "filled": 18,
+        "blank": 60,
+        "errors": 0,
+        "bad": 0,
+        "read": true
+      },
+      {
+        "id": "capital",
+        "title": "Firm debt and equity",
+        "filled": 4,
+        "blank": 2,
+        "errors": 0,
+        "bad": 0,
+        "read": true
+      },
+      {
+        "id": "projects",
+        "title": "Project list",
+        "filled": 0,
+        "blank": 0,
+        "errors": 0,
+        "bad": 0,
+        "read": false
+      }
+    ],
+    "projects": [
+      {
+        "id": "development-project-1",
+        "tab": "Development Project 1 Details",
+        "kind": "development",
+        "number": 1,
+        "state": "visible",
+        "hint": "This came from a \"Development Project 1\" tab",
+        "hasData": true,
+        "name": "Maple Court Apartments",
+        "groups": [
+          {
+            "id": "identity",
+            "title": "Project identity",
+            "filled": 5,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "stage",
+            "title": "Stage and review date",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          },
+          {
+            "id": "team",
+            "title": "Development team",
+            "filled": 14,
+            "blank": 7,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "timeline",
+            "title": "Timeline",
+            "filled": 3,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "sources",
+            "title": "Sources of money",
+            "filled": 24,
+            "blank": 11,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "budget",
+            "title": "Development budget",
+            "filled": 51,
+            "blank": 19,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "residentialIncome",
+            "title": "Residential income",
+            "filled": 36,
+            "blank": 4,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "commercialIncome",
+            "title": "Commercial income",
+            "filled": 9,
+            "blank": 3,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "otherIncome",
+            "title": "Other income",
+            "filled": 4,
+            "blank": 3,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "operatingExpenses",
+            "title": "Operating expenses (annual, at stabilization)",
+            "filled": 13,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "otherExpenses",
+            "title": "Other operating expenses",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "t12",
+            "title": "Trailing 12 months (optional)",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          }
+        ]
+      },
+      {
+        "id": "development-project-2",
+        "tab": "Development Project 2 Details",
+        "kind": "development",
+        "number": 2,
+        "state": "visible",
+        "hint": "This came from a \"Development Project 2\" tab",
+        "hasData": true,
+        "name": "Harbor Point Towers",
+        "groups": [
+          {
+            "id": "identity",
+            "title": "Project identity",
+            "filled": 5,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "stage",
+            "title": "Stage and review date",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          },
+          {
+            "id": "team",
+            "title": "Development team",
+            "filled": 10,
+            "blank": 11,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "timeline",
+            "title": "Timeline",
+            "filled": 3,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "sources",
+            "title": "Sources of money",
+            "filled": 22,
+            "blank": 6,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "budget",
+            "title": "Development budget",
+            "filled": 51,
+            "blank": 19,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "residentialIncome",
+            "title": "Residential income",
+            "filled": 36,
+            "blank": 4,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "commercialIncome",
+            "title": "Commercial income",
+            "filled": 9,
+            "blank": 3,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "otherIncome",
+            "title": "Other income",
+            "filled": 4,
+            "blank": 3,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "operatingExpenses",
+            "title": "Operating expenses (annual, at stabilization)",
+            "filled": 13,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "otherExpenses",
+            "title": "Other operating expenses",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "t12",
+            "title": "Trailing 12 months (optional)",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          }
+        ]
+      },
+      {
+        "id": "completed-project-1",
+        "tab": "Completed Project 1 Details",
+        "kind": "completed",
+        "number": 1,
+        "state": "visible",
+        "hint": "This came from a \"Completed Project 1\" tab",
+        "hasData": true,
+        "name": "Alder Court",
+        "groups": [
+          {
+            "id": "identity",
+            "title": "Project identity",
+            "filled": 5,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "stage",
+            "title": "Stage and review date",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          },
+          {
+            "id": "team",
+            "title": "Development team",
+            "filled": 11,
+            "blank": 10,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "timeline",
+            "title": "Timeline",
+            "filled": 3,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "sources",
+            "title": "Sources of money",
+            "filled": 14,
+            "blank": 7,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "budget",
+            "title": "Development budget",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          },
+          {
+            "id": "residentialIncome",
+            "title": "Residential income",
+            "filled": 6,
+            "blank": 4,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "commercialIncome",
+            "title": "Commercial income",
+            "filled": 5,
+            "blank": 3,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "otherIncome",
+            "title": "Other income",
+            "filled": 2,
+            "blank": 3,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "operatingExpenses",
+            "title": "Operating expenses (annual, at stabilization)",
+            "filled": 9,
+            "blank": 4,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "otherExpenses",
+            "title": "Other operating expenses",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "t12",
+            "title": "Trailing 12 months (optional)",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          }
+        ]
+      },
+      {
+        "id": "completed-project-2",
+        "tab": "Completed Project 2 Details",
+        "kind": "completed",
+        "number": 2,
+        "state": "visible",
+        "hint": "This came from a \"Completed Project 2\" tab",
+        "hasData": true,
+        "name": "Willow Street Flats",
+        "groups": [
+          {
+            "id": "identity",
+            "title": "Project identity",
+            "filled": 5,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "stage",
+            "title": "Stage and review date",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          },
+          {
+            "id": "team",
+            "title": "Development team",
+            "filled": 11,
+            "blank": 10,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "timeline",
+            "title": "Timeline",
+            "filled": 3,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "sources",
+            "title": "Sources of money",
+            "filled": 14,
+            "blank": 7,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "budget",
+            "title": "Development budget",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          },
+          {
+            "id": "residentialIncome",
+            "title": "Residential income",
+            "filled": 6,
+            "blank": 4,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "commercialIncome",
+            "title": "Commercial income",
+            "filled": 5,
+            "blank": 3,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "otherIncome",
+            "title": "Other income",
+            "filled": 2,
+            "blank": 3,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "operatingExpenses",
+            "title": "Operating expenses (annual, at stabilization)",
+            "filled": 9,
+            "blank": 4,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "otherExpenses",
+            "title": "Other operating expenses",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "t12",
+            "title": "Trailing 12 months (optional)",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          }
+        ]
+      },
+      {
+        "id": "completed-project-3",
+        "tab": "Completed Project 3 Details",
+        "kind": "completed",
+        "number": 3,
+        "state": "visible",
+        "hint": "This came from a \"Completed Project 3\" tab",
+        "hasData": true,
+        "name": "Maple Row Townhomes",
+        "groups": [
+          {
+            "id": "identity",
+            "title": "Project identity",
+            "filled": 5,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "stage",
+            "title": "Stage and review date",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          },
+          {
+            "id": "team",
+            "title": "Development team",
+            "filled": 11,
+            "blank": 10,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "timeline",
+            "title": "Timeline",
+            "filled": 3,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "sources",
+            "title": "Sources of money",
+            "filled": 14,
+            "blank": 7,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "budget",
+            "title": "Development budget",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          },
+          {
+            "id": "residentialIncome",
+            "title": "Residential income",
+            "filled": 6,
+            "blank": 4,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "commercialIncome",
+            "title": "Commercial income",
+            "filled": 5,
+            "blank": 3,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "otherIncome",
+            "title": "Other income",
+            "filled": 2,
+            "blank": 3,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "operatingExpenses",
+            "title": "Operating expenses (annual, at stabilization)",
+            "filled": 9,
+            "blank": 4,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "otherExpenses",
+            "title": "Other operating expenses",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": true
+          },
+          {
+            "id": "t12",
+            "title": "Trailing 12 months (optional)",
+            "filled": 0,
+            "blank": 0,
+            "errors": 0,
+            "bad": 0,
+            "read": false
+          }
+        ]
+      }
+    ],
+    "layoutProblems": [],
+    "errorCells": [],
+    "notes": []
+  },
+  "settings": {
+    "minDscr": 1.2,
+    "noiVsUnderwritten": 1,
+    "consecutiveMonths": 3,
+    "occupancyFloor": 0.9,
+    "rentPremium": 0.1
+  }
+}

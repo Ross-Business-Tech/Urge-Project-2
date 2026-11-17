@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { projectReadiness, STAGES } from './modules/shared/index.js'
 import { StageControls } from './ImportPreview.jsx'
 import { T12Tools } from './T12Tools.jsx'
+import { useProjectChoice } from './ProjectChoice.js'
 
 // What every analysis tab shows. Nothing until a workbook has been loaded; then the loaded projects, one at a time.
 // `review` is what the "Load workbook" tab has on screen (see App.jsx), or null when nothing is loaded yet.
@@ -25,7 +26,10 @@ export function EmptyState({ onGoLoad }) {
 // withStage: show the stage / date choices above the result, so they can be set without leaving this tab.
 // withT12: show the T-12 upload above the result.
 export default function LoadedProject({ review, onGoLoad, children, withStage = true, withT12 = false }) {
-  const [pick, setPick] = useState(null)
+  const shared = useProjectChoice()
+  const [localPick, setLocalPick] = useState(null)
+  const pick = shared ? shared.id : localPick
+  const setPick = shared ? shared.setId : setLocalPick
   const result = review?.result
   const projects = result ? result.report.projects.filter((p) => p.hasData) : []
   const chosen = projects.find((p) => p.id === pick) ?? projects[0]
