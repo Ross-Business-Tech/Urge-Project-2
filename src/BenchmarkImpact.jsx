@@ -5,6 +5,7 @@ import './modules/m2-benchmarks/benchmarks.css'
 
 const STATUS = {
   within: { label: 'Within range', chip: 'good' },
+  better: { label: 'Better than range', chip: 'good' },
   above: { label: 'Above range', chip: 'amber' },
   below: { label: 'Below range', chip: 'amber' },
   not_available: { label: 'Not available', chip: '' },
@@ -30,7 +31,8 @@ export default function BenchmarkImpact({ record, firm, settings, onGo }) {
   if (effects.items.length === 0) return <p className="note">Add a range below, and this section will show what it finds in this project.</p>
 
   const outside = effects.items.filter((i) => i.status === 'above' || i.status === 'below').length
-  const compared = effects.items.filter((i) => i.status === 'within' || i.status === 'above' || i.status === 'below').length
+  const better = effects.items.filter((i) => i.status === 'better').length
+  const compared = effects.items.filter((i) => i.status === 'within' || i.status === 'above' || i.status === 'below' || i.status === 'better').length
   return (
     <section className="benchmark-impact" aria-label="What your benchmarks found">
       <h2 className="details-heading">What your benchmarks found</h2>
@@ -38,8 +40,10 @@ export default function BenchmarkImpact({ record, firm, settings, onGo }) {
         {compared === 0
           ? 'None of your ranges could be compared with this project yet.'
           : outside
-            ? `${outside} of ${compared} compared ${compared === 1 ? 'figure is' : 'figures are'} outside your range.`
-            : `All ${compared} compared ${compared === 1 ? 'figure is' : 'figures are'} within your range.`}
+            ? `${outside} of ${compared} compared ${compared === 1 ? 'figure is' : 'figures are'} outside your range${better ? `; ${better} more ${better === 1 ? 'is' : 'are'} better than it` : ''}.`
+            : better
+              ? `All ${compared} compared ${compared === 1 ? 'figure is' : 'figures are'} within your range or better than it (${better} better).`
+              : `All ${compared} compared ${compared === 1 ? 'figure is' : 'figures are'} within your range.`}
       </p>
       <ul className="bm-list">
         {effects.items.map((item) => {
@@ -51,6 +55,7 @@ export default function BenchmarkImpact({ record, firm, settings, onGo }) {
                 <span className="bm-label">{item.label}</span>
                 <span className="chips">
                   <span className={`chip ${out && item.severity ? SEVERITY_CHIP[item.severity] : st.chip}`}>
+                    {item.status === 'better' ? '✓ ' : ''}
                     {st.label}
                     {out && item.severity ? ` · ${item.severity}` : ''}
                   </span>

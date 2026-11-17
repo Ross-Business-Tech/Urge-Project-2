@@ -105,7 +105,7 @@ test('interest rate: the average of the loans, weighted by amount, is compared w
   assert.deepEqual(inside.flags, [])
 })
 
-test('the side that matters most is graded by how far past the range the figure is; the other side is a lesser finding', () => {
+test('the risky side is graded by how far past the range the figure is; the other side is good news with no flag', () => {
   const p = project('development')
   const value = compareYours(p, [entry('interestRate', 0.001, 0.999)]).rows[0].value
   const grade = (low, high, metric = 'interestRate') => compareYours(p, [entry(metric, low, high)]).flags.map((f) => [f.id, f.severity])
@@ -113,11 +113,12 @@ test('the side that matters most is graded by how far past the range the figure 
   assert.deepEqual(grade(value / 1.3, value / 1.3), [['M2-yours-interest-rate-above', 'high']], '30% past the high edge')
   assert.deepEqual(grade(value / 1.1, value / 1.1), [['M2-yours-interest-rate-above', 'medium']], '10% past')
   assert.deepEqual(grade(value / 1.02, value / 1.02), [['M2-yours-interest-rate-above', 'low']], '2% past')
-  // A rate below the range is the safe side: a lesser finding, and medium only when it is far (25% or more) past the edge.
-  const nearBelow = grade(value * 1.1, value * 1.2)
-  assert.deepEqual(nearBelow, [['M2-yours-interest-rate-below', 'low']], '9% below the low edge')
-  const farBelow = grade(value * 1.5, value * 1.6)
-  assert.deepEqual(farBelow, [['M2-yours-interest-rate-below', 'medium']], '33% below the low edge')
+  // A rate below the range is good news: no flag, however far below it is. The table shows it as "better".
+  assert.deepEqual(grade(value * 1.1, value * 1.2), [], '9% below the low edge')
+  assert.deepEqual(grade(value * 1.5, value * 1.6), [], '33% below the low edge')
+  const below = compareYours(p, [entry('interestRate', value * 1.5, value * 1.6)]).rows[0]
+  assert.equal(below.status, 'better')
+  assert.equal(below.position, 'below')
   assert.deepEqual(grade(value, value), [], 'on the edge is within')
 })
 

@@ -16,7 +16,7 @@ const NONE = []
 
 const helpFor = (metric) => {
   if (metric.help) return metric.help
-  if (metric.kind === 'ratio') return `Flagged most strongly when the figure is ${metric.risky} your range; the other side is noted more gently.`
+  if (metric.risky) return `Flagged when the figure is ${metric.risky} your range. On the other side it is good news, so it shows in green with no flag.`
   return null
 }
 

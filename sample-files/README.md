@@ -15,8 +15,8 @@ Riverside Commons is a made-up 100-apartment project with nothing missing: five 
 - `full-example-development.xlsx`: still to be built. After loading it, choose the **Development** stage and an "as of" date (for example 2026-11-16). Good for the budget, cost per square foot, contingency, scenarios and development risk screens.
 - `full-example-completed.xlsx` with `full-example-completed-t12.xlsx`: already open. Load the workbook, choose the **Completed** stage and the same date, then upload the T-12 file against the project. Good for rents and expenses against real monthly results.
 - `full-example-benchmarks.json`: example ranges for the **Benchmarks** screen. Use "Open a saved file". Most of the project's figures sit inside them, and a few deliberately do not:
-  - above the range: 2-bedroom market rent, operating expenses per unit, soft cost per square foot, debt service coverage, equity share (the last two are the safe side);
-  - below the range: yield on cost (the risky side);
+  - outside the range on the risky side (flagged): 2-bedroom market rent, operating expenses per unit, soft cost per square foot, yield on cost (below it);
+  - outside the range on the good side (shown in green as "better than range", never flagged): debt service coverage and equity share, both above the range;
   - the 3-bedroom rent has no range, so it shows as "not compared";
   - for the completed version, the cost and contingency ranges show as "not used".
 

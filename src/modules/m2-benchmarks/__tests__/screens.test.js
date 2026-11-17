@@ -188,3 +188,18 @@ test('benchmarks saved without a date say so, instead of showing a made-up one',
 test('with nothing entered no date is shown', () => {
   assert.doesNotMatch(plain(renderToString(withProvider(null, createElement(Editor)))), /last changed/)
 })
+
+test('a figure outside the range on the good side is shown as better than the range, in green, with no flag or question', () => {
+  // The sample project borrows at about 6%: a range of 7% to 9% puts its rate below the range, which is good for a borrower.
+  const saved = [{ id: 'a', metric: 'interestRate', low: 0.07, high: 0.09, typical: null }]
+  const html = renderToString(withProvider(saved, createElement(Table, { record: record(), onOpenBenchmarks: () => {} })))
+  const text = plain(html)
+  assert.match(text, /Better than range/)
+  assert.match(text, /1 of 1 figures are within your range or better than it \(1 better\)\./)
+  assert.doesNotMatch(text, /Ask the sponsor/)
+  assert.doesNotMatch(text, /outside\./)
+  assert.match(html, /bm-row better/)
+  const effects = plain(renderToString(withProvider(saved, createElement(Impact, { record: record(), firm: null, settings: undefined, onGo: () => {} }))))
+  assert.match(effects, /Better than range/)
+  assert.match(effects, /within your range or better than it \(1 better\)/)
+})

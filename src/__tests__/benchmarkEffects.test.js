@@ -70,7 +70,8 @@ test('loan and return ranges: where the project stands, with the finding’s sev
   assert.equal(rate.wanted, '3.00% to 4.00%')
   assert.equal(itemOf(res, 'vacancy').status, 'within')
   assert.equal(itemOf(res, 'vacancy').severity, null)
-  assert.equal(itemOf(res, 'dscr').status, 'above')
+  assert.equal(itemOf(res, 'dscr').status, 'better', 'coverage above the range is good news')
+  assert.equal(itemOf(res, 'dscr').severity, null, 'and raises no flag')
   assert.equal(itemOf(res, 'dscr').screen, 'keynumbers')
 })
 

@@ -60,7 +60,8 @@ function valueOf(metric, record, ratios) {
   return { ok: false, reason: 'Unknown figure.' }
 }
 
-// rows: one for every entry that applies, for the table. flags: one for every figure outside its range.
+// rows: one for every entry that applies, for the table. flags: one for every figure outside its range on the risky side.
+// A figure outside its range on the good side has status 'better' and no flag.
 export function compareYours(project, entries, { settings = DEFAULT_SETTINGS } = {}) {
   const maker = createFlagMaker('M2', project)
   let ratios = []
@@ -86,13 +87,15 @@ export function compareYours(project, entries, { settings = DEFAULT_SETTINGS } =
     const position = v.value < range.low ? 'below' : v.value > range.high ? 'above' : 'within'
     const cells = citeCells(project, v.paths)
     const past = beyondEdge(v.value, range)
-    const detail = `${show(metric.unit, v.value, digits)} against your range of ${wanted}: ${position === 'within' ? 'within' : position} the range.${v.note ? ` ${v.note}` : ''}`
-    rows.push({ ...base, status: position, value: v.value, past, detail, cells })
-    if (position === 'within') continue
+    // Outside the range on the side that is NOT risky is good news (a lower interest rate, stronger coverage, more equity...):
+    // it raises no flag and is shown as "better" in green.
+    const better = position !== 'within' && position !== metric.risky
+    const detail = `${show(metric.unit, v.value, digits)} against your range of ${wanted}: ${position === 'within' ? 'within the range' : better ? `${position} the range, which is the favorable side` : `${position} the range`}.${v.note ? ` ${v.note}` : ''}`
+    rows.push({ ...base, status: better ? 'better' : position, position, value: v.value, past, detail, cells })
+    if (position === 'within' || better) continue
 
-    // The side that matters most is more serious the further past it the value is; the other side is a lesser finding.
-    const risky = position === metric.risky
-    const severity = risky ? (past >= 0.2 ? 'high' : past >= 0.05 ? 'medium' : 'low') : past >= 0.25 ? 'medium' : 'low'
+    // The risky side is more serious the further past the edge the value is.
+    const severity = past >= 0.2 ? 'high' : past >= 0.05 ? 'medium' : 'low'
     flags.push(
       maker.flag({
         id: `M2-yours-${metric.slug}-${position}`,
