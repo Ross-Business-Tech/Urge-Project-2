@@ -38,7 +38,6 @@ The website finds the AI service through `src/aiConfig.js`. To check the service
 
 ## Know before using real client data
 
-- Written approval from IT or the university is needed first, because the AI step sends a reduced copy of the review to an outside provider.
 - There is one shared access code and no per-person usage limit. Keep the code private and set a low spending limit at the provider.
 - Benchmarks live in each browser. A colleague on another computer needs the saved file.
 
