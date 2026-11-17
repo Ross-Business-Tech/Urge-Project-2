@@ -97,10 +97,12 @@ function checkList(rows, { noun, allGood }) {
   const passed = counted.filter((r) => r.status === 'pass').length
   const flags = failed.flatMap((r) => r.flags)
   const worst = flags.reduce((w, f) => (compareSeverity(f.severity, w) < 0 ? f.severity : w), 'low')
-  const tone = failed.length === 0 ? 'good' : worst === 'high' ? 'bad' : 'amber'
+  // "All good" is only said when every check could run. Checks that could not run are never counted as passed.
+  const unproven = failed.length === 0 && unchecked > 0
+  const tone = unproven ? 'amber' : failed.length === 0 ? 'good' : worst === 'high' ? 'bad' : 'amber'
   return {
     tone,
-    headline: failed.length ? `${plural(failed.length, noun)} need${failed.length === 1 ? 's' : ''} a look.` : allGood,
+    headline: failed.length ? `${plural(failed.length, noun)} need${failed.length === 1 ? 's' : ''} a look.` : unproven ? `Nothing is wrong so far, but ${plural(unchecked, 'check')} could not run.` : allGood,
     sub: `${passed} of ${counted.length} checks pass${unchecked ? `, ${unchecked} could not be checked for lack of data` : ''}.`,
     tiles: [
       { label: 'Passed', value: passed, tone: 'good' },
