@@ -60,6 +60,9 @@ const display = (r) => (r.unit === 'times' ? fmt.times(r.value) : r.unit === 'pe
 
 // ---- one builder per screen: returns the props for <Summary />, or null when there is nothing to summarize ----
 
+// "All 3 key ratios meet your settings." / "The key ratio meets your settings." (one ratio is not "all 1").
+const meets = (n) => (n === 1 ? 'The key ratio meets your settings.' : `All ${n} key ratios meet your settings.`)
+
 function keyNumbers({ record, settings, bm }) {
   if (!record.data.stage.stage) return null
   const ratios = keyRatios(record, settings).filter((r) => r.ok)
@@ -74,7 +77,7 @@ function keyNumbers({ record, settings, bm }) {
     ? `${plural(concern, 'key ratio')} ${concern === 1 ? 'is' : 'are'} a concern.`
     : watch
       ? `${plural(watch, 'key ratio')} need${watch === 1 ? 's' : ''} watching.`
-      : `All ${ratios.filter((r) => r.status).length || ratios.length} key ratios meet your settings.`
+      : meets(ratios.filter((r) => r.status).length || ratios.length)
   const tiles = ratios.slice(0, 3).map((r) => ({ label: r.title, value: display(r), tone: r.status === 'concern' ? 'bad' : r.status === 'watch' ? 'amber' : r.status === 'ok' ? 'good' : undefined }))
   return {
     tone,

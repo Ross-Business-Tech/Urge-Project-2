@@ -45,6 +45,15 @@ test('a server that cannot be reached gives a message about waking up, not a cra
   assert.match(r.message, /waking up/)
 })
 
+test('an unreachable service names this website’s address, so a missing allowed-list entry can be spotted at once', async () => {
+  const r = await askGateway({ url: 'https://x.test/api/ai', code: 'c', payload: {}, fetchImpl: async () => { throw new TypeError('Failed to fetch') }, origin: 'https://inner-ember-bh9q.here.now' })
+  assert.match(r.message, /may not allow this website's address \(https:\/\/inner-ember-bh9q\.here\.now\)/)
+  assert.match(r.message, /add it to its allowed list/)
+  const none = await askGateway({ url: 'https://x.test/api/ai', code: 'c', payload: {}, fetchImpl: async () => { throw new TypeError('Failed to fetch') }, origin: null })
+  assert.doesNotMatch(none.message, /\(null\)|undefined/)
+  assert.match(none.message, /may not allow this website's address:/)
+})
+
 test('a reply that is not JSON, or an unknown error, is handled', async () => {
   assert.equal((await ask(async () => new Response('<html>502</html>', { status: 502 }))).error, 'server_error')
   const r = await ask(async () => reply({ ok: false, error: 'something_new' }, 500))
