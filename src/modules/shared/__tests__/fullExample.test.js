@@ -76,7 +76,7 @@ test('development: the example benchmarks show what the README says', async () =
   assert.deepEqual(statuses(res), {
     'rent-studio': 'within', 'rent-1br': 'within', 'rent-1br-60': 'within', 'rent-2br': 'above', 'rent-2br-60': 'within',
     expense: 'above', 'cost-hard': 'within', 'cost-soft': 'above', 'cost-total': 'within', contingency: 'within',
-    interest: 'within', coverage: 'above', 'loan-to-cost': 'within', equity: 'above', 'break-even': 'within', yield: 'below', 'debt-yield': 'within', vacancy: 'within',
+    interest: 'within', coverage: 'better', 'loan-to-cost': 'within', equity: 'better', 'break-even': 'within', yield: 'below', 'debt-yield': 'within', vacancy: 'within',
   })
   assert.deepEqual(res.notCompared, ['Rent for 3br (market rate): no range entered, so 1 unit row not compared.'])
 })
@@ -90,7 +90,7 @@ test('completed: ranges for cost and contingency are not used, and the rest are 
   assert.equal(s['rent-studio'], 'within')
   assert.equal(s.expense, 'above')
   assert.equal(s.interest, 'within')
-  assert.equal(s.coverage, 'above')
+  assert.equal(s.coverage, 'better')
   assert.equal(s.vacancy, 'within')
   assert.equal(s['loan-to-cost'], 'not_available', 'a finished project has no cost to compare loans with')
 })

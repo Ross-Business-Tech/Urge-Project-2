@@ -12,7 +12,9 @@
 //
 // compareProject(project, context) returns { ok, stage, set, rows } where each row is one line of the table on screen:
 //   { id, metric, label, basis, unit, value, range, position, percentFromMedian, status, detail, cells, flags }
-// status: 'within' | 'above' | 'below' | 'no_benchmark' | 'not_available' | 'not_applicable'
+// status: 'within' | 'above' | 'below' | 'better' | 'no_benchmark' | 'not_available' | 'not_applicable'
+//   Outside the range on the good side (expenses below, costs below: see GOOD) is 'better': good news, so it raises no flag
+//   and is shown in green. Every other row outside the range keeps 'above' or 'below'. `position` always keeps the plain direction.
 
 import {
   projectSchema,
@@ -70,15 +72,18 @@ const residentialUnits = (record) => sum(record.data.residentialIncome.rows.map(
 // How far past the nearer edge of the range, as a share of that edge (0.1 = 10% past it).
 const beyondEdge = (value, range) => (value > range.high ? value / range.high - 1 : value < range.low ? 1 - value / range.low : 0)
 
-// Rents above the market overstate income; expenses below the market understate costs. Those are the risky directions.
-// The other direction is worth a mention but rarely a concern. Cost per square foot below the range is a question about
-// scope (missing lines, a thin budget), which M3D's budget checks own in detail, so M2 only notes it.
-const RISKY = { rent: 'above', expense: 'below', cost: 'above' }
+// Which side of a range is a problem, and which side is good news.
+//   rents:     above the market may overstate income (a finding); below is cautious underwriting, a small note, not good news
+//              (lower rent is less income), so it is neither flagged hard nor shown in green.
+//   expenses:  above the market is a finding; below is GOOD news (a cheaper building to run).
+//   costs:     above the market is a finding; below is GOOD news (a cheaper build).
+// Good news raises no flag. The table shows it in green as "better than range".
+const RISKY = { rent: 'above', expense: 'above', cost: 'above' }
+const GOOD = { rent: null, expense: 'below', cost: 'below' }
 
 function severityFor(metric, position, past) {
   // A value just past the edge (under 5%) is within the noise of any benchmark: worth a note, not a warning.
   if (position === RISKY[metric]) return past >= 0.2 ? 'high' : past >= 0.05 ? 'medium' : 'low'
-  if (metric === 'cost') return 'low'
   return past >= 0.25 ? 'medium' : 'low'
 }
 
@@ -89,7 +94,8 @@ function severityFor(metric, position, past) {
 function compared({ id, metric, label, basis, value, range, cells, rangeBasis }) {
   const c = compareToRange(value, range)
   const unit = UNITS[metric]
-  const where = c.position === 'within' ? 'within' : `${c.position}`
+  const better = c.position !== 'within' && c.position === GOOD[metric]
+  const where = c.position === 'within' ? 'within the range' : better ? `${c.position} the range, which is the favorable side` : `${c.position} the range`
   return {
     id,
     metric,
@@ -101,9 +107,9 @@ function compared({ id, metric, label, basis, value, range, cells, rangeBasis })
     rangeBasis,
     position: c.position,
     percentFromMedian: c.percentFromMedian,
-    status: c.position,
+    status: better ? 'better' : c.position,
     past: beyondEdge(value, range),
-    detail: `${unit.format(value)}${unit.short} vs. ${unit.format(range.low)} to ${unit.format(range.high)} (median ${unit.format(range.median)})${rangeBasis ? `, ${rangeBasis}` : ''}: ${where} the range.`,
+    detail: `${unit.format(value)}${unit.short} vs. ${unit.format(range.low)} to ${unit.format(range.high)} (median ${unit.format(range.median)})${rangeBasis ? `, ${rangeBasis}` : ''}: ${where}.`,
     cells,
   }
 }
@@ -211,6 +217,8 @@ function expenseRow(record, set, stage) {
   if (blank.length) {
     row.detail += ` Note: no amount for ${blank.join(', ')}, so the total may be understated.`
     row.incompleteLines = blank // the flag below uses this: a total with a key line missing cannot be judged against the market
+    // A total that is low because a key line is blank is not good news: it stays on the cautious side and the missing lines are asked for.
+    if (row.status === 'better') row.status = 'below'
   }
   return row
 }
@@ -251,11 +259,10 @@ function costRows(record, set, stage, budgetTab) {
 const NOUN = { rent: 'rents', expense: 'operating expenses', cost: 'costs per square foot' }
 const QUESTIONS = {
   'rent-above': 'What supports rents above the comparable properties (signed leases, amenities, a recent rent survey)? Please send the evidence.',
+  'expense-below': 'The expense total looks low because lines are missing. Please send the expense budget line by line.',
   'rent-below': 'Why are rents below comparable properties? Is there room to raise them, or something holding them down?',
-  'expense-below': 'Operating expenses look low against comparable properties. Please send the expense budget line by line and explain any savings.',
   'expense-above': 'Why are operating expenses higher than at comparable properties?',
   'cost-above': 'Why does the budget cost more per square foot than comparable projects? Please send the contractor bid or cost estimate.',
-  'cost-below': 'The budget costs less per square foot than comparable projects. Is the scope complete? Please send the contractor bid or cost estimate.',
 }
 
 function flagsFor(rows, flag, ctx) {

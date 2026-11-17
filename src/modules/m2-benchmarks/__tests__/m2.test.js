@@ -140,12 +140,23 @@ test('expenses that look low only because a key line has no amount cannot be jud
   assert.match(flagOf(two, 'M2-expenses-below-comps').title, /property taxes, insurance have no amount/)
 })
 
-test('a complete expense list that is genuinely far below the market is still a high flag', () => {
+test('a complete expense list far below the market is good news: no flag, shown as better than the range', () => {
   const thin = project('development', (d) => {
     for (const line of Object.values(d.operatingExpenses.lines)) if (line.amount) line.amount = Math.round(line.amount * 0.4)
   })
-  const f = flagOf(thin, 'M2-expenses-below-comps')
-  assert.equal(f.severity, 'high')
-  assert.match(f.title, /below the comparable range by a wide margin/)
-  assert.doesNotMatch(f.title, /cannot be judged/)
+  const res = compareProject(thin, {})
+  const row = res.rows.find((r) => r.id === 'expenses')
+  assert.equal(row.status, 'better')
+  assert.equal(row.position, 'below')
+  assert.match(row.detail, /favorable side/)
+  assert.ok(!ids(thin).some((id) => id.startsWith('M2-expenses')), 'no expense flag at all')
+  // Costs below the range are good news too.
+  const cheap = project('development', (d) => (d.budget.lines.carpentry.amount = 1000))
+  assert.ok(!ids(cheap).includes('M2-cost-below-comps'))
+  assert.ok(compareProject(cheap, {}).rows.filter((r) => r.metric === 'cost').every((r) => r.status !== 'below'))
+})
+
+test('expenses above the range are the risky side, graded by distance', () => {
+  const heavy = project('development', (d) => { for (const line of Object.values(d.operatingExpenses.lines)) if (line.amount) line.amount = Math.round(line.amount * 2) })
+  assert.equal(flagOf(heavy, 'M2-expenses-above-comps').severity, 'high')
 })

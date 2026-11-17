@@ -24,6 +24,17 @@
   border-color: #c98a00;
 }
 
+.bm-row.better {
+  border-color: #0d6b3a;
+  background: #eef8f1;
+}
+
+.chip.good.strong {
+  font-weight: 700;
+  background: #bfe8cd;
+  color: #084a28;
+}
+
 .bm-row.no_benchmark,
 .bm-row.not_available,
 .bm-row.not_applicable {
@@ -108,7 +119,21 @@
   background: #c98a00;
 }
 
+.bm-dot.better {
+  background: #0a8f4a;
+}
+
 @media (prefers-color-scheme: dark) {
+  .bm-row.better {
+    border-color: #3f8f62;
+    background: #14261c;
+  }
+
+  .chip.good.strong {
+    background: #1f5a38;
+    color: #c8f5da;
+  }
+
   .bm-band {
     background: #1f3b2a;
   }

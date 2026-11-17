@@ -14,13 +14,14 @@ import { STAGE_VALUES } from '../projectStage.js'
 import { normalizeUnitType, normalizeAmi } from './index.js'
 
 // `kind: 'set'` metrics are compared by the original rent / expense / cost / contingency code. `risky` is the side that
-// matters most: a value past that edge is the more serious finding. The other side is still shown, as a lesser one.
+// matters: a value past that edge is a finding, and the more serious the further past it is. Past the other edge is good news: it is
+// shown as "better than range" with no flag.
 export const METRICS = [
-  { id: 'rent', slug: 'rent', label: 'Monthly rent per unit', unit: 'dollars', kind: 'set', qualifiers: ['unitType', 'ami'], help: 'For one unit type. Add the income level too if you want to compare restricted units.' },
-  { id: 'expense', slug: 'expenses', label: 'Operating expenses per unit, per year', unit: 'dollars', kind: 'set' },
-  { id: 'costHard', slug: 'hard-cost', label: 'Hard cost per sq ft', unit: 'dollars', kind: 'set' },
-  { id: 'costSoft', slug: 'soft-cost', label: 'Soft cost per sq ft', unit: 'dollars', kind: 'set' },
-  { id: 'costTotal', slug: 'total-cost', label: 'Total cost per sq ft', unit: 'dollars', kind: 'set' },
+  { id: 'rent', slug: 'rent', label: 'Monthly rent per unit', unit: 'dollars', kind: 'set', risky: 'above', qualifiers: ['unitType', 'ami'], help: 'For one unit type. Add the income level too if you want to compare restricted units.' },
+  { id: 'expense', slug: 'expenses', label: 'Operating expenses per unit, per year', unit: 'dollars', kind: 'set', risky: 'above' },
+  { id: 'costHard', slug: 'hard-cost', label: 'Hard cost per sq ft', unit: 'dollars', kind: 'set', risky: 'above' },
+  { id: 'costSoft', slug: 'soft-cost', label: 'Soft cost per sq ft', unit: 'dollars', kind: 'set', risky: 'above' },
+  { id: 'costTotal', slug: 'total-cost', label: 'Total cost per sq ft', unit: 'dollars', kind: 'set', risky: 'above' },
   { id: 'contingency', slug: 'contingency', label: 'Contingency, as a share of hard cost', unit: 'percent', kind: 'set' },
   { id: 'interestRate', slug: 'interest-rate', label: 'Interest rate (average of the loans)', unit: 'percent', kind: 'ratio', risky: 'above' },
   { id: 'dscr', slug: 'coverage', label: 'Debt service coverage', unit: 'times', kind: 'ratio', risky: 'below' },

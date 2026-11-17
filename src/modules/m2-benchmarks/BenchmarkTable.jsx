@@ -7,6 +7,7 @@ import './benchmarks.css'
 
 const STATUS = {
   within: { label: 'Within range', chip: 'good' },
+  better: { label: 'Better than range', chip: 'good' },
   above: { label: 'Above range', chip: 'amber' },
   below: { label: 'Below range', chip: 'amber' },
   no_benchmark: { label: 'No benchmark', chip: '' },
@@ -93,12 +94,18 @@ export default function BenchmarkTable({ record, settings = DEFAULT_SETTINGS, on
   const flagFor = (row) => result.flags.find((fl) => fl.id.includes(`-${row.status}-comps`) && fl.id.startsWith(`M2-${{ rent: 'rent', expense: 'expenses', cost: 'cost' }[row.metric]}-`))
   const isOut = (r) => r.status === 'above' || r.status === 'below'
   const outside = result.rows.filter(isOut).length + yours.rows.filter(isOut).length
-  const compared = result.rows.filter((r) => r.range).length + yours.rows.filter((r) => r.status === 'within' || isOut(r)).length
+  const better = result.rows.filter((r) => r.status === 'better').length + yours.rows.filter((r) => r.status === 'better').length
+  const compared = result.rows.filter((r) => r.range).length + yours.rows.filter((r) => r.status === 'within' || r.status === 'better' || isOut(r)).length
+  // Outside the range on the good side is not a problem, so those figures count as fine, and are called out in green.
+  const fine = compared - outside
+  const labelOf = (row) => (row.status === 'better' && row.past >= 0.2 ? 'Well better than range' : STATUS[row.status].label)
   return (
     <section className="benchmarks">
       <p className="section-label">{bm.benchmarks ? 'Comparison with your benchmarks' : 'Market comparison: are rents, expenses and costs reasonable?'}</p>
       <p className={outside ? 'banner warn' : 'ok'} role="status">
-        {compared === 0 ? 'Nothing could be compared yet.' : `${compared - outside} of ${compared} figures are within ${bm.benchmarks ? 'your' : 'the market'} range${outside ? `. ${outside} ${outside === 1 ? 'is' : 'are'} outside.` : '.'}`}
+        {compared === 0
+          ? 'Nothing could be compared yet.'
+          : `${fine} of ${compared} figures are within ${bm.benchmarks ? 'your' : 'the market'} range${better ? ` or better than it (${better} better)` : ''}${outside ? `. ${outside} ${outside === 1 ? 'is' : 'are'} outside.` : '.'}`}
       </p>
       <p className="note">
         Compared with: {result.set.name}{bm.benchmarks ? ` (${lastChangedText(changedAt)})` : ''}.{result.set.madeUp && <strong> Sample numbers only, not real market data.</strong>}
@@ -121,8 +128,9 @@ export default function BenchmarkTable({ record, settings = DEFAULT_SETTINGS, on
               <div className="bm-top">
                 <span className="bm-label">{row.label}</span>
                 <span className="chips">
-                  <span className={`chip ${flag ? SEVERITY_CHIP[flag.severity] || st.chip : st.chip}`}>
-                    {st.label}
+                  <span className={`chip ${flag ? SEVERITY_CHIP[flag.severity] || st.chip : st.chip}${row.status === 'better' && row.past >= 0.2 ? ' strong' : ''}`}>
+                    {row.status === 'better' ? '✓ ' : ''}
+                    {labelOf(row)}
                     {flag ? ` · ${flag.severity}` : ''}
                   </span>
                 </span>
@@ -182,8 +190,9 @@ export default function BenchmarkTable({ record, settings = DEFAULT_SETTINGS, on
                 <div className="bm-top">
                   <span className="bm-label">{row.label}</span>
                   <span className="chips">
-                    <span className={`chip ${flag ? SEVERITY_CHIP[flag.severity] || st.chip : st.chip}`}>
-                      {st.label}
+                    <span className={`chip ${flag ? SEVERITY_CHIP[flag.severity] || st.chip : st.chip}${row.status === 'better' && row.past >= 0.2 ? ' strong' : ''}`}>
+                      {row.status === 'better' ? '✓ ' : ''}
+                      {labelOf(row)}
                       {flag ? ` · ${flag.severity}` : ''}
                     </span>
                   </span>
